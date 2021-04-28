@@ -8,7 +8,6 @@ Metadata:
     Order: 1
     OptionalParameters:
       - KubernetesVersion
-      - WorkerAMINameFilter
       - AdditionalEKSAdminUserArn
       - AdditionalEKSAdminRoleArn
       - ControlWorkerInstanceType
@@ -46,7 +45,6 @@ Metadata:
           - KeyPairName
           - AdditionalEKSAdminUserArn
           - AdditionalEKSAdminRoleArn
-          - WorkerAMINameFilter
       - Label:
           default: Control Plane Workers Configuration
         Parameters:
@@ -98,8 +96,6 @@ Metadata:
         default: Additional EKS admin user
       AdditionalEKSAdminRoleArn:
         default: Additional EKS admin role
-      WorkerAMINameFilter:
-        default: Worker AMI name filter
       ControlWorkerInstanceType:
         default: Instance type
       ControlNodeGroupDesiredSize:
@@ -257,11 +253,6 @@ Parameters:
     Default: ""
     Description: Resource name of additional IAM role added to the aws-auth ConfigMap of the EKS cluster.
 
-  WorkerAMINameFilter:
-    Type: String
-    Default: kasa-worker-v1-*
-    Description: AMI name filter to use for searching latest available image ID for worker nodes.
-
   ControlWorkerInstanceType:
     Type: String
     Default: m5.xlarge
@@ -370,8 +361,14 @@ Parameters:
     MaxValue: 65535
     Description: Port number to use for communicating with Redis server
 
-# TODO: bkovalev: Add mappings for Region -> CP/EP AMI once we publish AMIs in supported regions
 Mappings:
+  WorkerAMIMap:
+    us-east-1:
+      "118": ami-04e0aace2faaea0c0
+      "119": ami-06f995c5e133ad46c
+    us-east-2:
+      "118": ami-0883f55ce0673c383
+      "119": ami-00238099ab28c3007
   EnforcerConfigurationTierMap:
     "vCPU2":
       instanceType: m5.large
@@ -400,13 +397,6 @@ Resources:
       Type: String
       Name: !Sub "/CSFCN/${AWS::StackName}/eks/clusterName"
       Value: !Sub "${AWS::StackName}"
-
-  WorkerImageId:
-    Type: Custom::CliQuery
-    Properties:
-      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
-      AwsCliCommand: !Sub "ec2 describe-images --filters 'Name=name,Values=${WorkerAMINameFilter}' 'Name=state,Values=available' --query 'max_by(Images, &CreationDate)'"
-      IdField: ImageId
 
   # AWSQS functions and resource types support
 
@@ -1027,7 +1017,7 @@ Resources:
       LaunchTemplateName: !Sub "${ClusterName.Value}-cpworkers"
       LaunchTemplateData:
         KeyName: !Ref KeyPairName
-        ImageId: !Ref WorkerImageId
+        ImageId: !FindInMap [WorkerAMIMap, !Ref AWS::Region, "118"]
         InstanceType: !Ref ControlWorkerInstanceType
         NetworkInterfaces:
           - DeviceIndex: 0
@@ -1198,7 +1188,7 @@ Resources:
       LaunchTemplateName: !Sub "${ClusterName.Value}-epworkers"
       LaunchTemplateData:
         KeyName: !Ref KeyPairName
-        ImageId: !Ref WorkerImageId
+        ImageId: !FindInMap [WorkerAMIMap, !Ref AWS::Region, "118"]
         InstanceType: !FindInMap [EnforcerConfigurationTierMap, !Ref EnforcerConfigurationTier, instanceType]
         NetworkInterfaces:
           - DeviceIndex: 0
