@@ -960,6 +960,7 @@ Resources:
         FunctionRoleArn: !GetAtt IamStack.Outputs.KubernetesAdminRoleArn
         EKSPublicAccessEndpoint: "Enabled"
         EKSPrivateAccessEndpoint: "Disabled"
+        EKSEncryptSecrets: "Disabled"
         AdditionalEKSAdminUserArn: !Ref AdditionalEKSAdminUserArn
         AdditionalEKSAdminRoleArn: !Ref AdditionalEKSAdminRoleArn
 
