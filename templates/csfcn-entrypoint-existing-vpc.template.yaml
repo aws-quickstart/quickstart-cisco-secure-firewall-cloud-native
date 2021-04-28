@@ -4,8 +4,8 @@ Description: Deploys Cisco Secure Firewall Cloud Native into a new EKS cluster o
 
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: "Launch into new VPC"
-    Order: 1
+    EntrypointName: "Launch into existing VPC"
+    Order: 2
     OptionalParameters:
       - KubernetesVersion
       - WorkerAMINameFilter
