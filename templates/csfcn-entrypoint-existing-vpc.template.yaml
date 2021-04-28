@@ -989,7 +989,7 @@ Resources:
       LaunchTemplateName: !Sub "${ClusterName.Value}-cpworkers"
       LaunchTemplateData:
         KeyName: !Ref KeyPairName
-        ImageId: !FindInMap [WorkerAMIMap, !Ref AWS::Region, "118"]
+        ImageId: !FindInMap [ WorkerAMIMap, !Ref AWS::Region, "118" ]
         InstanceType: !Ref ControlWorkerInstanceType
         NetworkInterfaces:
           - DeviceIndex: 0
@@ -1176,7 +1176,7 @@ Resources:
       LaunchTemplateName: !Sub "${ClusterName.Value}-epworkers"
       LaunchTemplateData:
         KeyName: !Ref KeyPairName
-        ImageId: !FindInMap [WorkerAMIMap, !Ref AWS::Region, "118"]
+        ImageId: !FindInMap [ WorkerAMIMap, !Ref AWS::Region, "118" ]
         InstanceType: !FindInMap [ EnforcerConfigurationTierMap, !Ref EnforcerConfigurationTier, instanceType ]
         NetworkInterfaces:
           - DeviceIndex: 0

@@ -1263,6 +1263,7 @@ Resources:
               # following pragma disables that behavior
               # AWSOVERRIDE
 
+
               --MIMEBOUNDARY
               Content-Disposition: attachment; filename="install-deps.sh"
               Content-Transfer-Encoding: 7bit
@@ -1480,128 +1481,128 @@ Resources:
               echo 0 >/proc/sys/net/ipv4/conf/tap_nlp/rp_filter
 
               # override default docker ulimits according to STO's recommendation
-                          sudo bash -c "cat > /etc/docker/daemon.json" <<EOF
-                          {
-                              "default-ulimits": {
-                                  "nofile": {
-                                      "Hard": 1024,
-                                      "Soft": 1024,
-                                      "Name": "nofile"
-                                  },
-                                  "nproc": {
-                                      "Hard": 4096,
-                                      "Soft": 4096,
-                                      "Name": "nproc"
-                                  }
-                              }
-                          }
-                          EOF
+              sudo bash -c "cat > /etc/docker/daemon.json" <<EOF
+              {
+                  "default-ulimits": {
+                      "nofile": {
+                          "Hard": 1024,
+                          "Soft": 1024,
+                          "Name": "nofile"
+                      },
+                      "nproc": {
+                          "Hard": 4096,
+                          "Soft": 4096,
+                          "Name": "nproc"
+                      }
+                  }
+              }
+              EOF
 
 
-                          --MIMEBOUNDARY
-                          Content-Disposition: attachment; filename="create-core-helper.sh"
-                          Content-Transfer-Encoding: 7bit
-                          Content-Type: text/x-shellscript
-                          Mime-Version: 1.0
+              --MIMEBOUNDARY
+              Content-Disposition: attachment; filename="create-core-helper.sh"
+              Content-Transfer-Encoding: 7bit
+              Content-Type: text/x-shellscript
+              Mime-Version: 1.0
 
-                          #!/bin/bash
+              #!/bin/bash
 
-                          [ ! -f /mnt/coredump_helper ] && cat <<EOF > /mnt/coredump_helper
-                          #!/usr/bin/python3
+              [ ! -f /mnt/coredump_helper ] && cat <<EOF > /mnt/coredump_helper
+              #!/usr/bin/python3
 
-                          import sys
-                          import os
-                          import os.path
-                          import subprocess
-                          import io
-                          import grp
-                          import logging
-                          from datetime import datetime
+              import sys
+              import os
+              import os.path
+              import subprocess
+              import io
+              import grp
+              import logging
+              from datetime import datetime
 
-                          DEFAULT_LIMIT=41943040 # 40 MB default
-                          MULTIPLIER = 1024
-                          LOG_FILE= '/var/log/core.log'
+              DEFAULT_LIMIT=41943040 # 40 MB default
+              MULTIPLIER = 1024
+              LOG_FILE= '/var/log/core.log'
 
-                          def parsePodInfo(pid):
-                              env = {}
-                              with open('/proc/%s/environ' % pid) as fd:
-                                  for envspec in fd.read().split('\000'):
-                                      if not envspec:
-                                          continue
-                                      varname, varval = envspec.split('=', 1)
-                                      env[varname] = varval
+              def parsePodInfo(pid):
+                  env = {}
+                  with open('/proc/%s/environ' % pid) as fd:
+                      for envspec in fd.read().split('\000'):
+                          if not envspec:
+                              continue
+                          varname, varval = envspec.split('=', 1)
+                          env[varname] = varval
 
-                              return env
+                  return env
 
-                          def getSize(start_path = '.'):
-                              total_size = 0
-                              for dirpath, dirnames, filenames in os.walk(start_path):
-                                  for f in filenames:
-                                      fp = os.path.join(dirpath, f)
-                                      # skip if it is symbolic link
-                                      if not os.path.islink(fp):
-                                          total_size += os.path.getsize(fp)
+              def getSize(start_path = '.'):
+                  total_size = 0
+                  for dirpath, dirnames, filenames in os.walk(start_path):
+                      for f in filenames:
+                          fp = os.path.join(dirpath, f)
+                          # skip if it is symbolic link
+                          if not os.path.islink(fp):
+                              total_size += os.path.getsize(fp)
 
-                              return total_size
+                  return total_size
 
-                          def writeCoreDump(env):
+              def writeCoreDump(env):
 
-                              coreLimit = DEFAULT_LIMIT
+                  coreLimit = DEFAULT_LIMIT
 
-                              now = datetime.fromtimestamp(int(timeStamp))
-                              date = now.strftime("%Y%m%d")
-                              time = now.strftime("%H:%M:%S")
+                  now = datetime.fromtimestamp(int(timeStamp))
+                  date = now.strftime("%Y%m%d")
+                  time = now.strftime("%H:%M:%S")
 
-                              key = "POD_NAME"
-                              if key in env:
-                                  podName = env["POD_NAME"]
-                                  podNamespace = env["POD_NAMESPACE"]
-                                  corePath = env["COREDUMP_PATH"]
-                                  coreLimitString = env["CORE_SIZE_LIMIT"].rstrip('MB')
-                                  coreLimit = MULTIPLIER * MULTIPLIER * int(coreLimitString)
-                                  logging.info("Core detectected in ASAc pod: %s ,Namespace: %s , dumping to path: %s",
-                                              podName, podNamespace, corePath)
-                              else:
-                                  podName = "HOST"
-                                  podNamespace = "NONE"
-                                  corePath = "/tmp/dumps/"
-                                  logging.info("Core detectected in Host, dumping core to %s",corePath)
+                  key = "POD_NAME"
+                  if key in env:
+                      podName = env["POD_NAME"]
+                      podNamespace = env["POD_NAMESPACE"]
+                      corePath = env["COREDUMP_PATH"]
+                      coreLimitString = env["CORE_SIZE_LIMIT"].rstrip('MB')
+                      coreLimit = MULTIPLIER * MULTIPLIER * int(coreLimitString)
+                      logging.info("Core detectected in ASAc pod: %s ,Namespace: %s , dumping to path: %s",
+                                  podName, podNamespace, corePath)
+                  else:
+                      podName = "HOST"
+                      podNamespace = "NONE"
+                      corePath = "/tmp/dumps/"
+                      logging.info("Core detectected in Host, dumping core to %s",corePath)
 
-                              os.makedirs(corePath,exist_ok=True)
+                  os.makedirs(corePath,exist_ok=True)
 
-                              coreFile = os.path.join(corePath, '-'.join(["core",process_name, podNamespace, podName,date,time, pid, signum]) + ".gz")
+                  coreFile = os.path.join(corePath, '-'.join(["core",process_name, podNamespace, podName,date,time, pid, signum]) + ".gz")
 
-                              if getSize(corePath) < coreLimit:
-                                  core = open(coreFile, 'w')
-                                  p = subprocess.Popen("gzip", shell=True, stdin=sys.stdin, stdout=core, stderr=core)
-                                  core.close()
-                                  logging.info("Successfully dumped core to %s", coreFile)
-                              else:
-                                  logging.error("Not enough space left in  %s. Core will not be generated.",corePath)
+                  if getSize(corePath) < coreLimit:
+                      core = open(coreFile, 'w')
+                      p = subprocess.Popen("gzip", shell=True, stdin=sys.stdin, stdout=core, stderr=core)
+                      core.close()
+                      logging.info("Successfully dumped core to %s", coreFile)
+                  else:
+                      logging.error("Not enough space left in  %s. Core will not be generated.",corePath)
 
-                              # Start of the script
-                          try:
-                              logging.basicConfig(filename=LOG_FILE,level=logging.DEBUG)
+                  # Start of the script
+              try:
+                  logging.basicConfig(filename=LOG_FILE,level=logging.DEBUG)
 
-                              if len(sys.argv) != 5:
-                                  logging.info('Usage: %s <process_name> <pid> <signal number> <time stamp>' % sys.argv[0])
-                                  logging.info('The core dump is read from stdin.')
-                                  sys.exit(1)
+                  if len(sys.argv) != 5:
+                      logging.info('Usage: %s <process_name> <pid> <signal number> <time stamp>' % sys.argv[0])
+                      logging.info('The core dump is read from stdin.')
+                      sys.exit(1)
 
-                              (process_name, pid, signum, timeStamp) = sys.argv[1:5]
+                  (process_name, pid, signum, timeStamp) = sys.argv[1:5]
 
-                              env = parsePodInfo(pid)
+                  env = parsePodInfo(pid)
 
-                              writeCoreDump(env)
+                  writeCoreDump(env)
 
-                          except Exception as err:
+              except Exception as err:
 
-                              logging.error("Error generating Core Dump : %s", err)
+                  logging.error("Error generating Core Dump : %s", err)
 
-                          EOF
+              EOF
 
-                          sudo chmod +x /mnt/coredump_helper
-                          sysctl -w kernel.core_pattern="|/mnt/coredump_helper %e %p %s %t"
+              sudo chmod +x /mnt/coredump_helper
+              sysctl -w kernel.core_pattern="|/mnt/coredump_helper %e %p %s %t"
 
 
               --MIMEBOUNDARY
