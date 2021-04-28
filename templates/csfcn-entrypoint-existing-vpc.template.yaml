@@ -33,7 +33,6 @@ Metadata:
           default: Network configuration
         Parameters:
           - VPCID
-          - VPCCIDR
           - PublicSubnet1ID
           - PrivateSubnetID
           - PublicSubnet2ID
@@ -42,6 +41,7 @@ Metadata:
           - ASAcInsideSubnet1CIDR
           - ASAcOutsideSubnet2CIDR
           - ASAcInsideSubnet2CIDR
+          - PublicSubnetRouteTableID
       - Label:
           default: EKS Cluster Configuration
         Parameters:
@@ -108,8 +108,6 @@ Metadata:
         default: Elastic IP attachment mode
       VPCID:
         default: VPC ID
-      VPCCIDR:
-        default: VPC CIDR
       PublicSubnet1CIDR:
         default: Public subnet 1 CIDR
       ASAcOutsideSubnet1CIDR:
@@ -126,6 +124,8 @@ Metadata:
         default: ASAc inside subnet 2 CIDR
       PrivateSubnet2CIDR:
         default: Private subnet 2 CIDR
+      PublicSubnetRouteTableID:
+        default: Public subnets route table ID
       EnforcerCacheType:
         default: Cache type
       EnforcerCacheNodeType:
