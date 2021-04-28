@@ -421,7 +421,7 @@ Resources:
           Value: !Sub [ "${pref}_outside_${az}", { pref: !GetAtt ClusterName.Value, az: !Select [ 0, !GetAZs "" ] } ]
         - Key: !Sub "kubernetes.io/cluster/${ClusterName.Value}"
           Value: "shared"
-        - Key: kuberneates.io/role/elb
+        - Key: kubernetes.io/role/elb
           Value: "1"
 
   OutsideSubnetAZ1RouteTableAssociation:
@@ -442,7 +442,7 @@ Resources:
           Value: !Sub [ "${pref}_inside_${az}", { pref: !GetAtt ClusterName.Value, az: !Select [ 0, !GetAZs "" ] } ]
         - Key: !Sub "kubernetes.io/cluster/${ClusterName.Value}"
           Value: "shared"
-        - Key: kuberneates.io/role/elb
+        - Key: kubernetes.io/role/elb
           Value: "1"
 
   InsideSubnetAZ1RouteTableAssociation:
@@ -463,7 +463,7 @@ Resources:
           Value: !Sub [ "${pref}_outside_${az}", { pref: !GetAtt ClusterName.Value, az: !Select [ 1, !GetAZs "" ] } ]
         - Key: !Sub "kubernetes.io/cluster/${ClusterName.Value}"
           Value: "shared"
-        - Key: kuberneates.io/role/elb
+        - Key: kubernetes.io/role/elb
           Value: "1"
 
   OutsideSubnetAZ2RouteTableAssociation:
@@ -484,7 +484,7 @@ Resources:
           Value: !Sub [ "${pref}_inside_${az}", { pref: !GetAtt ClusterName.Value, az: !Select [ 1, !GetAZs "" ] } ]
         - Key: !Sub "kubernetes.io/cluster/${ClusterName.Value}"
           Value: "shared"
-        - Key: kuberneates.io/role/elb
+        - Key: kubernetes.io/role/elb
           Value: "1"
 
   InsideSubnetAZ2RouteTableAssociation:
