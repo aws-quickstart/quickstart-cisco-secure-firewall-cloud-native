@@ -5,6 +5,7 @@ project:
   package_lambda: false
   regions:
     - us-east-1
+    - us-east-2
   s3_bucket: ''
   parameters:
     QSS3BucketName: $[taskcat_autobucket]
@@ -15,4 +16,5 @@ tests:
       KeyPairName: override
     regions:
       - us-east-1
+      - us-east-2
     template: templates/csfcn-entrypoint-new-vpc.template.yaml
