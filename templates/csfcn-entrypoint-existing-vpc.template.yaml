@@ -361,7 +361,7 @@ Mappings:
       hugePagesSize: "512"
 
 Conditions:
-  UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
   EnableEFS: !Equals [ !Ref StorageType, "efs" ]
   EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
   EnforcerCacheTransitEncryptionEnabled: !Equals [ !Ref EnforcerCacheTransitEncryption, Enabled ]
@@ -980,7 +980,7 @@ Resources:
       LaunchTemplateName: !Sub "${ClusterName.Value}-cpworkers"
       LaunchTemplateData:
         KeyName: !Ref KeyPairName
-        ImageId: !FindInMap [WorkerAMIMap, !Ref AWS::Region, "118"]
+        ImageId: !FindInMap [ WorkerAMIMap, !Ref AWS::Region, "118" ]
         InstanceType: !Ref ControlWorkerInstanceType
         NetworkInterfaces:
           - DeviceIndex: 0
@@ -1148,8 +1148,8 @@ Resources:
       LaunchTemplateName: !Sub "${ClusterName.Value}-epworkers"
       LaunchTemplateData:
         KeyName: !Ref KeyPairName
-        ImageId: !FindInMap [WorkerAMIMap, !Ref AWS::Region, "118"]
-        InstanceType: !FindInMap [EnforcerConfigurationTierMap, !Ref EnforcerConfigurationTier, instanceType]
+        ImageId: !FindInMap [ WorkerAMIMap, !Ref AWS::Region, "118" ]
+        InstanceType: !FindInMap [ EnforcerConfigurationTierMap, !Ref EnforcerConfigurationTier, instanceType ]
         NetworkInterfaces:
           - DeviceIndex: 0
             AssociatePublicIpAddress: true
@@ -1415,7 +1415,7 @@ Resources:
                        --stack  ${ClusterName.Value} \
                        --resource NodeGroup  \
                        --region ${AWS::Region}
-            - HugePagesSize: !FindInMap [EnforcerConfigurationTierMap, !Ref EnforcerConfigurationTier, hugePagesSize]
+            - HugePagesSize: !FindInMap [ EnforcerConfigurationTierMap, !Ref EnforcerConfigurationTier, hugePagesSize ]
 
 
   # Custom Functions
