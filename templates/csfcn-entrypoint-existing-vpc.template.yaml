@@ -34,7 +34,7 @@ Metadata:
         Parameters:
           - VPCID
           - PublicSubnet1ID
-          - PrivateSubnetID
+          - PrivateSubnet1ID
           - PublicSubnet2ID
           - PrivateSubnet2ID
           - ASAcOutsideSubnet1CIDR
@@ -177,13 +177,13 @@ Parameters:
     Description: ID of the public DMZ subnet 1 (ASAc default 1), located in Availability Zone 1.
   PrivateSubnet1ID:
     Type: "AWS::EC2::Subnet::Id"
-    Description: ID of the private subnet 1, located in Availability Zone 1.
+    Description: ID of the private subnet 1, located in Availability Zone 1. Must have "kubernetes.io/role/internal-elb" tag attached.
   PublicSubnet2ID:
     Type: "AWS::EC2::Subnet::Id"
     Description: ID of the public DMZ subnet 2 (ASAc default 2), located in Availability Zone 2.
   PrivateSubnet2ID:
     Type: "AWS::EC2::Subnet::Id"
-    Description: ID of the private subnet 2, located in Availability Zone 2.
+    Description: ID of the private subnet 2, located in Availability Zone 2. Must have "kubernetes.io/role/internal-elb" tag attached.
   PublicSubnetRouteTableID:
     Description: ID of VPC public subnet route table (e.g., rtb-0b9ce78da592f11e0)
     Type: String
