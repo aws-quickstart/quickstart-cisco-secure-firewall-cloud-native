@@ -8,11 +8,11 @@ Metadata:
     Order: 1
     OptionalParameters:
       - KubernetesVersion
-      - AdditionalEKSAdminUserArn
       - AdditionalEKSAdminRoleArn
       - ControlWorkerInstanceType
       - ControlNodeGroupDesiredSize
       - StorageType
+      - EKSClusterLoggingTypes
       - PortierisVersion
       - EnforcerConfigurationTier
       - EnforcerNodeGroupDesiredSize
@@ -43,8 +43,9 @@ Metadata:
         Parameters:
           - KubernetesVersion
           - KeyPairName
-          - AdditionalEKSAdminUserArn
+          - EKSAdminUserArn
           - AdditionalEKSAdminRoleArn
+          - EKSClusterLoggingTypes
       - Label:
           default: Control Plane Workers Configuration
         Parameters:
@@ -92,10 +93,12 @@ Metadata:
         default: Kubernetes version
       KeyPairName:
         default: SSH key name
-      AdditionalEKSAdminUserArn:
-        default: Additional EKS admin user
+      EKSAdminUserArn:
+        default: EKS admin user
       AdditionalEKSAdminRoleArn:
         default: Additional EKS admin role
+      EKSClusterLoggingTypes:
+        default: Cluster logging types
       ControlWorkerInstanceType:
         default: Instance type
       ControlNodeGroupDesiredSize:
@@ -243,15 +246,23 @@ Parameters:
       to securely connect to your instance after it launches.
     Type: AWS::EC2::KeyPair::KeyName
 
-  AdditionalEKSAdminUserArn:
+  EKSAdminUserArn:
     Type: String
-    Default: ""
-    Description: Resource name of additional IAM user added to the aws-auth ConfigMap of the EKS cluster.
+    Description: Resource name of the IAM user added to the aws-auth ConfigMap of the EKS cluster.
+    # Make the param required so that the admin IAM user is assigned
+    AllowedPattern: ".+"
 
   AdditionalEKSAdminRoleArn:
     Type: String
     Default: ""
     Description: Resource name of additional IAM role added to the aws-auth ConfigMap of the EKS cluster.
+
+  EKSClusterLoggingTypes:
+    Type: String
+    Default: ""
+    AllowedPattern: ^$|^\s*(api|audit|authenticator|controllerManager|scheduler)\s*(,\s*(api|audit|authenticator|controllerManager|scheduler)\s*)*$
+    ConstraintDescription: Comma separated list of allowed values - api, audit, authenticator, controllerManager and scheduler
+    Description: Cluster control plane logging options; comma separated.
 
   ControlWorkerInstanceType:
     Type: String
@@ -380,7 +391,7 @@ Mappings:
       instanceType: m5.2xlarge
       hugePagesSize: "256"
     "vCPU16":
-      instanceType: m5.4xlarge
+      instanceType: m5n.4xlarge
       hugePagesSize: "512"
 
 Conditions:
@@ -389,6 +400,7 @@ Conditions:
   EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
   EnforcerCacheTransitEncryptionEnabled: !Equals [ !Ref EnforcerCacheTransitEncryption, Enabled ]
   UsePortieris: !Not [ !Equals [ !Ref PortierisVersion, none ] ]
+  HasAdditionalEKSAdminRole: !Not [ !Equals [ !Ref AdditionalEKSAdminRoleArn, "" ] ]
 
 Resources:
   ClusterName:
@@ -540,8 +552,8 @@ Resources:
       CacheSubnetGroupName: !Sub "${ClusterName.Value}"
       Description: ASAc ElastiCache Subnet Group
       SubnetIds:
-        - !GetAtt VPCStack.Outputs.PrivateSubnet1AID
-        - !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+        - !GetAtt VPCStack.Outputs.PublicSubnet1ID
+        - !GetAtt VPCStack.Outputs.PublicSubnet2ID
 
   # Security Groups
 
@@ -961,8 +973,89 @@ Resources:
         EKSPublicAccessEndpoint: "Enabled"
         EKSPrivateAccessEndpoint: "Disabled"
         EKSEncryptSecrets: "Disabled"
-        AdditionalEKSAdminUserArn: !Ref AdditionalEKSAdminUserArn
-        AdditionalEKSAdminRoleArn: !Ref AdditionalEKSAdminRoleArn
+        EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
+
+  # Fix for the issue when on updating EKSControlPlane it drops the NodeGroup role entry in "aws-auth" configmap.
+  # The contents of the configmap is re-applied explicitly to overcome the issue.
+  # The issue is opened on "quickstart-amazon-eks" repo: https://github.com/aws-quickstart/quickstart-amazon-eks/issues/299
+  AwsAuthConfigMap:
+    Type: "Custom::KubeManifest"
+    Properties:
+      ServiceToken: !GetAtt ApplyKubernetesManifestFunction.Arn
+      ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
+      Manifest: !Sub
+        - |-
+          kind: ConfigMap
+          apiVersion: v1
+          metadata:
+            name: aws-auth
+            namespace: kube-system
+          data:
+            mapRoles: >-
+              [
+                {
+                  "groups": [
+                    "aws-auth-admin"
+                  ],
+                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-eks-cluster"
+                },
+                {
+                  "groups": [
+                    "aws-auth-admin"
+                  ],
+                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/CloudFormation-Kubernetes-VPC"
+                },
+                {
+                  "groups": [
+                    "system:bootstrappers",
+                    "system:nodes",
+                    "eks:kube-proxy-windows"
+                  ],
+                  "rolearn": "${EC2WorkersRole.Arn}",
+                  "username": "system:node:{{EC2PrivateDNSName}}"
+                },
+                {
+                  "groups": [
+                    "system:masters"
+                  ],
+                  "rolearn": "${IamStack.Outputs.KubernetesAdminRoleArn}",
+                  "username": "${IamStack.Outputs.KubernetesAdminRoleArn}"
+                },
+                {
+                  "groups": [
+                    "system:masters"
+                  ],
+                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-helm",
+                  "username": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-helm"
+                },
+                {
+                  "groups": [
+                    "system:masters"
+                  ],
+                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-get",
+                  "username": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-get"
+                },
+                {
+                  "groups": [
+                    "system:masters"
+                  ],
+                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-resource",
+                  "username": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-resource"
+                },
+                {
+                  "groups": [
+                    "system:masters"
+                  ],
+                  "rolearn": "${EKSAdminUserArn}",
+                  "username": "${EKSAdminUserArn}"
+                } ${AdditionalEKSAdminRoleArnEntry}
+              ]
+            mapUsers: >-
+              [{"userarn":"${EKSAdminUserArn}","username":"${EKSAdminUserArn}","groups":["system:masters"]}]
+        - AdditionalEKSAdminRoleArnEntry: !If
+            - HasAdditionalEKSAdminRole
+            - !Sub ', {"groups": ["system:masters"], "rolearn": "${AdditionalEKSAdminRoleArn}", "username": "${AdditionalEKSAdminRoleArn}"}'
+            - ""
 
   # EFS
 
@@ -1001,7 +1094,7 @@ Resources:
 
   CPWorkersGroup:
     Type: AWS::EKS::Nodegroup
-    DependsOn: CalicoCNI
+    DependsOn: [ CalicoCNI, AwsAuthConfigMap ]
     Properties:
       NodegroupName: cpworkers
       ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
@@ -1027,7 +1120,7 @@ Resources:
       LaunchTemplateName: !Sub "${ClusterName.Value}-cpworkers"
       LaunchTemplateData:
         KeyName: !Ref KeyPairName
-        ImageId: !FindInMap [ WorkerAMIMap, !Ref AWS::Region, "118" ]
+        ImageId: !FindInMap [WorkerAMIMap, !Ref AWS::Region, "118"]
         InstanceType: !Ref ControlWorkerInstanceType
         NetworkInterfaces:
           - DeviceIndex: 0
@@ -1179,18 +1272,15 @@ Resources:
 
             #!/bin/bash
             set -o xtrace
-            /etc/eks/bootstrap.sh ${ClusterName.Value} \
+
+            /etc/eks/bootstrap.sh ${EKSControlPlane.Outputs.EKSName} \
                      --b64-cluster-ca ${EKSControlPlane.Outputs.CAData} \
                      --apiserver-endpoint ${EKSControlPlane.Outputs.EKSEndpoint} \
                      --use-max-pods true
-            /opt/aws/bin/cfn-signal --exit-code $? \
-                     --stack  ${ClusterName.Value} \
-                     --resource NodeGroup  \
-                     --region ${AWS::Region}
 
   EPWorkersGroup:
     Type: AWS::EKS::Nodegroup
-    DependsOn: CalicoCNI
+    DependsOn: [ CalicoCNI, AwsAuthConfigMap ]
     Properties:
       NodegroupName: epworkers
       ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
@@ -1614,15 +1704,13 @@ Resources:
 
               #!/bin/bash
               set -o xtrace
-              /etc/eks/bootstrap.sh ${ClusterName.Value} \
+
+              /etc/eks/bootstrap.sh ${EKSControlPlane.Outputs.EKSName} \
                        --b64-cluster-ca ${EKSControlPlane.Outputs.CAData} \
                        --apiserver-endpoint ${EKSControlPlane.Outputs.EKSEndpoint} \
                        --use-max-pods true \
                        --kubelet-extra-args '--register-with-taints=cisco-nodetype=enforcement:NoSchedule'
-              /opt/aws/bin/cfn-signal --exit-code $? \
-                       --stack  ${ClusterName.Value} \
-                       --resource NodeGroup  \
-                       --region ${AWS::Region}
+
             - HugePagesSize: !FindInMap [ EnforcerConfigurationTierMap, !Ref EnforcerConfigurationTier, hugePagesSize ]
 
 
@@ -1768,8 +1856,11 @@ Resources:
               status = cfnresponse.SUCCESS
               try:
                   manifest_file = '/tmp/manifest.json'
+                  manifest_text = http_get(event['ResourceProperties']["Url"]) \
+                    if event['ResourceProperties'].get("Url") \
+                    else event['ResourceProperties']["Manifest"]
                   with open(manifest_file, 'w') as f:
-                      f.write(http_get(event['ResourceProperties']["Url"]))
+                      f.write(manifest_text)
                   create_kubeconfig(event['ResourceProperties']['ClusterName'])
 
                   if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
