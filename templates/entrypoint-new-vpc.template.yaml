@@ -425,7 +425,7 @@ Resources:
         BastionIAMRoleName: ""
         CloudFormationKubernetesVPCRoleExists: !Ref CloudFormationKubernetesVPCRoleExists
 
-  FirewallStack:
+  SFCNStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
@@ -478,24 +478,24 @@ Resources:
 
 Outputs:
   EksArn:
-    Value: !GetAtt FirewallStack.Outputs.EksArn
+    Value: !GetAtt SFCNStack.Outputs.EksArn
   CAData:
-    Value: !GetAtt FirewallStack.Outputs.CAData
+    Value: !GetAtt SFCNStack.Outputs.CAData
   EKSEndpoint:
-    Value: !GetAtt FirewallStack.Outputs.EKSEndpoint
+    Value: !GetAtt SFCNStack.Outputs.EKSEndpoint
   EKSName:
-    Value: !GetAtt FirewallStack.Outputs.EKSName
+    Value: !GetAtt SFCNStack.Outputs.EKSName
   PublicSubnetRouteTable:
     Value: !GetAtt VPCStack.Outputs.PublicSubnetRouteTable
   ElasticachePrimaryEndpoint:
     Condition: EnforcerCacheTypeIsElastiCache
-    Value: !GetAtt FirewallStack.Outputs.ElasticachePrimaryEndpoint
+    Value: !GetAtt SFCNStack.Outputs.ElasticachePrimaryEndpoint
   ElasticachePrimaryEndpointPort:
     Condition: EnforcerCacheTypeIsElastiCache
-    Value: !GetAtt FirewallStack.Outputs.ElasticachePrimaryEndpointPort
+    Value: !GetAtt SFCNStack.Outputs.ElasticachePrimaryEndpointPort
   ElasticacheReaderEndpoint:
     Condition: EnforcerCacheTypeIsElastiCache
-    Value: !GetAtt FirewallStack.Outputs.ElasticacheReaderEndpoint
+    Value: !GetAtt SFCNStack.Outputs.ElasticacheReaderEndpoint
   ElasticacheReaderEndpointPort:
     Condition: EnforcerCacheTypeIsElastiCache
-    Value: !GetAtt FirewallStack.Outputs.ElasticacheReaderEndpointPort
+    Value: !GetAtt SFCNStack.Outputs.ElasticacheReaderEndpointPort
