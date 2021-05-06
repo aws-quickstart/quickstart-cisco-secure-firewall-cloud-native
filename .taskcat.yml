@@ -1,17 +1,12 @@
 project:
   name: quickstart-cisco-secure-firewall-cloud-native
-  owner: quickstart-eng@amazon.com
   regions:
     - us-east-1
     - us-east-2
   parameters:
     QSS3BucketName: $[taskcat_autobucket]
     QSS3BucketRegion: $[taskcat_current_region]
+    KeyPairName: override
 tests:
   new-vpc:
-    parameters:
-      KeyPairName: cikey
-    regions:
-      - us-east-1
-      - us-east-2
     template: templates/entrypoint-new-vpc.template.yaml
