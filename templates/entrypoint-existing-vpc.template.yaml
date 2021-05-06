@@ -6,32 +6,42 @@ Metadata:
   QuickStartDocumentation:
     EntrypointName: "Launch into existing VPC"
     Order: 2
-    OptionalParameters:
-      - KubernetesVersion
-      - AdditionalEKSAdminRoleArn
-      - ControlWorkerInstanceType
-      - ControlNodeGroupDesiredSize
-      - ControlNodeGroupMaxSize
-      - StorageType
-      - EKSClusterLoggingTypes
-      - PortierisVersion
-      - EnforcerConfigurationTier
-      - EnforcerNodeGroupDesiredSize
-      - EnforcerNodeGroupMaxSize
-      - EIPAttachmentMode
-      - EnforcerCacheType
-      - EnforcerCacheNodeType
-      - EnforcerCacheAuthToken
-      - EnforcerCacheTransitEncryption
-      - EnforcerCacheEngineVersion
-      - EnforcerCachePort
-      - QSS3BucketName
-      - QSS3KeyPrefix
-      - QSS3BucketRegion
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Network configuration
+          default: Cluster Configuration
+        Parameters:
+          - KubernetesVersion
+          - KeyPairName
+          - EKSClusterLoggingTypes
+          - StorageType
+          - EKSAdminUserArn
+          - AdditionalEKSAdminRoleArn
+      - Label:
+          default: Control-plane Configuration
+        Parameters:
+          - ControllerConfigurationTier
+          - ControlNodeGroupDesiredSize
+          - ControlNodeGroupMaxSize
+          - PortierisVersion
+      - Label:
+          default: Data-plane Configuration
+        Parameters:
+          - EnforcerConfigurationTier
+          - EnforcerNodeGroupDesiredSize
+          - EnforcerNodeGroupMaxSize
+          - EIPAttachmentMode
+      - Label:
+          default: (Optional) Cache Configuration
+        Parameters:
+          - EnforcerCacheType
+          - EnforcerCacheNodeType
+          - EnforcerCacheAuthToken
+          - EnforcerCacheTransitEncryption
+          - EnforcerCacheEngineVersion
+          - EnforcerCachePort
+      - Label:
+          default: (Optional) Network configuration
         Parameters:
           - VPCID
           - PublicSubnet1ID
@@ -44,43 +54,19 @@ Metadata:
           - ASAcInsideSubnet2CIDR
           - PublicSubnetRouteTableID
       - Label:
-          default: EKS Cluster Configuration
-        Parameters:
-          - KubernetesVersion
-          - KeyPairName
-          - EKSAdminUserArn
-          - AdditionalEKSAdminRoleArn
-          - EKSClusterLoggingTypes
-      - Label:
-          default: Control Plane Workers Configuration
-        Parameters:
-          - ControlWorkerInstanceType
-          - ControlNodeGroupDesiredSize
-          - ControlNodeGroupMaxSize
-          - StorageType
-          - PortierisVersion
-      - Label:
-          default: Data Plane Workers Configuration
-        Parameters:
-          - EnforcerConfigurationTier
-          - EnforcerNodeGroupDesiredSize
-          - EnforcerNodeGroupMaxSize
-          - EIPAttachmentMode
-      - Label:
-          default: (Optional) Data Plane External Cache Configuration
-        Parameters:
-          - EnforcerCacheType
-          - EnforcerCacheNodeType
-          - EnforcerCacheAuthToken
-          - EnforcerCacheTransitEncryption
-          - EnforcerCacheEngineVersion
-          - EnforcerCachePort
-      - Label:
           default: (Optional) AWS Quick Start configuration
         Parameters:
           - QSS3BucketName
           - QSS3KeyPrefix
           - QSS3BucketRegion
+      - Label:
+          default: Firewall Configuration
+        Parameters:
+          - DevhubUsername
+          - DevhubApiKey
+          - FirewallVersion
+          - EnforcerServiceRoles
+          - EnforcerAutoscaling
     ParameterLabels:
       KubernetesVersion:
         default: Kubernetes version
@@ -92,8 +78,8 @@ Metadata:
         default: Additional EKS admin role
       EKSClusterLoggingTypes:
         default: Cluster logging types
-      ControlWorkerInstanceType:
-        default: Instance type
+      ControllerConfigurationTier:
+        default: Controller instance tier
       ControlNodeGroupDesiredSize:
         default: Desired nodes number
       ControlNodeGroupMaxSize:
@@ -103,7 +89,7 @@ Metadata:
       PortierisVersion:
         default: Portieris Helm version
       EnforcerConfigurationTier:
-        default: Enforcer Instance tier
+        default: Enforcer instance tier
       EnforcerNodeGroupDesiredSize:
         default: Desired nodes number
       EnforcerNodeGroupMaxSize:
@@ -148,6 +134,16 @@ Metadata:
         default: Quick Start S3 bucket name
       QSS3KeyPrefix:
         default: Quick Start S3 key prefix
+      DevhubUsername:
+        default: Devhub username
+      DevhubApiKey:
+        default: Devhub API Key
+      FirewallVersion:
+        default: Product version
+      EnforcerServiceRoles:
+        default: Enforcer service roles
+      EnforcerAutoscaling:
+        default: Autoscale enforcer
 
 Parameters:
   QSS3BucketName:
@@ -241,12 +237,15 @@ Parameters:
     Default: ""
     AllowedPattern: ^$|^\s*(api|audit|authenticator|controllerManager|scheduler)\s*(,\s*(api|audit|authenticator|controllerManager|scheduler)\s*)*$
     ConstraintDescription: Comma separated list of allowed values - api, audit, authenticator, controllerManager and scheduler
-    Description: Cluster control plane logging options; comma separated.
+    Description: |
+      Cluster control plane logging options (api, audit, authenticator, controllerManager and scheduler); comma separated.
 
-  ControlWorkerInstanceType:
+  ControllerConfigurationTier:
+    Description: Instance tier to be used by controller workers
+    Default: "vCPU4"
     Type: String
-    Default: m5.xlarge
-    Description: The instance type of control plane worker nodes.
+    AllowedValues: [ "vCPU2", "vCPU4" ]
+    ConstraintDescription: must specify vCPU2 or vCPU4
 
   EnforcerConfigurationTier:
     Description: Instance tier to be used by enforcer workers
@@ -351,6 +350,40 @@ Parameters:
     MaxValue: 65535
     Description: Port number to use for communicating with Redis server
 
+  DevhubUsername:
+    Type: String
+    AllowedPattern: "[a-zA-Z0-9]{3,10}"
+    ConstraintDescription: Devhub username should be an alphanumeric string, at least 3 and up to 10 characters
+    Description: Username of Cisco Devhub account
+
+  DevhubApiKey:
+    Type: String
+    NoEcho: true
+    Description: API key obtained from Cisco Devhub account
+
+  FirewallVersion:
+    Type: String
+    Default: v0.1.0-158
+    Description: Helm chart version of the product
+
+  EnforcerServiceRoles:
+    Type: String
+    Default: default
+    AllowedPattern: "[a-zA-Z0-9-]{3,15}(,[a-zA-Z0-9-]{3,15})*"
+    AllowedValues: [ "default", "default,redirector" ]
+    ConstraintDescription: |
+      Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
+      and upto 15 characters long.
+    Description: |
+      Service roles of ASA separated by comma, no spaces allowed. If choosing the multiple service role option, ensure that at
+      least as many enforcer worker nodes is set as the desired number for faster deployment
+
+  EnforcerAutoscaling:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Disabled
+    Description: Enable scaling of ASA with default metrics
+
 Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
   EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
@@ -412,9 +445,10 @@ Resources:
         EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
         StorageType: !Ref StorageType
         # Control-plane configuration
-        ControlWorkerInstanceType: !Ref ControlWorkerInstanceType
+        ControllerConfigurationTier: !Ref ControllerConfigurationTier
         ControlNodeGroupDesiredSize: !Ref ControlNodeGroupDesiredSize
         ControlNodeGroupMaxSize: !Ref ControlNodeGroupMaxSize
+        PortierisVersion: !Ref PortierisVersion
         # Data-plane configuration
         EnforcerConfigurationTier: !Ref EnforcerConfigurationTier
         EnforcerNodeGroupDesiredSize: !Ref EnforcerNodeGroupDesiredSize
@@ -432,7 +466,12 @@ Resources:
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         QSS3BucketRegion: !Ref QSS3BucketRegion
         # Firewall configuration
-        PortierisVersion: !Ref PortierisVersion
+        DevhubUsername: !Ref DevhubUsername
+        DevhubApiKey: !Ref DevhubApiKey
+        FirewallVersion: !Ref FirewallVersion
+        EnforcerServiceRoles: !Ref EnforcerServiceRoles
+        EnforcerAutoscaling: !Ref EnforcerAutoscaling
+
 Outputs:
   EksArn:
     Value: !GetAtt SFCNStack.Outputs.EksArn

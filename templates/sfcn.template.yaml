@@ -98,12 +98,15 @@ Parameters:
     Default: ""
     AllowedPattern: ^$|^\s*(api|audit|authenticator|controllerManager|scheduler)\s*(,\s*(api|audit|authenticator|controllerManager|scheduler)\s*)*$
     ConstraintDescription: Comma separated list of allowed values - api, audit, authenticator, controllerManager and scheduler
-    Description: Cluster control plane logging options; comma separated.
+    Description: |
+      Cluster control plane logging options (api, audit, authenticator, controllerManager and scheduler); comma separated.
 
-  ControlWorkerInstanceType:
+  ControllerConfigurationTier:
+    Description: Instance tier to be used by controller workers
+    Default: "vCPU4"
     Type: String
-    Default: m5.xlarge
-    Description: The instance type of control plane worker nodes.
+    AllowedValues: [ "vCPU2", "vCPU4" ]
+    ConstraintDescription: must specify vCPU2 or vCPU4
 
   EnforcerConfigurationTier:
     Description: Instance tier to be used by enforcer workers
@@ -193,12 +196,12 @@ Parameters:
     ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
     Description: |
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
-      Required if in-transit encryption is enabled
+      Takes effect only if in-transit encryption is enabled
 
   EnforcerCacheTransitEncryption:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
-    Default: Disabled
+    Default: Enabled
     Description: Cannot be changed after creation, update requires replacement
 
   EnforcerCachePort:
@@ -208,6 +211,40 @@ Parameters:
     MaxValue: 65535
     Description: Port number to use for communicating with Redis server
 
+  DevhubUsername:
+    Type: String
+    AllowedPattern: "[a-zA-Z0-9]{3,10}"
+    ConstraintDescription: Devhub username should be an alphanumeric string, at least 3 and up to 10 characters
+    Description: Username of Cisco Devhub account
+
+  DevhubApiKey:
+    Type: String
+    NoEcho: true
+    Description: API key obtained from Cisco Devhub account
+
+  FirewallVersion:
+    Type: String
+    Default: v0.1.0-158
+    Description: Helm chart version of the product
+
+  EnforcerServiceRoles:
+    Type: String
+    Default: default
+    AllowedPattern: "[a-zA-Z0-9-]{3,15}(,[a-zA-Z0-9-]{3,15})*"
+    AllowedValues: [ "default", "default,redirector" ]
+    ConstraintDescription: |
+      Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
+      and upto 15 characters long.
+    Description: |
+      Service roles of ASA separated by comma, no spaces allowed. If choosing the multiple service role option, ensure that at
+      least as many enforcer worker nodes is set as the desired number for faster deployment
+
+  EnforcerAutoscaling:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Disabled
+    Description: Enable scaling of ASA with default metrics
+
 Mappings:
   WorkerAMIMap:
     us-east-1:
@@ -216,7 +253,7 @@ Mappings:
     us-east-2:
       "118": ami-0883f55ce0673c383
       "119": ami-00238099ab28c3007
-  EnforcerConfigurationTierMap:
+  ConfigurationTierMap:
     "vCPU2":
       instanceType: m5.large
       hugePagesSize: "128"
@@ -237,6 +274,8 @@ Conditions:
   EnforcerCacheTransitEncryptionEnabled: !Equals [ !Ref EnforcerCacheTransitEncryption, Enabled ]
   UsePortieris: !Not [ !Equals [ !Ref PortierisVersion, none ] ]
   HasAdditionalEKSAdminRole: !Not [ !Equals [ !Ref AdditionalEKSAdminRoleArn, "" ] ]
+  EnforcerCacheAuthTokenIsBlank: !Equals [ !Ref EnforcerCacheAuthToken, "" ]
+  EnforcerAutoscalingEnabled: !Equals [ !Ref EnforcerAutoscaling, Enabled ]
 
 Resources:
 
@@ -560,7 +599,10 @@ Resources:
       EngineVersion: !Ref EnforcerCacheEngineVersion
       CacheNodeType: !Ref EnforcerCacheNodeType
       Port: !Ref EnforcerCachePort
-      AuthToken: !If [ EnforcerCacheTransitEncryptionEnabled, !Ref EnforcerCacheAuthToken, !Ref 'AWS::NoValue' ]
+      # AuthToken can be set only if Transit Encryption is Enabled
+      AuthToken: !If [ EnforcerCacheTransitEncryptionEnabled,
+                       !If [ EnforcerCacheAuthTokenIsBlank, !Ref 'AWS::NoValue', !Ref EnforcerCacheAuthToken],
+                       !Ref 'AWS::NoValue' ]
       MultiAZEnabled: false
       AutomaticFailoverEnabled: false
       TransitEncryptionEnabled: !If [ EnforcerCacheTransitEncryptionEnabled, true, false ]
@@ -913,7 +955,7 @@ Resources:
       LaunchTemplateData:
         KeyName: !Ref KeyPairName
         ImageId: !FindInMap [ WorkerAMIMap, !Ref AWS::Region, "118" ]
-        InstanceType: !Ref ControlWorkerInstanceType
+        InstanceType: !FindInMap [ConfigurationTierMap, !Ref ControllerConfigurationTier, instanceType]
         NetworkInterfaces:
           - DeviceIndex: 0
             AssociatePublicIpAddress: true
@@ -1057,6 +1099,25 @@ Resources:
 
 
             --MIMEBOUNDARY
+            Content-Disposition: attachment; filename="install-ecr-login-helper.sh"
+            Content-Transfer-Encoding: 7bit
+            Content-Type: text/x-shellscript
+            Mime-Version: 1.0
+
+            #!/bin/bash
+            set -o xtrace
+
+            sudo apt install amazon-ecr-credential-helper
+            sudo mkdir -p /root/.docker
+            sudo bash -c "cat > /root/.docker/config.json" <<EOF
+            {
+                "credsStore": "ecr-login"
+            }
+            EOF
+            echo "export DOCKER_CONTENT_TRUST=0" | sudo tee -a /etc/environment
+
+
+            --MIMEBOUNDARY
             Content-Disposition: attachment; filename="register-node.sh"
             Content-Transfer-Encoding: 7bit
             Content-Type: text/x-shellscript
@@ -1097,7 +1158,7 @@ Resources:
       LaunchTemplateData:
         KeyName: !Ref KeyPairName
         ImageId: !FindInMap [ WorkerAMIMap, !Ref AWS::Region, "118" ]
-        InstanceType: !FindInMap [ EnforcerConfigurationTierMap, !Ref EnforcerConfigurationTier, instanceType ]
+        InstanceType: !FindInMap [ ConfigurationTierMap, !Ref EnforcerConfigurationTier, instanceType ]
         NetworkInterfaces:
           - DeviceIndex: 0
             AssociatePublicIpAddress: true
@@ -1157,6 +1218,14 @@ Resources:
               apt-get upgrade -yq
               apt-get install -yq jq software-properties-common dpdk dpdk-igb-uio-dkms ec2-instance-connect
               apt-cache show hugepages && sudo apt-get install -yq hugepages || true
+              sudo apt install amazon-ecr-credential-helper
+              sudo mkdir -p /root/.docker
+              sudo bash -c "cat > /root/.docker/config.json" <<EOF
+              {
+                  "credsStore": "ecr-login"
+              }
+              EOF
+              echo "export DOCKER_CONTENT_TRUST=0" | sudo tee -a /etc/environment
 
 
               --MIMEBOUNDARY
@@ -1500,7 +1569,7 @@ Resources:
                        --use-max-pods true \
                        --kubelet-extra-args '--register-with-taints=cisco-nodetype=enforcement:NoSchedule'
 
-            - HugePagesSize: !FindInMap [ EnforcerConfigurationTierMap, !Ref EnforcerConfigurationTier, hugePagesSize ]
+            - HugePagesSize: !FindInMap [ ConfigurationTierMap, !Ref EnforcerConfigurationTier, hugePagesSize ]
 
 
   # Custom Functions
@@ -1786,6 +1855,27 @@ Resources:
         "installCRDs": true
         "webhook.hostNetwork": true
         "webhook.securePort": 10251
+        "podAnnotations.seccomp\\.security\\.alpha\\.kubernetes\\.io/pod" : "runtime/default"
+        "containerSecurityContext.runAsNonRoot": "true"
+        "containerSecurityContext.allowPrivilegeEscalation": "false"
+        "resources.limits.cpu": "100m"
+        "resources.limits.memory": "50Mi"
+        "resources.requests.cpu": "25m"
+        "resources.requests.memory": "30Mi"
+        "cainjector.podAnnotations.seccomp\\.security\\.alpha\\.kubernetes\\.io/pod" : "runtime/default"
+        "cainjector.containerSecurityContext.runAsNonRoot": "true"
+        "cainjector.containerSecurityContext.allowPrivilegeEscalation": "false"
+        "cainjector.resources.limits.cpu": "100m"
+        "cainjector.resources.limits.memory": "100Mi"
+        "cainjector.resources.requests.cpu": "25m"
+        "cainjector.resources.requests.memory": "50Mi"
+        "webhook.podAnnotations.seccomp\\.security\\.alpha\\.kubernetes\\.io/pod" : "runtime/default"
+        "webhook.containerSecurityContext.runAsNonRoot": "true"
+        "webhook.containerSecurityContext.allowPrivilegeEscalation": "false"
+        "webhook.resources.limits.cpu": "100m"
+        "webhook.resources.limits.memory": "50Mi"
+        "webhook.resources.requests.cpu": "25m"
+        "webhook.resources.requests.memory": "30Mi"
 
   Portieris:
     Condition: UsePortieris
@@ -1833,6 +1923,45 @@ Resources:
         "nodeSelector.css\\.cisco\\.com/nodetype": "configuration"
         "serviceAccount.name": "prometheus-adapter"
 
+  SecureFirewall:
+    Type: "AWSQS::Kubernetes::Helm"
+    DependsOn: [ClusterAutoscaler, CertManager, PrometheusAdapter]
+    Properties:
+      ClusterID: !GetAtt EKSControlPlane.Outputs.EKSName
+      # TODO change helm chart repository and make name/namespace configurable
+      Name: "kasa"
+      Namespace: "kasa-system"
+      Chart: "kasa-bundle"
+      Version: !Ref FirewallVersion
+      Repository: "https://devhub.cisco.com/artifactory/asac-ci-helm"
+      RepositoryOptions:
+        Username: !Ref DevhubUsername
+        Password: !Ref DevhubApiKey
+      Values:
+        "global.acceptEULA": "yes"
+        "global.platform": "eks"
+        "global.storageType": !Ref StorageType
+        "global.imageCredentials.registry": !Sub "709825985650.dkr.ecr.${AWS::Region}.amazonaws.com"
+        "global.imageCredentials.artifactoryRepo": "cisco"
+        "global.imageCredentials.username": !Ref DevhubUsername
+        "global.imageCredentials.password": !Ref DevhubApiKey
+        "dataPlane.serviceRoles": !Sub "{${EnforcerServiceRoles}}"
+        "dataPlane.redis.host": !If [ EnforcerCacheTypeIsElastiCache, !GetAtt ASAcElastiCacheReplicationGroup.PrimaryEndPoint.Address, ""]
+        "dataPlane.redis.port": !Ref EnforcerCachePort
+        "dataPlane.redis.token": !If [ EnforcerCacheTransitEncryptionEnabled, !Ref EnforcerCacheAuthToken, "" ]
+        "dataPlane.hpa.enable": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
+        "dataPlane.configurationTier": !Ref EnforcerConfigurationTier
+
+  SecureFirewallCDOToken:
+    Type: "Custom::Kubectl"
+    DependsOn: SecureFirewall
+    Properties:
+      ServiceToken: !GetAtt KubectlFunction.Arn
+      ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
+      Command: |-
+        get secrets -n kasa-system -o=jsonpath='{.items[?(@.metadata.annotations.kubernetes\.io/service-account\.name=="kasa-cdo")].data.token}'
+
+
 Outputs:
   EksArn:
     Value: !GetAtt EKSControlPlane.Outputs.EksArn
@@ -1842,6 +1971,8 @@ Outputs:
     Value: !GetAtt EKSControlPlane.Outputs.EKSEndpoint
   EKSName:
     Value: !GetAtt EKSControlPlane.Outputs.EKSName
+  CDOToken:
+    Value: !GetAtt SecureFirewallCDOToken.Output
   PublicSubnetRouteTable:
     Value: !Ref PublicSubnetRouteTableID
   ElasticachePrimaryEndpoint:
