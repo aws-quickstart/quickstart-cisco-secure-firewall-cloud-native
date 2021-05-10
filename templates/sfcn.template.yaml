@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-
+Description: Nested stack of Cisco Secure Firewall Cloud Native Quickstart entrypoints that deployes all CSFCN resources.
 Parameters:
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -66,6 +66,7 @@ Parameters:
 
   EKSClusterName:
     Type: String
+    MaxLength: 26 # Issue https://github.com/aws-quickstart/quickstart-amazon-eks/issues/314
 
   FunctionRoleArn:
     Type: String
@@ -105,15 +106,15 @@ Parameters:
     Description: Instance tier to be used by controller workers
     Default: "vCPU4"
     Type: String
-    AllowedValues: [ "vCPU2", "vCPU4" ]
-    ConstraintDescription: must specify vCPU2 or vCPU4
+    AllowedValues: [ "vCPU4" ]
+    ConstraintDescription: must specify vCPU4
 
   EnforcerConfigurationTier:
     Description: Instance tier to be used by enforcer workers
     Default: "vCPU4"
     Type: String
-    AllowedValues: [ "vCPU2", "vCPU4", "vCPU8", "vCPU16" ]
-    ConstraintDescription: must specify vCPU2, vCPU4, vCPU8 or vCPU16
+    AllowedValues: [ "vCPU4", "vCPU8", "vCPU16" ]
+    ConstraintDescription: must specify vCPU4, vCPU8 or vCPU16
 
   ControlNodeGroupMaxSize:
     Type: Number
@@ -227,6 +228,11 @@ Parameters:
     Default: v0.1.0-158
     Description: Helm chart version of the product
 
+  SystemNamespace:
+    Type: String
+    Default: kasa-system
+    Description: The namespace where product components are installed.
+
   EnforcerServiceRoles:
     Type: String
     Default: default
@@ -254,9 +260,6 @@ Mappings:
       "118": ami-0883f55ce0673c383
       "119": ami-00238099ab28c3007
   ConfigurationTierMap:
-    "vCPU2":
-      instanceType: m5.large
-      hugePagesSize: "128"
     "vCPU4":
       instanceType: m5.xlarge
       hugePagesSize: "128"
@@ -414,7 +417,7 @@ Resources:
           CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - Description: "Allow cluster egress access to the Internet."
-          IpProtocol: -1
+          IpProtocol: "-1"
           FromPort: 0
           ToPort: 0
           CidrIp: 0.0.0.0/0
@@ -435,13 +438,12 @@ Resources:
       Description: "Allow pods running on workers to send communication to cluster primary security group."
       GroupId: !Ref ControlPlaneSecurityGroup
       SourceSecurityGroupId: !Ref WorkersSecurityGroup
-      IpProtocol: -1
+      IpProtocol: "-1"
       FromPort: 0
       ToPort: 65535
 
   WorkersSecurityGroup:
     Type: AWS::EC2::SecurityGroup
-    DependsOn: ControlPlaneSecurityGroup
     Properties:
       GroupDescription: EKS cluster worker nodes security group.
       VpcId: !Ref VPCID
@@ -458,24 +460,23 @@ Resources:
           CidrIp: 0.0.0.0/0
         - Description: "Allow workers pods to receive communication from the cluster control plane."
           SourceSecurityGroupId: !Ref ControlPlaneSecurityGroup
-          IpProtocol: -1
+          IpProtocol: "-1"
           FromPort: 0
           ToPort: 0
       SecurityGroupEgress:
         - Description: "Allow all egress."
-          IpProtocol: -1
+          IpProtocol: "-1"
           FromPort: 0
           ToPort: 0
           CidrIp: 0.0.0.0/0
 
   WorkersSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
-    DependsOn: WorkersSecurityGroup
     Properties:
       Description: "Allow inter-worker communication."
       GroupId: !Ref WorkersSecurityGroup
       SourceSecurityGroupId: !Ref WorkersSecurityGroup
-      IpProtocol: -1
+      IpProtocol: "-1"
       FromPort: 0
       ToPort: 0
 
@@ -507,13 +508,13 @@ Resources:
           Value: !Sub "${EKSClusterName}-workers-2"
       SecurityGroupIngress:
         - Description: "Allow all ingress connections."
-          IpProtocol: -1
+          IpProtocol: "-1"
           FromPort: 0
           ToPort: 0
           CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - Description: "Allow all egress connections."
-          IpProtocol: -1
+          IpProtocol: "-1"
           FromPort: 0
           ToPort: 0
           CidrIp: 0.0.0.0/0
@@ -576,12 +577,12 @@ Resources:
           SourceSecurityGroupId: !Ref WorkersSecurityGroup3
       SecurityGroupEgress:
         - Description: "Allow all elasticache cluster IPv4 egress traffic"
-          IpProtocol: -1
+          IpProtocol: "-1"
           FromPort: 0
           ToPort: 0
           CidrIp: 0.0.0.0/0
         - Description: "Allow all elasticache cluster IPv6 egress traffic"
-          IpProtocol: -1
+          IpProtocol: "-1"
           FromPort: 0
           ToPort: 0
           CidrIpv6: "::/0"
@@ -601,7 +602,7 @@ Resources:
       Port: !Ref EnforcerCachePort
       # AuthToken can be set only if Transit Encryption is Enabled
       AuthToken: !If [ EnforcerCacheTransitEncryptionEnabled,
-                       !If [ EnforcerCacheAuthTokenIsBlank, !Ref 'AWS::NoValue', !Ref EnforcerCacheAuthToken],
+                       !If [ EnforcerCacheAuthTokenIsBlank, !Ref 'AWS::NoValue', !Ref EnforcerCacheAuthToken ],
                        !Ref 'AWS::NoValue' ]
       MultiAZEnabled: false
       AutomaticFailoverEnabled: false
@@ -955,7 +956,7 @@ Resources:
       LaunchTemplateData:
         KeyName: !Ref KeyPairName
         ImageId: !FindInMap [ WorkerAMIMap, !Ref AWS::Region, "118" ]
-        InstanceType: !FindInMap [ConfigurationTierMap, !Ref ControllerConfigurationTier, instanceType]
+        InstanceType: !FindInMap [ ConfigurationTierMap, !Ref ControllerConfigurationTier, instanceType ]
         NetworkInterfaces:
           - DeviceIndex: 0
             AssociatePublicIpAddress: true
@@ -1764,6 +1765,7 @@ Resources:
     DependsOn: EFSDriver
     Type: "AWSQS::Kubernetes::Resource"
     Properties:
+      Namespace: ""
       ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
       Manifest: !Sub |
         kind: StorageClass
@@ -1852,24 +1854,24 @@ Resources:
         "nodeSelector.css\\.cisco\\.com/nodetype": "configuration"
         "webhook.nodeSelector.css\\.cisco\\.com/nodetype": "configuration"
         "cainjector.nodeSelector.css\\.cisco\\.com/nodetype": "configuration"
-        "installCRDs": true
-        "webhook.hostNetwork": true
-        "webhook.securePort": 10251
-        "podAnnotations.seccomp\\.security\\.alpha\\.kubernetes\\.io/pod" : "runtime/default"
+        "installCRDs": "true"
+        "webhook.hostNetwork": "true"
+        "webhook.securePort": "10251"
+        "podAnnotations.seccomp\\.security\\.alpha\\.kubernetes\\.io/pod": "runtime/default"
         "containerSecurityContext.runAsNonRoot": "true"
         "containerSecurityContext.allowPrivilegeEscalation": "false"
         "resources.limits.cpu": "100m"
         "resources.limits.memory": "50Mi"
         "resources.requests.cpu": "25m"
         "resources.requests.memory": "30Mi"
-        "cainjector.podAnnotations.seccomp\\.security\\.alpha\\.kubernetes\\.io/pod" : "runtime/default"
+        "cainjector.podAnnotations.seccomp\\.security\\.alpha\\.kubernetes\\.io/pod": "runtime/default"
         "cainjector.containerSecurityContext.runAsNonRoot": "true"
         "cainjector.containerSecurityContext.allowPrivilegeEscalation": "false"
         "cainjector.resources.limits.cpu": "100m"
         "cainjector.resources.limits.memory": "100Mi"
         "cainjector.resources.requests.cpu": "25m"
         "cainjector.resources.requests.memory": "50Mi"
-        "webhook.podAnnotations.seccomp\\.security\\.alpha\\.kubernetes\\.io/pod" : "runtime/default"
+        "webhook.podAnnotations.seccomp\\.security\\.alpha\\.kubernetes\\.io/pod": "runtime/default"
         "webhook.containerSecurityContext.runAsNonRoot": "true"
         "webhook.containerSecurityContext.allowPrivilegeEscalation": "false"
         "webhook.resources.limits.cpu": "100m"
@@ -1891,7 +1893,7 @@ Resources:
       Version: !Ref PortierisVersion
       Values:
         "UseCertManager": "true"
-        "replicaCount": 1
+        "replicaCount": "1"
         "nodeSelector.css\\.cisco\\.com/nodetype": "configuration"
         "useHostNetwork": "true"
         "IBMContainerService": "false"
@@ -1917,23 +1919,55 @@ Resources:
       Repository: "https://prometheus-community.github.io/helm-charts"
       Version: "2.8.0"
       Values:
-        "hostNetwork.enabled": true
+        "hostNetwork.enabled": "true"
         "dnsPolicy": "ClusterFirstWithHostNet"
         "prometheus.url": "http://kasa-prometheus.kube-system.svc"
         "nodeSelector.css\\.cisco\\.com/nodetype": "configuration"
         "serviceAccount.name": "prometheus-adapter"
 
+  FirewallChartRepo:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub |
+        ssm get-parameters --names /CSFCN/${EKSClusterName}/firewallChartRepo --query '{Value: Parameters[0].Value || `https://devhub.cisco.com/artifactory/asac-ci-helm`}'
+      IdField: 'Value'
+
+  FirewallChartName:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub |
+        ssm get-parameters --names /CSFCN/${EKSClusterName}/firewallChartName --query '{Value: Parameters[0].Value || `kasa-bundle`}'
+      IdField: 'Value'
+
+  FirewallContainerRegistry:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub |
+        ssm get-parameters --names /CSFCN/${EKSClusterName}/firewallContainerRegistry --query '{Value: Parameters[0].Value || `709825985650.dkr.ecr.${AWS::Region}.amazonaws.com`}'
+      IdField: 'Value'
+
+  FirewallContainerRepo:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub |
+        ssm get-parameters --names /CSFCN/${EKSClusterName}/firewallContainerRepo --query '{Value: Parameters[0].Value || `cisco`}'
+      IdField: 'Value'
+
   SecureFirewall:
     Type: "AWSQS::Kubernetes::Helm"
-    DependsOn: [ClusterAutoscaler, CertManager, PrometheusAdapter]
+    DependsOn: [ ClusterAutoscaler, CertManager, PrometheusAdapter ]
     Properties:
       ClusterID: !GetAtt EKSControlPlane.Outputs.EKSName
       # TODO change helm chart repository and make name/namespace configurable
       Name: "kasa"
-      Namespace: "kasa-system"
-      Chart: "kasa-bundle"
+      Namespace: !Ref SystemNamespace
+      Chart: !Ref FirewallChartName
       Version: !Ref FirewallVersion
-      Repository: "https://devhub.cisco.com/artifactory/asac-ci-helm"
+      Repository: !Ref FirewallChartRepo
       RepositoryOptions:
         Username: !Ref DevhubUsername
         Password: !Ref DevhubApiKey
@@ -1941,12 +1975,12 @@ Resources:
         "global.acceptEULA": "yes"
         "global.platform": "eks"
         "global.storageType": !Ref StorageType
-        "global.imageCredentials.registry": !Sub "709825985650.dkr.ecr.${AWS::Region}.amazonaws.com"
-        "global.imageCredentials.artifactoryRepo": "cisco"
+        "global.imageCredentials.registry": !Ref FirewallContainerRegistry
+        "global.imageCredentials.artifactoryRepo": !Ref FirewallContainerRepo
         "global.imageCredentials.username": !Ref DevhubUsername
         "global.imageCredentials.password": !Ref DevhubApiKey
         "dataPlane.serviceRoles": !Sub "{${EnforcerServiceRoles}}"
-        "dataPlane.redis.host": !If [ EnforcerCacheTypeIsElastiCache, !GetAtt ASAcElastiCacheReplicationGroup.PrimaryEndPoint.Address, ""]
+        "dataPlane.redis.host": !If [ EnforcerCacheTypeIsElastiCache, !GetAtt ASAcElastiCacheReplicationGroup.PrimaryEndPoint.Address, "" ]
         "dataPlane.redis.port": !Ref EnforcerCachePort
         "dataPlane.redis.token": !If [ EnforcerCacheTransitEncryptionEnabled, !Ref EnforcerCacheAuthToken, "" ]
         "dataPlane.hpa.enable": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
@@ -1958,8 +1992,8 @@ Resources:
     Properties:
       ServiceToken: !GetAtt KubectlFunction.Arn
       ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
-      Command: |-
-        get secrets -n kasa-system -o=jsonpath='{.items[?(@.metadata.annotations.kubernetes\.io/service-account\.name=="kasa-cdo")].data.token}'
+      Command: !Sub |-
+        get secrets -n ${SystemNamespace} -o=jsonpath='{.items[?(@.metadata.annotations.kubernetes\.io/service-account\.name=="kasa-cdo")].data.token}'
 
 
 Outputs:

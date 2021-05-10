@@ -3,10 +3,21 @@ project:
   regions:
     - us-east-1
     - us-east-2
+  s3_regional_buckets: true
+  shorten_stack_name: true
   parameters:
+
+    # To override parameters, create ./.taskcat_overrides.yml file and place your values there. Example:
+    # KeyPairName: mykeypair
+    # EKSAdminUserArn: arn:aws:iam::1234567891011:user/my-cli
+    # ...
+
     QSS3BucketName: $[taskcat_autobucket]
     QSS3BucketRegion: $[taskcat_current_region]
-    KeyPairName: override
+    KeyPairName: $[taskcat_getkeypair] # Sets "cikey" by default. Override with your own value
+    EKSAdminUserArn: override # Override with your own value
+    DevhubUsername: override # Override with your own value
+    DevhubApiKey: override # Override with your own value
 tests:
-  new-vpc:
+  sfcnbase:
     template: templates/entrypoint-new-vpc.template.yaml

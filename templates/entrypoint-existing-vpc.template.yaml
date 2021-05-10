@@ -65,6 +65,7 @@ Metadata:
           - DevhubUsername
           - DevhubApiKey
           - FirewallVersion
+          - SystemNamespace
           - EnforcerServiceRoles
           - EnforcerAutoscaling
     ParameterLabels:
@@ -140,6 +141,8 @@ Metadata:
         default: Devhub API Key
       FirewallVersion:
         default: Product version
+      SystemNamespace:
+        default: System namespace
       EnforcerServiceRoles:
         default: Enforcer service roles
       EnforcerAutoscaling:
@@ -244,15 +247,15 @@ Parameters:
     Description: Instance tier to be used by controller workers
     Default: "vCPU4"
     Type: String
-    AllowedValues: [ "vCPU2", "vCPU4" ]
-    ConstraintDescription: must specify vCPU2 or vCPU4
+    AllowedValues: [ "vCPU4" ]
+    ConstraintDescription: must specify vCPU4
 
   EnforcerConfigurationTier:
     Description: Instance tier to be used by enforcer workers
     Default: "vCPU4"
     Type: String
-    AllowedValues: [ "vCPU2", "vCPU4", "vCPU8", "vCPU16" ]
-    ConstraintDescription: must specify vCPU2, vCPU4, vCPU8 or vCPU16
+    AllowedValues: [ "vCPU4", "vCPU8", "vCPU16" ]
+    ConstraintDescription: must specify vCPU4, vCPU8 or vCPU16
 
   ControlNodeGroupMaxSize:
     Type: Number
@@ -363,8 +366,13 @@ Parameters:
 
   FirewallVersion:
     Type: String
-    Default: v0.1.0-158
+    Default: v0.1.0-156
     Description: Helm chart version of the product
+
+  SystemNamespace:
+    Type: String
+    Default: kasa-system
+    Description: The namespace where product components are installed.
 
   EnforcerServiceRoles:
     Type: String
@@ -469,6 +477,7 @@ Resources:
         DevhubUsername: !Ref DevhubUsername
         DevhubApiKey: !Ref DevhubApiKey
         FirewallVersion: !Ref FirewallVersion
+        SystemNamespace: !Ref SystemNamespace
         EnforcerServiceRoles: !Ref EnforcerServiceRoles
         EnforcerAutoscaling: !Ref EnforcerAutoscaling
 
