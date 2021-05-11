@@ -1097,7 +1097,8 @@ Resources:
                 }
             }
             EOF
-
+            # restarting Docker daemon for new ulimits to be applied
+            sudo systemctl restart docker
 
             --MIMEBOUNDARY
             Content-Disposition: attachment; filename="install-ecr-login-helper.sh"
@@ -1238,6 +1239,7 @@ Resources:
               #!/bin/bash
 
               export AWS_DEFAULT_REGION=${AWS::Region}
+              export AWS_MAX_ATTEMPTS=20
               INSTANCE_ID=$(curl -sS http://169.254.169.254/latest/meta-data/instance-id)
               AZ=$(curl -sS http://169.254.169.254/latest/meta-data/placement/availability-zone)
               OUTSIDE_SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPCID}" --filters "Name=tag-key,Values=Name" "Name=tag-value,Values=${EKSClusterName}_outside_$AZ" --output text --query 'Subnets[0].SubnetId')
@@ -1447,7 +1449,8 @@ Resources:
                   }
               }
               EOF
-
+              # restarting Docker daemon for new ulimits to be applied
+              sudo systemctl restart docker
 
               --MIMEBOUNDARY
               Content-Disposition: attachment; filename="create-core-helper.sh"
@@ -1924,6 +1927,25 @@ Resources:
         "prometheus.url": "http://kasa-prometheus.kube-system.svc"
         "nodeSelector.css\\.cisco\\.com/nodetype": "configuration"
         "serviceAccount.name": "prometheus-adapter"
+
+  UpdatePodSecurityPolicy:
+    Type: "Custom::Kubectl"
+    DependsOn: ClusterAutoscaler
+    Properties:
+      ServiceToken: !GetAtt KubectlFunction.Arn
+      ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
+      Command: |-
+        patch psp/eks.privileged --patch
+        '{"spec": {"allowedHostPaths": [{"pathPrefix": "/lib/modules"}, {"pathPrefix": "/local/configvol"},
+        {"pathPrefix": "/tmp"}, {"pathPrefix": "/dev"}, {"pathPrefix": "/mnt/upload_to_ss"},
+        {"pathPrefix": "/etc/ssl/certs", "readOnly": true}, {"pathPrefix": "/mnt/storage"},
+        {"pathPrefix": "/var/log"}, {"pathPrefix": "/var/lib/docker/containers", "readOnly": true},
+        {"pathPrefix": "/var/run/calico"}, {"pathPrefix": "/var/lib/calico"},
+        {"pathPrefix": "/run"}, {"pathPrefix": "/sys/fs"},
+        {"pathPrefix": "/opt/cni/bin"}, {"pathPrefix": "/etc/cni/net.d"},
+        {"pathPrefix": "/var/lib/cni/networks"}, {"pathPrefix": "/var/run/nodeagent"},
+        {"pathPrefix": "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"},
+        {"pathPrefix": "/mnt/coredump_repo"}, {"pathPrefix": "/home/ubuntu/fluentdout"}]}}'
 
   FirewallChartRepo:
     Type: Custom::CliQuery
