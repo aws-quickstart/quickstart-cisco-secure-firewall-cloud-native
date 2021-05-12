@@ -1,0 +1,257 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Helm Chart
+        Parameters:
+          - ClusterID
+          - Name
+          - Version
+          - DevhubApiKey
+          - DevhubUsername
+          - SystemNamespace
+      - Label:
+          default: Global Configuration
+        Parameters:
+          - StorageType
+      - Label:
+          default: Control-plane Configuration
+        Parameters:
+          - Controlplane
+      - Label:
+          default: Data-plane Configuration
+        Parameters:
+          - Dataplane
+          - DataplaneNamespace
+          - EnforcerConfigurationTier
+          - EnforcerCachePort
+          - EnforcerServiceRoles
+          - EnforcerCacheAuthToken
+          - EnforcerCacheType
+          - EnforcerCacheTransitEncryption
+          - EnforcerAutoscaling
+          - ElasticachePrimaryEndpoint
+    ParameterLabels:
+      Name:
+        default: Name
+      ClusterID:
+        default: EKS cluster ID
+      Version:
+        default: Secure Firewall version
+      DevhubApiKey:
+        default: Devhub API Key
+      DevhubUsername:
+        default: Devhub username
+      SystemNamespace:
+        default: Control-plane namespace
+      DataplaneNamespace:
+        default: Data-plane namespace
+      StorageType:
+        default: Storage type
+      Controlplane:
+        default: Control-plane toggle
+      Dataplane:
+        default: Data-plane toggle
+      EnforcerConfigurationTier:
+        default: Enforcer instance tier
+      EnforcerCachePort:
+        default: Redis port number
+      EnforcerServiceRoles:
+        default: Enforcer service roles
+      EnforcerCacheAuthToken:
+        default: Redis authentication token
+      EnforcerCacheType:
+        default: Cache type
+      EnforcerCacheTransitEncryption:
+        default: In-Transit encryption
+      EnforcerAutoscaling:
+        default: Autoscale enforcer
+      ElasticachePrimaryEndpoint:
+        default: Redis host
+      
+Parameters:
+  ClusterID:
+    AllowedPattern: ".+"
+    Type: String
+  
+  Version:
+    Type: String
+    AllowedPattern: ".+"
+    Description: Helm chart version
+  
+  DevhubApiKey:
+    Type: String
+    NoEcho: True
+    AllowedPattern: ".+"
+    Description: API key obtained from Cisco Devhub account
+  
+  DevhubUsername:
+    Type: String
+    AllowedPattern: ".+"
+    Description: Username of Cisco Devhub account
+  
+  SystemNamespace:
+    Type: String
+    AllowedPattern: ".+"
+    Default: kasa-system
+
+  DataplaneNamespace:
+    Type: String
+    Default: ""
+
+  Controlplane:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: Install Secure Firewall controlplane as part of Helm release
+  
+  Dataplane:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: Install Secure Firewall dataplane as part of Helm release
+
+  StorageType:
+    Type: String
+    AllowedValues: [ local, efs ]
+    Default: local
+    Description: The type of a storage used to keep logs and deployments files.
+  
+  EnforcerConfigurationTier:
+    Description: Instance tier to be used by enforcer workers
+    Default: "vCPU4"
+    Type: String
+    AllowedValues: [ "vCPU4", "vCPU8", "vCPU16" ]
+    ConstraintDescription: must specify vCPU4, vCPU8 or vCPU16
+  
+  EnforcerCachePort:
+    Type: Number
+    Default: 6379
+    MinValue: 1
+    MaxValue: 65535
+    Description: Port number to use for communicating with Redis server
+  
+  EnforcerServiceRoles:
+    Type: String
+    Default: default
+    AllowedPattern: "[a-zA-Z0-9-]{3,15}(,[a-zA-Z0-9-]{3,15})*"
+    AllowedValues: [ "default", "default,redirector" ]
+    ConstraintDescription: |
+      Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
+      and upto 15 characters long.
+    Description: |
+      Service roles of ASA separated by comma, no spaces allowed. If choosing the multiple service role option, ensure that at
+      least as many enforcer worker nodes is set as the desired number for faster deployment
+  
+  EnforcerCacheAuthToken:
+    Type: String
+    NoEcho: true
+    MaxLength: 128
+    AllowedPattern: "([a-zA-Z0-9!&#$^><-]{16,128})?"
+    Default: ""
+    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
+    Description: |
+      Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
+      Takes effect only if in-transit encryption is enabled
+
+  EnforcerCacheType:
+    Type: String
+    Default: "none"
+    AllowedValues:
+      - none
+      - elasticache
+      - incluster
+    Description: Type of External Cache to use for ASAc
+
+  EnforcerCacheTransitEncryption:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: Cannot be changed after creation, update requires replacement
+
+  EnforcerAutoscaling:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Disabled
+    Description: Enable scaling of ASA with default metrics
+
+  ElasticachePrimaryEndpoint:
+    Type: String
+    Default: ""
+
+  Name:
+    Type: String
+    Description: Helm chart release name
+
+Conditions:
+  EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
+  EnforcerCacheTransitEncryptionEnabled: !Equals [ !Ref EnforcerCacheTransitEncryption, Enabled ]
+  EnforcerAutoscalingEnabled: !Equals [ !Ref EnforcerAutoscaling, Enabled ]
+  DataplaneEnabled: !Equals [ !Ref Dataplane, Enabled ]
+  ControlplaneEnabled: !Equals [ !Ref Controlplane, Enabled ]
+  DataplaneNamespaceProvided: !Not [ !Equals [ !Ref DataplaneNamespace, ""] ]
+
+Resources:
+  ChartName:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub |
+        ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartName --query '{Value: Parameters[0].Value || `kasa-bundle`}'
+      IdField: 'Value'
+
+  ChartRepo:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub |
+        ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartRepo --query '{Value: Parameters[0].Value || `https://devhub.cisco.com/artifactory/asac-ci-helm`}'
+      IdField: 'Value'
+
+  ContainerRegistry:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub |
+        ssm get-parameters --names /CSFCN/${ClusterID}/firewallContainerRegistry --query '{Value: Parameters[0].Value || `709825985650.dkr.ecr.us-east-1.amazonaws.com`}'
+      IdField: 'Value'
+
+  ArtifactoryRepo:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub |
+        ssm get-parameters --names /CSFCN/${ClusterID}/firewallContainerRepo --query '{Value: Parameters[0].Value || `cisco`}'
+      IdField: 'Value'
+
+  SecureFirewall:
+    Type: "AWSQS::Kubernetes::Helm"
+    Properties:
+      ClusterID: !Ref ClusterID
+      Name: !Ref Name
+      Namespace: !Ref SystemNamespace
+      Chart: !Ref ChartName
+      Version: !Ref Version
+      Repository: !Ref ChartRepo
+      RepositoryOptions:
+        Username: !Ref DevhubUsername
+        Password: !Ref DevhubApiKey
+      Values:
+        "global.acceptEULA": "yes"
+        "global.platform": "eks"
+        "global.storageType": !Ref StorageType
+        "global.imageCredentials.registry": !Ref ContainerRegistry
+        "global.imageCredentials.artifactoryRepo": !Ref ArtifactoryRepo
+        "global.imageCredentials.username": !Ref DevhubUsername
+        "global.imageCredentials.password": !Ref DevhubApiKey
+        "global.dataPlaneNamespace": !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]
+        "tags.dataPlane": !If [ DataplaneEnabled, "true", "false"]
+        "dataPlane.serviceRoles": !Sub "{${EnforcerServiceRoles}}"
+        "dataPlane.redis.host": !If [ EnforcerCacheTypeIsElastiCache, !Ref ElasticachePrimaryEndpoint, "" ]
+        "dataPlane.redis.port": !Ref EnforcerCachePort
+        "dataPlane.redis.token": !If [ EnforcerCacheTransitEncryptionEnabled, !Ref EnforcerCacheAuthToken, "" ]
+        "dataPlane.hpa.enable": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
+        "dataPlane.configurationTier": !Ref EnforcerConfigurationTier
+        "tags.controlPlane": !If [ ControlplaneEnabled, "true", "false"]

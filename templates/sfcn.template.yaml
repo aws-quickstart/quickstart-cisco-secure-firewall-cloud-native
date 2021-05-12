@@ -212,25 +212,33 @@ Parameters:
     MaxValue: 65535
     Description: Port number to use for communicating with Redis server
 
+  SecureFirewallDataplane:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: Secure Firewall data-plane installation
+
   DevhubUsername:
     Type: String
-    AllowedPattern: "[a-zA-Z0-9]{3,10}"
-    ConstraintDescription: Devhub username should be an alphanumeric string, at least 3 and up to 10 characters
+    AllowedPattern: ".+"
     Description: Username of Cisco Devhub account
 
   DevhubApiKey:
     Type: String
     NoEcho: true
+    AllowedPattern: ".+"
     Description: API key obtained from Cisco Devhub account
 
   FirewallVersion:
     Type: String
     Default: v0.1.0-158
+    AllowedPattern: ".+"
     Description: Helm chart version of the product
 
   SystemNamespace:
     Type: String
     Default: kasa-system
+    AllowedPattern: ".+"
     Description: The namespace where product components are installed.
 
   EnforcerServiceRoles:
@@ -278,7 +286,6 @@ Conditions:
   UsePortieris: !Not [ !Equals [ !Ref PortierisVersion, none ] ]
   HasAdditionalEKSAdminRole: !Not [ !Equals [ !Ref AdditionalEKSAdminRoleArn, "" ] ]
   EnforcerCacheAuthTokenIsBlank: !Equals [ !Ref EnforcerCacheAuthToken, "" ]
-  EnforcerAutoscalingEnabled: !Equals [ !Ref EnforcerAutoscaling, Enabled ]
 
 Resources:
 
@@ -730,7 +737,9 @@ Resources:
     Type: Custom::CliQuery
     Properties:
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
-      AwsCliCommand: 'iam list-open-id-connect-providers --query "OpenIDConnectProviderList[0]"'
+      AwsCliCommand: !Sub
+        - 'iam list-open-id-connect-providers --query "OpenIDConnectProviderList[?contains(Arn,''${EKSEndpointID}'')] | [0]"'
+        - EKSEndpointID: !Select [ 1, !Split [ "https://" , !Select [ 0, !Split [ "." , !Sub '${EKSControlPlane.Outputs.EKSEndpoint}' ] ] ] ]
       IdField: Arn
 
   OIDCProviderURL:
@@ -776,11 +785,17 @@ Resources:
               - Effect: Allow
                 Action:
                   - "elasticfilesystem:CreateAccessPoint"
+                Resource: "*"
+                Condition:
+                  StringLike:
+                    "aws:RequestTag/efs.csi.aws.com/cluster": "true"
+              - Effect: Allow
+                Action:
                   - "elasticfilesystem:DeleteAccessPoint"
                 Resource: "*"
                 Condition:
                   StringEquals:
-                    "aws:RequestTag/efs.csi.aws.com/cluster": "true"
+                    "aws:ResourceTag/efs.csi.aws.com/cluster": "true"
 
   # EKS Cluster
 
@@ -1947,66 +1962,35 @@ Resources:
         {"pathPrefix": "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"},
         {"pathPrefix": "/mnt/coredump_repo"}, {"pathPrefix": "/home/ubuntu/fluentdout"}]}}'
 
-  FirewallChartRepo:
-    Type: Custom::CliQuery
-    Properties:
-      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
-      AwsCliCommand: !Sub |
-        ssm get-parameters --names /CSFCN/${EKSClusterName}/firewallChartRepo --query '{Value: Parameters[0].Value || `https://devhub.cisco.com/artifactory/asac-ci-helm`}'
-      IdField: 'Value'
-
-  FirewallChartName:
-    Type: Custom::CliQuery
-    Properties:
-      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
-      AwsCliCommand: !Sub |
-        ssm get-parameters --names /CSFCN/${EKSClusterName}/firewallChartName --query '{Value: Parameters[0].Value || `kasa-bundle`}'
-      IdField: 'Value'
-
-  FirewallContainerRegistry:
-    Type: Custom::CliQuery
-    Properties:
-      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
-      AwsCliCommand: !Sub |
-        ssm get-parameters --names /CSFCN/${EKSClusterName}/firewallContainerRegistry --query '{Value: Parameters[0].Value || `709825985650.dkr.ecr.${AWS::Region}.amazonaws.com`}'
-      IdField: 'Value'
-
-  FirewallContainerRepo:
-    Type: Custom::CliQuery
-    Properties:
-      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
-      AwsCliCommand: !Sub |
-        ssm get-parameters --names /CSFCN/${EKSClusterName}/firewallContainerRepo --query '{Value: Parameters[0].Value || `cisco`}'
-      IdField: 'Value'
-
   SecureFirewall:
-    Type: "AWSQS::Kubernetes::Helm"
-    DependsOn: [ ClusterAutoscaler, CertManager, PrometheusAdapter ]
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - ClusterAutoscaler
+      - CertManager
+      - PrometheusAdapter
     Properties:
-      ClusterID: !GetAtt EKSControlPlane.Outputs.EKSName
-      # TODO change helm chart repository and make name/namespace configurable
-      Name: "kasa"
-      Namespace: !Ref SystemNamespace
-      Chart: !Ref FirewallChartName
-      Version: !Ref FirewallVersion
-      Repository: !Ref FirewallChartRepo
-      RepositoryOptions:
-        Username: !Ref DevhubUsername
-        Password: !Ref DevhubApiKey
-      Values:
-        "global.acceptEULA": "yes"
-        "global.platform": "eks"
-        "global.storageType": !Ref StorageType
-        "global.imageCredentials.registry": !Ref FirewallContainerRegistry
-        "global.imageCredentials.artifactoryRepo": !Ref FirewallContainerRepo
-        "global.imageCredentials.username": !Ref DevhubUsername
-        "global.imageCredentials.password": !Ref DevhubApiKey
-        "dataPlane.serviceRoles": !Sub "{${EnforcerServiceRoles}}"
-        "dataPlane.redis.host": !If [ EnforcerCacheTypeIsElastiCache, !GetAtt ASAcElastiCacheReplicationGroup.PrimaryEndPoint.Address, "" ]
-        "dataPlane.redis.port": !Ref EnforcerCachePort
-        "dataPlane.redis.token": !If [ EnforcerCacheTransitEncryptionEnabled, !Ref EnforcerCacheAuthToken, "" ]
-        "dataPlane.hpa.enable": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
-        "dataPlane.configurationTier": !Ref EnforcerConfigurationTier
+      TemplateURL:
+        !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/sfcn-helm.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+      Parameters:
+        ClusterID: !GetAtt EKSControlPlane.Outputs.EKSName
+        Version: !Ref FirewallVersion
+        Name: "kasa"
+        DevhubUsername: !Ref DevhubUsername
+        DevhubApiKey: !Ref DevhubApiKey
+        SystemNamespace: !Ref SystemNamespace
+        StorageType: !Ref StorageType
+        Dataplane: !Ref SecureFirewallDataplane
+        EnforcerServiceRoles: !Ref EnforcerServiceRoles
+        EnforcerCacheType: !Ref EnforcerCacheType
+        ElasticachePrimaryEndpoint: !If [ EnforcerCacheTypeIsElastiCache, !GetAtt ASAcElastiCacheReplicationGroup.PrimaryEndPoint.Address, "" ]
+        EnforcerCachePort: !Ref EnforcerCachePort
+        EnforcerCacheTransitEncryption: !Ref EnforcerCacheTransitEncryption
+        EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
+        EnforcerAutoscaling: !Ref EnforcerAutoscaling
+        EnforcerConfigurationTier: !Ref EnforcerConfigurationTier
 
   SecureFirewallCDOToken:
     Type: "Custom::Kubectl"

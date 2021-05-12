@@ -1,0 +1,222 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Helm Chart
+        Parameters:
+          - ClusterID
+          - Version
+          - Name
+          - DevhubApiKey
+          - DevhubUsername
+          - SystemNamespace
+      - Label:
+          default: Global Configuration
+        Parameters:
+          - StorageType
+      - Label:
+          default: Data-plane Configuration
+        Parameters:
+          - DataplaneNamespace
+          - EnforcerConfigurationTier
+          - EnforcerCachePort
+          - EnforcerServiceRoles
+          - EnforcerCacheAuthToken
+          - EnforcerCacheType
+          - EnforcerCacheTransitEncryption
+          - EnforcerAutoscaling
+          - ElasticachePrimaryEndpoint
+    ParameterLabels:
+      ClusterID:
+        default: EKS cluster ID
+      Version:
+        default: Secure Firewall version
+      Name:
+        default: Name
+      DevhubApiKey:
+        default: Devhub API Key
+      DevhubUsername:
+        default: Devhub username
+      SystemNamespace:
+        default: Control-plane namespace
+      DataplaneNamespace:
+        default: Data-plane namespace
+      StorageType:
+        default: Storage type
+      EnforcerConfigurationTier:
+        default: Enforcer instance tier
+      EnforcerCachePort:
+        default: Redis port number
+      EnforcerServiceRoles:
+        default: Enforcer service roles
+      EnforcerCacheAuthToken:
+        default: Redis authentication token
+      EnforcerCacheType:
+        default: Cache type
+      EnforcerCacheTransitEncryption:
+        default: In-Transit encryption
+      EnforcerAutoscaling:
+        default: Autoscale enforcer
+      ElasticachePrimaryEndpoint:
+        default: Redis host
+      
+          
+
+Parameters:
+  QSS3BucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: aws-quickstart
+    Description: S3 bucket name for the Quick Start assets. This string can include
+      numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start
+      or end with a hyphen (-).
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: ^[0-9a-zA-Z-/.]*$
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), periods (.) and forward slashes (/).
+    Default: quickstart-cisco-secure-firewall-cloud-native/
+    Description: The S3 key prefix for the Quick Start assets. Quick Start key prefix
+      can include numbers, lowercase letters, uppercase letters, hyphens (-), periods (.) and
+      forward slashes (/).
+    Type: String
+  QSS3BucketRegion:
+    Default: 'us-east-1'
+    Description: AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. If you use your own bucket, you must specify this value.
+    Type: String
+
+  ClusterID:
+    AllowedPattern: ".+"
+    Type: String
+
+  Version:
+    Type: String
+    AllowedPattern: ".+"
+    Description: Helm chart version
+
+  Name:
+    Type: String
+    AllowedPattern: ".+"
+    Description: Helm chart release name
+
+  DevhubApiKey:
+    Type: String
+    NoEcho: True
+    AllowedPattern: ".+"
+    Description: API key obtained from Cisco Devhub account
+
+  DevhubUsername:
+    Type: String
+    AllowedPattern: ".+"
+    Description: Username of Cisco Devhub account
+  
+  SystemNamespace:
+    Type: String
+    AllowedPattern: ".+"
+    Default: kasa-system
+
+  DataplaneNamespace:
+    Type: String
+  
+  StorageType:
+    Type: String
+    AllowedValues: [ local, efs ]
+    Default: local
+    Description: The type of a storage used to keep logs and deployments files.
+  
+  EnforcerConfigurationTier:
+    Description: Instance tier to be used by enforcer workers
+    Default: "vCPU4"
+    Type: String
+    AllowedValues: [ "vCPU4", "vCPU8", "vCPU16" ]
+    ConstraintDescription: must specify vCPU4, vCPU8 or vCPU16
+  
+  EnforcerCachePort:
+    Type: Number
+    Default: 6379
+    MinValue: 1
+    MaxValue: 65535
+    Description: Port number to use for communicating with Redis server
+  
+  EnforcerServiceRoles:
+    Type: String
+    Default: default
+    AllowedPattern: "[a-zA-Z0-9-]{3,15}(,[a-zA-Z0-9-]{3,15})*"
+    AllowedValues: [ "default", "default,redirector" ]
+    ConstraintDescription: |
+      Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
+      and upto 15 characters long.
+    Description: |
+      Service roles of ASA separated by comma, no spaces allowed. If choosing the multiple service role option, ensure that at
+      least as many enforcer worker nodes is set as the desired number for faster deployment
+  
+  EnforcerCacheAuthToken:
+    Type: String
+    NoEcho: true
+    MaxLength: 128
+    AllowedPattern: "([a-zA-Z0-9!&#$^><-]{16,128})?"
+    Default: ""
+    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
+    Description: |
+      Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
+      Takes effect only if in-transit encryption is enabled
+
+  EnforcerCacheType:
+    Type: String
+    Default: "none"
+    AllowedValues:
+      - none
+      - elasticache
+      - incluster
+    Description: Type of External Cache to use for ASAc
+
+  EnforcerCacheTransitEncryption:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: Cannot be changed after creation, update requires replacement
+
+  EnforcerAutoscaling:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Disabled
+    Description: Enable scaling of ASA with default metrics
+
+  ElasticachePrimaryEndpoint:
+    Type: String
+    Default: ""
+
+Conditions:
+  UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
+
+Resources:
+  SecureFirewall:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/sfcn-helm.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+      Parameters:
+        ClusterID: !Ref ClusterID
+        Version: !Ref Version
+        DevhubUsername: !Ref DevhubUsername
+        DevhubApiKey: !Ref DevhubApiKey
+        Controlplane: Disabled
+        Name: !Ref Name
+        SystemNamespace: !Ref SystemNamespace
+        DataplaneNamespace: !Ref DataplaneNamespace
+        StorageType: !Ref StorageType
+        EnforcerServiceRoles: !Ref EnforcerServiceRoles
+        EnforcerCacheType: !Ref EnforcerCacheType
+        ElasticachePrimaryEndpoint: !Ref ElasticachePrimaryEndpoint
+        EnforcerCachePort: !Ref EnforcerCachePort
+        EnforcerCacheTransitEncryption: !Ref EnforcerCacheTransitEncryption
+        EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken  
+        EnforcerAutoscaling: !Ref EnforcerAutoscaling
+        EnforcerConfigurationTier: !Ref EnforcerConfigurationTier

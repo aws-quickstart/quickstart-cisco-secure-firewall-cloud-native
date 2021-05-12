@@ -62,6 +62,7 @@ Metadata:
       - Label:
           default: Firewall Configuration
         Parameters:
+          - SecureFirewallDataplane
           - DevhubUsername
           - DevhubApiKey
           - FirewallVersion
@@ -135,6 +136,8 @@ Metadata:
         default: Quick Start S3 bucket name
       QSS3KeyPrefix:
         default: Quick Start S3 key prefix
+      SecureFirewallDataplane:
+        default: Secure Firewall data-plane installation
       DevhubUsername:
         default: Devhub username
       DevhubApiKey:
@@ -353,25 +356,33 @@ Parameters:
     MaxValue: 65535
     Description: Port number to use for communicating with Redis server
 
+  SecureFirewallDataplane:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: Secure Firewall data-plane installation
+
   DevhubUsername:
     Type: String
-    AllowedPattern: "[a-zA-Z0-9]{3,10}"
-    ConstraintDescription: Devhub username should be an alphanumeric string, at least 3 and up to 10 characters
+    AllowedPattern: ".+"
     Description: Username of Cisco Devhub account
 
   DevhubApiKey:
     Type: String
     NoEcho: true
+    AllowedPattern: ".+"
     Description: API key obtained from Cisco Devhub account
 
   FirewallVersion:
     Type: String
     Default: v0.1.0-156
+    AllowedPattern: ".+"
     Description: Helm chart version of the product
 
   SystemNamespace:
     Type: String
     Default: kasa-system
+    AllowedPattern: ".+"
     Description: The namespace where product components are installed.
 
   EnforcerServiceRoles:
@@ -474,6 +485,7 @@ Resources:
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         QSS3BucketRegion: !Ref QSS3BucketRegion
         # Firewall configuration
+        SecureFirewallDataplane: !Ref SecureFirewallDataplane
         DevhubUsername: !Ref DevhubUsername
         DevhubApiKey: !Ref DevhubApiKey
         FirewallVersion: !Ref FirewallVersion
