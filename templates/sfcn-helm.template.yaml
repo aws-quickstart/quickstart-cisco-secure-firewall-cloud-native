@@ -137,7 +137,7 @@ Parameters:
     Type: String
     Default: default
     AllowedPattern: "[a-zA-Z0-9-]{3,15}(,[a-zA-Z0-9-]{3,15})*"
-    AllowedValues: [ "default", "default,redirector" ]
+    AllowedValues: [ "default", "default,vpnredirector" ]
     ConstraintDescription: |
       Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
       and upto 15 characters long.
