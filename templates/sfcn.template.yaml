@@ -68,9 +68,6 @@ Parameters:
     Type: String
     MaxLength: 26 # Issue https://github.com/aws-quickstart/quickstart-amazon-eks/issues/314
 
-  FunctionRoleArn:
-    Type: String
-
   KubernetesVersion:
     Type: String
     Default: 1.18
@@ -182,12 +179,6 @@ Parameters:
     ]
     Description: EC2 instance type to use as Cache node, check region availaibility before selection
 
-  EnforcerCacheEngineVersion:
-    Type: String
-    Default: "6.x"
-    AllowedValues:
-      - 6.x
-
   EnforcerCacheAuthToken:
     Type: String
     NoEcho: true
@@ -288,6 +279,26 @@ Conditions:
   EnforcerCacheAuthTokenIsBlank: !Equals [ !Ref EnforcerCacheAuthToken, "" ]
 
 Resources:
+
+  CloudFormationKubernetesVPCRoleExists:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: "iam list-roles --query 'Roles[?RoleName==`CloudFormation-Kubernetes-VPC`].RoleName | {RoleName: [0]}'"
+      IdField: 'RoleName'
+
+  IamStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-iam.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+      Parameters:
+        QSS3BucketName: !Ref QSS3BucketName
+        CreateBastionRole: "Disabled"
+        BastionIAMRoleName: ""
+        CloudFormationKubernetesVPCRoleExists: !Ref CloudFormationKubernetesVPCRoleExists
 
   VPCCIDR:
     Type: Custom::CliQuery
@@ -604,7 +615,7 @@ Resources:
       ReplicationGroupDescription: ASAc ElastiCache Replication Group
       NumCacheClusters: 1
       Engine: Redis
-      EngineVersion: !Ref EnforcerCacheEngineVersion
+      EngineVersion: 6.x
       CacheNodeType: !Ref EnforcerCacheNodeType
       Port: !Ref EnforcerCachePort
       # AuthToken can be set only if Transit Encryption is Enabled
@@ -819,7 +830,7 @@ Resources:
             - !Ref PrivateSubnet1ID
             - !Ref PrivateSubnet2ID
         RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/eks-quickstart-ControlPlane"
-        FunctionRoleArn: !Ref FunctionRoleArn
+        FunctionRoleArn: !GetAtt IamStack.Outputs.KubernetesAdminRoleArn
         EKSPublicAccessEndpoint: "Enabled"
         EKSPrivateAccessEndpoint: "Disabled"
         EKSEncryptSecrets: "Disabled"
@@ -868,8 +879,8 @@ Resources:
                   "groups": [
                     "system:masters"
                   ],
-                  "rolearn": "${FunctionRoleArn}",
-                  "username": "${FunctionRoleArn}"
+                  "rolearn": "${IamStack.Outputs.KubernetesAdminRoleArn}",
+                  "username": "${IamStack.Outputs.KubernetesAdminRoleArn}"
                 },
                 {
                   "groups": [
@@ -1640,7 +1651,7 @@ Resources:
       Timeout: 60
       Runtime: python3.7
       Handler: index.handler
-      Role: !Ref FunctionRoleArn
+      Role: !GetAtt IamStack.Outputs.KubernetesAdminRoleArn
       Layers: [ !Ref GetKubectlLayerArn, !Ref GetCrhelperLayerArn, !Ref GetAwsCliLayerArn ]
       Code:
         ZipFile: |
@@ -1697,7 +1708,7 @@ Resources:
       Timeout: 60
       Runtime: python3.7
       Handler: index.handler
-      Role: !Ref FunctionRoleArn
+      Role: !GetAtt IamStack.Outputs.KubernetesAdminRoleArn
       Layers: [ !Ref GetKubectlLayerArn, !Ref GetCrhelperLayerArn, !Ref GetAwsCliLayerArn ]
       Code:
         ZipFile: |
