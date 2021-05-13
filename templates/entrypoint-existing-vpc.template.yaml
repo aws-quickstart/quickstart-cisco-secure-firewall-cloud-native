@@ -99,22 +99,22 @@ Metadata:
         default: Elastic IP attachment mode
       VPCID:
         default: VPC ID
-      PublicSubnet1CIDR:
-        default: Public subnet 1 CIDR
+      PublicSubnet1ID:
+        default: Public subnet 1 ID
       ASAcOutsideSubnet1CIDR:
         default: ASAc outside subnet 1 CIDR
       ASAcInsideSubnet1CIDR:
         default: ASAc inside subnet 1 CIDR
-      PrivateSubnet1CIDR:
+      PrivateSubnet1ID:
         default: Private subnet 1 CIDR
-      PublicSubnet2CIDR:
-        default: Public subnet 2 CIDR
+      PublicSubnet2ID:
+        default: Public subnet 2 ID
       ASAcOutsideSubnet2CIDR:
         default: ASAc outside subnet 2 CIDR
       ASAcInsideSubnet2CIDR:
         default: ASAc inside subnet 2 CIDR
-      PrivateSubnet2CIDR:
-        default: Private subnet 2 CIDR
+      PrivateSubnet2ID:
+        default: Private subnet 2 ID
       PublicSubnetRouteTableID:
         default: Public subnets route table ID
       EnforcerCacheType:
