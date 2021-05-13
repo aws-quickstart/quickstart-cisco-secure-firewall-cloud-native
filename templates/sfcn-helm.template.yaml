@@ -254,4 +254,5 @@ Resources:
         "dataPlane.redis.token": !If [ EnforcerCacheTransitEncryptionEnabled, !Ref EnforcerCacheAuthToken, "" ]
         "dataPlane.hpa.enable": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
         "dataPlane.configurationTier": !Ref EnforcerConfigurationTier
+        "snmpExporter.deployPrometheus": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
         "tags.controlPlane": !If [ ControlplaneEnabled, "true", "false"]
