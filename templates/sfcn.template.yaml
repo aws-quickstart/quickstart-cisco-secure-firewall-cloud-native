@@ -1116,7 +1116,7 @@ Resources:
             sudo systemctl restart docker
 
             --MIMEBOUNDARY
-            Content-Disposition: attachment; filename="install-ecr-login-helper.sh"
+            Content-Disposition: attachment; filename="06-install-ecr-login-helper.sh"
             Content-Transfer-Encoding: 7bit
             Content-Type: text/x-shellscript
             Mime-Version: 1.0
@@ -1135,7 +1135,7 @@ Resources:
 
 
             --MIMEBOUNDARY
-            Content-Disposition: attachment; filename="register-node.sh"
+            Content-Disposition: attachment; filename="99-register-node.sh"
             Content-Transfer-Encoding: 7bit
             Content-Type: text/x-shellscript
             Mime-Version: 1.0
@@ -1223,7 +1223,7 @@ Resources:
 
 
               --MIMEBOUNDARY
-              Content-Disposition: attachment; filename="install-deps.sh"
+              Content-Disposition: attachment; filename="04-install-deps.sh"
               Content-Transfer-Encoding: 7bit
               Content-Type: text/x-shellscript
               Mime-Version: 1.0
@@ -1468,7 +1468,7 @@ Resources:
               sudo systemctl restart docker
 
               --MIMEBOUNDARY
-              Content-Disposition: attachment; filename="create-core-helper.sh"
+              Content-Disposition: attachment; filename="05-create-core-helper.sh"
               Content-Transfer-Encoding: 7bit
               Content-Type: text/x-shellscript
               Mime-Version: 1.0
@@ -1497,8 +1497,11 @@ Resources:
                       for envspec in fd.read().split('\000'):
                           if not envspec:
                               continue
-                          varname, varval = envspec.split('=', 1)
-                          env[varname] = varval
+                          try:
+                              varname, varval = envspec.split('=', 1)
+                              env[varname] = varval
+                          except Exception:
+                              continue
 
                   return env
 
@@ -1570,11 +1573,13 @@ Resources:
               EOF
 
               sudo chmod +x /mnt/coredump_helper
+              # disabling the default Apport service intercepting crashes in order to overwrite 'kernel.core_pattern'
+              sudo systemctl disable apport.service
               sysctl -w kernel.core_pattern="|/mnt/coredump_helper %e %p %s %t"
 
 
               --MIMEBOUNDARY
-              Content-Disposition: attachment; filename="register-node.sh"
+              Content-Disposition: attachment; filename="99-register-node.sh"
               Content-Transfer-Encoding: 7bit
               Content-Type: text/x-shellscript
               Mime-Version: 1.0
