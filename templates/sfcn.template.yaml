@@ -506,6 +506,22 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${EKSClusterName}-workers-0"
+      SecurityGroupIngress:
+        - Description: "Allow connections from first ASAc interface"
+          IpProtocol: "-1"
+          FromPort: 0
+          ToPort: 65535
+          SourceSecurityGroupId: !Ref WorkersSecurityGroup1
+        - Description: "Allow connections from second ASAc interface"
+          IpProtocol: "-1"
+          FromPort: 0
+          ToPort: 65535
+          SourceSecurityGroupId: !Ref WorkersSecurityGroup2
+        - Description: "Allow connections from third ASAc interface"
+          IpProtocol: "-1"
+          FromPort: 0
+          ToPort: 65535
+          SourceSecurityGroupId: !Ref WorkersSecurityGroup3
 
   WorkersSecurityGroup1:
     Type: AWS::EC2::SecurityGroup
@@ -965,8 +981,6 @@ Resources:
       Subnets:
         - !Ref PublicSubnet1ID
         - !Ref PublicSubnet2ID
-        - !Ref PrivateSubnet1ID
-        - !Ref PrivateSubnet2ID
       ScalingConfig:
         DesiredSize: !Ref ControlNodeGroupDesiredSize
         MaxSize: !Ref ControlNodeGroupMaxSize

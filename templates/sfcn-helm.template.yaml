@@ -226,6 +226,14 @@ Resources:
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallContainerRepo --query '{Value: Parameters[0].Value || `cisco`}'
       IdField: 'Value'
 
+  LicensingEnabled:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub |
+        ssm get-parameters --names /CSFCN/${ClusterID}/licensingEnabled --query '{Value: Parameters[0].Value || `"true"`}'
+      IdField: 'Value'
+
   SecureFirewall:
     Type: "AWSQS::Kubernetes::Helm"
     Properties:
@@ -247,6 +255,7 @@ Resources:
         "global.imageCredentials.username": !Ref DevhubUsername
         "global.imageCredentials.password": !Ref DevhubApiKey
         "global.dataPlaneNamespace": !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]
+        "tags.controlPlane": !If [ ControlplaneEnabled, "true", "false"]
         "tags.dataPlane": !If [ DataplaneEnabled, "true", "false"]
         "dataPlane.serviceRoles": !Sub "{${EnforcerServiceRoles}}"
         "dataPlane.redis.host": !If [ EnforcerCacheTypeIsElastiCache, !Ref ElasticachePrimaryEndpoint, "" ]
@@ -254,5 +263,5 @@ Resources:
         "dataPlane.redis.token": !If [ EnforcerCacheTransitEncryptionEnabled, !Ref EnforcerCacheAuthToken, "" ]
         "dataPlane.hpa.enable": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
         "dataPlane.configurationTier": !Ref EnforcerConfigurationTier
+        "dataPlane.enableLicensing": !Ref LicensingEnabled
         "snmpExporter.deployPrometheus": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
-        "tags.controlPlane": !If [ ControlplaneEnabled, "true", "false"]

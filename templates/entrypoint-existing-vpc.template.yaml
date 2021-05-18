@@ -337,7 +337,7 @@ Parameters:
   EnforcerCacheTransitEncryption:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
-    Default: Disabled
+    Default: Enabled
     Description: Cannot be changed after creation, update requires replacement
 
   EnforcerCachePort:
