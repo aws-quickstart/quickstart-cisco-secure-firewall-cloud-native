@@ -1,0 +1,480 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Deploys Cisco Secure Firewall Cloud Native into a new EKS cluster of an existing VPC.
+
+Metadata:
+  QuickStartDocumentation:
+    EntrypointName: "Launch into existing VPC"
+    Order: 2
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Cluster Configuration
+        Parameters:
+          - KubernetesVersion
+          - KeyPairName
+          - EKSClusterLoggingTypes
+          - StorageType
+          - EKSAdminUserArn
+          - AdditionalEKSAdminRoleArn
+      - Label:
+          default: Control-plane Configuration
+        Parameters:
+          - ControllerConfigurationTier
+          - ControlNodeGroupDesiredSize
+          - ControlNodeGroupMaxSize
+          - PortierisVersion
+      - Label:
+          default: Data-plane Configuration
+        Parameters:
+          - EnforcerConfigurationTier
+          - EnforcerNodeGroupDesiredSize
+          - EnforcerNodeGroupMaxSize
+          - EIPAttachmentMode
+      - Label:
+          default: (Optional) Cache Configuration
+        Parameters:
+          - EnforcerCacheType
+          - EnforcerCacheNodeType
+          - EnforcerCacheAuthToken
+          - EnforcerCacheTransitEncryption
+          - EnforcerCachePort
+      - Label:
+          default: (Optional) Network configuration
+        Parameters:
+          - VPCID
+          - PublicSubnet1ID
+          - PrivateSubnet1ID
+          - PublicSubnet2ID
+          - PrivateSubnet2ID
+          - ASAcOutsideSubnet1CIDR
+          - ASAcInsideSubnet1CIDR
+          - ASAcOutsideSubnet2CIDR
+          - ASAcInsideSubnet2CIDR
+          - PublicSubnetRouteTableID
+      - Label:
+          default: (Optional) AWS Quick Start configuration
+        Parameters:
+          - QSS3BucketName
+          - QSS3KeyPrefix
+          - QSS3BucketRegion
+      - Label:
+          default: Firewall Configuration
+        Parameters:
+          - SecureFirewallDataplane
+          - DevhubUsername
+          - DevhubApiKey
+          - FirewallVersion
+          - SystemNamespace
+          - EnforcerServiceRoles
+          - EnforcerAutoscaling
+    ParameterLabels:
+      KubernetesVersion:
+        default: Kubernetes version
+      KeyPairName:
+        default: SSH key name
+      EKSAdminUserArn:
+        default: EKS admin user
+      AdditionalEKSAdminRoleArn:
+        default: Additional EKS admin role
+      EKSClusterLoggingTypes:
+        default: Cluster logging types
+      ControllerConfigurationTier:
+        default: Controller instance tier
+      ControlNodeGroupDesiredSize:
+        default: Desired nodes number
+      ControlNodeGroupMaxSize:
+        default: Maximum nodes number
+      StorageType:
+        default: Storage type
+      PortierisVersion:
+        default: Portieris Helm version
+      EnforcerConfigurationTier:
+        default: Enforcer instance tier
+      EnforcerNodeGroupDesiredSize:
+        default: Desired nodes number
+      EnforcerNodeGroupMaxSize:
+        default: Maximum nodes number
+      EIPAttachmentMode:
+        default: Elastic IP attachment mode
+      VPCID:
+        default: VPC ID
+      PublicSubnet1ID:
+        default: Public subnet 1 ID
+      ASAcOutsideSubnet1CIDR:
+        default: ASAc outside subnet 1 CIDR
+      ASAcInsideSubnet1CIDR:
+        default: ASAc inside subnet 1 CIDR
+      PrivateSubnet1ID:
+        default: Private subnet 1 CIDR
+      PublicSubnet2ID:
+        default: Public subnet 2 ID
+      ASAcOutsideSubnet2CIDR:
+        default: ASAc outside subnet 2 CIDR
+      ASAcInsideSubnet2CIDR:
+        default: ASAc inside subnet 2 CIDR
+      PrivateSubnet2ID:
+        default: Private subnet 2 ID
+      PublicSubnetRouteTableID:
+        default: Public subnets route table ID
+      EnforcerCacheType:
+        default: Cache type
+      EnforcerCacheNodeType:
+        default: Cache node type
+      EnforcerCacheAuthToken:
+        default: Redis authentication token
+      EnforcerCacheTransitEncryption:
+        default: In-Transit encryption
+      EnforcerCachePort:
+        default: Redis port number
+      QSS3BucketRegion:
+        default: Quick Start S3 bucket Region
+      QSS3BucketName:
+        default: Quick Start S3 bucket name
+      QSS3KeyPrefix:
+        default: Quick Start S3 key prefix
+      SecureFirewallDataplane:
+        default: Secure Firewall data-plane installation
+      DevhubUsername:
+        default: Devhub username
+      DevhubApiKey:
+        default: Devhub API Key
+      FirewallVersion:
+        default: Product version
+      SystemNamespace:
+        default: System namespace
+      EnforcerServiceRoles:
+        default: Enforcer service roles
+      EnforcerAutoscaling:
+        default: Autoscale enforcer
+
+Parameters:
+  QSS3BucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: aws-quickstart
+    Description: S3 bucket name for the Quick Start assets. This string can include
+      numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start
+      or end with a hyphen (-).
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: ^[0-9a-zA-Z-/.]*$
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), periods (.) and forward slashes (/).
+    Default: quickstart-cisco-secure-firewall-cloud-native/
+    Description: The S3 key prefix for the Quick Start assets. Quick Start key prefix
+      can include numbers, lowercase letters, uppercase letters, hyphens (-), periods (.) and
+      forward slashes (/).
+    Type: String
+  QSS3BucketRegion:
+    Default: 'us-east-1'
+    Description: AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. If you use your own bucket, you must specify this value.
+    Type: String
+
+  VPCID:
+    Type: "AWS::EC2::VPC::Id"
+    Description: ID of your existing VPC (e.g., vpc-0343606e)
+  PublicSubnet1ID:
+    Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the public DMZ subnet 1 (ASAc default 1), located in Availability Zone 1.
+  PrivateSubnet1ID:
+    Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the private subnet 1, located in Availability Zone 1. Must have "kubernetes.io/role/internal-elb" tag attached.
+  PublicSubnet2ID:
+    Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the public DMZ subnet 2 (ASAc default 2), located in Availability Zone 2.
+  PrivateSubnet2ID:
+    Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the private subnet 2, located in Availability Zone 2. Must have "kubernetes.io/role/internal-elb" tag attached.
+  PublicSubnetRouteTableID:
+    Description: ID of VPC public subnet route table (e.g., rtb-0b9ce78da592f11e0)
+    Type: String
+  ASAcOutsideSubnet1CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    Description: CIDR block for the ASAc outside subnet 1, located in Availability Zone 1.
+    Type: String
+  ASAcInsideSubnet1CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    Description: CIDR block for the ASAc inside subnet 1, located in Availability Zone 1.
+    Type: String
+  ASAcOutsideSubnet2CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    Description: CIDR block for the ASAc outside subnet 2, located in Availability Zone 2.
+    Type: String
+  ASAcInsideSubnet2CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    Description: CIDR block for the ASAc inside subnet 2, located in Availability Zone 2.
+    Type: String
+
+  KubernetesVersion:
+    Type: String
+    Default: 1.18
+    AllowedValues:
+      - 1.18
+    Description: The desired Kubernetes version for your cluster.
+
+  KeyPairName:
+    Description: Name of an existing key pair, which allows you
+      to securely connect to your instance after it launches.
+    Type: AWS::EC2::KeyPair::KeyName
+
+  EKSAdminUserArn:
+    Type: String
+    Description: Resource name of the IAM user added to the aws-auth ConfigMap of the EKS cluster.
+    # Make the param required so that the admin IAM user is assigned
+    AllowedPattern: ".+"
+
+  AdditionalEKSAdminRoleArn:
+    Type: String
+    Default: ""
+    Description: Resource name of additional IAM role added to the aws-auth ConfigMap of the EKS cluster.
+
+  EKSClusterLoggingTypes:
+    Type: String
+    Default: ""
+    AllowedPattern: ^$|^\s*(api|audit|authenticator|controllerManager|scheduler)\s*(,\s*(api|audit|authenticator|controllerManager|scheduler)\s*)*$
+    ConstraintDescription: Comma separated list of allowed values - api, audit, authenticator, controllerManager and scheduler
+    Description: |
+      Cluster control plane logging options (api, audit, authenticator, controllerManager and scheduler); comma separated.
+
+  ControllerConfigurationTier:
+    Description: Instance tier to be used by controller workers
+    Default: "vCPU4"
+    Type: String
+    AllowedValues: [ "vCPU4" ]
+    ConstraintDescription: must specify vCPU4
+
+  EnforcerConfigurationTier:
+    Description: Instance tier to be used by enforcer workers
+    Default: "vCPU4"
+    Type: String
+    AllowedValues: [ "vCPU4", "vCPU8", "vCPU16" ]
+    ConstraintDescription: must specify vCPU4, vCPU8 or vCPU16
+
+  ControlNodeGroupMaxSize:
+    Type: Number
+    Default: 2
+    Description: The maximum number of control plane worker nodes.
+
+  ControlNodeGroupDesiredSize:
+    Type: Number
+    Default: 1
+    Description: The desired number of control plane worker nodes.
+
+  StorageType:
+    Type: String
+    AllowedValues: [ local, efs ]
+    Default: local
+    Description: The type of a storage used to keep logs and deployments files.
+
+  PortierisVersion:
+    Type: String
+    AllowedValues: [ v0.10.2, none ]
+    Default: none
+    Description: Deploy Portieris for image signature verification
+
+  EnforcerNodeGroupMaxSize:
+    Type: Number
+    Default: 5
+    Description: The maximum number of data plane worker nodes.
+
+  EnforcerNodeGroupDesiredSize:
+    Type: Number
+    Default: 1
+    Description: The desired number of data plane worker nodes.
+
+  EIPAttachmentMode:
+    Type: String
+    Default: "outside"
+    AllowedValues:
+      - none
+      - outside
+      - inside
+      - both
+    Description: ASAc interfaces to attach Elastic IPs.
+
+  EnforcerCacheType:
+    Type: String
+    Default: "none"
+    AllowedValues:
+      - none
+      - elasticache
+      - incluster
+    Description: Type of External Cache to use for ASAc
+
+  EnforcerCacheNodeType:
+    Type: String
+    Default: "cache.r5.large"
+    AllowedValues: [
+        cache.t2.micro, cache.t2.small, cache.t2.medium,
+        cache.t3.micro, cache.t3.small, cache.t3.medium,
+        cache.m4.large, cache.m4.xlarge, cache.m4.2xlarge, cache.m4.4xlarge, cache.m4.10xlarge,
+        cache.m5.large, cache.m5.xlarge, cache.m5.2xlarge, cache.m5.4xlarge, cache.m5.12xlarge, cache.m5.24xlarge,
+        cache.m6g.large, cache.m6g.xlarge, cache.m6g.2xlarge, cache.m6g.4xlarge, cache.m6g.12xlarge, cache.m6g.24xlarge,
+        cache.r4.large, cache.r4.xlarge, cache.r4.2xlarge, cache.r4.4xlarge, cache.r4.8xlarge, cache.r4.16xlarge,
+        cache.r5.large, cache.r5.xlarge, cache.r5.2xlarge, cache.r5.4xlarge, cache.r5.12xlarge, cache.r5.24xlarge,
+        cache.r6g.large, cache.r6g.xlarge, cache.r6g.2xlarge, cache.r6g.4xlarge, cache.r6g.12xlarge, cache.r6g.24xlarge
+    ]
+    Description: EC2 instance type to use as Cache node, check region availaibility before selection
+
+  EnforcerCacheAuthToken:
+    Type: String
+    NoEcho: true
+    MaxLength: 128
+    Default: ""
+    AllowedPattern: "([a-zA-Z0-9!&#$^><-]{16,128})?"
+    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
+    Description: |
+      Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
+      Required if in-transit encryption is enabled
+
+  EnforcerCacheTransitEncryption:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: Cannot be changed after creation, update requires replacement
+
+  EnforcerCachePort:
+    Type: Number
+    Default: 6379
+    MinValue: 1
+    MaxValue: 65535
+    Description: Port number to use for communicating with Redis server
+
+  SecureFirewallDataplane:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: Secure Firewall data-plane installation
+
+  DevhubUsername:
+    Type: String
+    AllowedPattern: ".+"
+    Description: Username of Cisco Devhub account
+
+  DevhubApiKey:
+    Type: String
+    NoEcho: true
+    AllowedPattern: ".+"
+    Description: API key obtained from Cisco Devhub account
+
+  FirewallVersion:
+    Type: String
+    Default: v0.1.0-156
+    AllowedPattern: ".+"
+    Description: Helm chart version of the product
+
+  SystemNamespace:
+    Type: String
+    Default: kasa-system
+    AllowedPattern: ".+"
+    Description: The namespace where product components are installed.
+
+  EnforcerServiceRoles:
+    Type: String
+    Default: default
+    AllowedPattern: "[a-zA-Z0-9-]{3,15}(,[a-zA-Z0-9-]{3,15})*"
+    AllowedValues: [ "default", "default,vpnredirector" ]
+    ConstraintDescription: |
+      Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
+      and upto 15 characters long.
+    Description: |
+      Service roles of ASA separated by comma, no spaces allowed. If choosing the multiple service role option, ensure that at
+      least as many enforcer worker nodes is set as the desired number for faster deployment
+
+  EnforcerAutoscaling:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Disabled
+    Description: Enable scaling of ASA with default metrics
+
+Conditions:
+  UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
+  EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
+
+Resources:
+  SFCNStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/sfcn.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+      Parameters:
+        # Network configuration
+        VPCID: !Ref VPCID
+        PublicSubnet1ID: !Ref PublicSubnet1ID
+        PrivateSubnet1ID: !Ref PrivateSubnet1ID
+        PublicSubnet2ID: !Ref PublicSubnet2ID
+        PrivateSubnet2ID: !Ref PrivateSubnet2ID
+        ASAcOutsideSubnet1CIDR: !Ref ASAcOutsideSubnet1CIDR
+        ASAcInsideSubnet1CIDR: !Ref ASAcInsideSubnet1CIDR
+        ASAcOutsideSubnet2CIDR: !Ref ASAcOutsideSubnet2CIDR
+        ASAcInsideSubnet2CIDR: !Ref ASAcInsideSubnet2CIDR
+        PublicSubnetRouteTableID: !Ref PublicSubnetRouteTableID
+        # Cluster configuration
+        EKSClusterName: !Ref AWS::StackName
+        KubernetesVersion: !Ref KubernetesVersion
+        KeyPairName: !Ref KeyPairName
+        EKSAdminUserArn: !Ref EKSAdminUserArn
+        AdditionalEKSAdminRoleArn: !Ref AdditionalEKSAdminRoleArn
+        EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
+        StorageType: !Ref StorageType
+        # Control-plane configuration
+        ControllerConfigurationTier: !Ref ControllerConfigurationTier
+        ControlNodeGroupDesiredSize: !Ref ControlNodeGroupDesiredSize
+        ControlNodeGroupMaxSize: !Ref ControlNodeGroupMaxSize
+        PortierisVersion: !Ref PortierisVersion
+        # Data-plane configuration
+        EnforcerConfigurationTier: !Ref EnforcerConfigurationTier
+        EnforcerNodeGroupDesiredSize: !Ref EnforcerNodeGroupDesiredSize
+        EnforcerNodeGroupMaxSize: !Ref EnforcerNodeGroupMaxSize
+        EIPAttachmentMode: !Ref EIPAttachmentMode
+        # External Cache configuration
+        EnforcerCacheType: !Ref EnforcerCacheType
+        EnforcerCacheNodeType: !Ref EnforcerCacheNodeType
+        EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
+        EnforcerCacheTransitEncryption: !Ref EnforcerCacheTransitEncryption
+        EnforcerCachePort: !Ref EnforcerCachePort
+        # Quick Start configuration
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3KeyPrefix: !Ref QSS3KeyPrefix
+        QSS3BucketRegion: !Ref QSS3BucketRegion
+        # Firewall configuration
+        SecureFirewallDataplane: !Ref SecureFirewallDataplane
+        DevhubUsername: !Ref DevhubUsername
+        DevhubApiKey: !Ref DevhubApiKey
+        FirewallVersion: !Ref FirewallVersion
+        SystemNamespace: !Ref SystemNamespace
+        EnforcerServiceRoles: !Ref EnforcerServiceRoles
+        EnforcerAutoscaling: !Ref EnforcerAutoscaling
+
+Outputs:
+  EksArn:
+    Value: !GetAtt SFCNStack.Outputs.EksArn
+  CAData:
+    Value: !GetAtt SFCNStack.Outputs.CAData
+  EKSEndpoint:
+    Value: !GetAtt SFCNStack.Outputs.EKSEndpoint
+  EKSName:
+    Value: !GetAtt SFCNStack.Outputs.EKSName
+  PublicSubnetRouteTable:
+    Value: !Ref PublicSubnetRouteTableID
+  ElasticachePrimaryEndpoint:
+    Condition: EnforcerCacheTypeIsElastiCache
+    Value: !GetAtt SFCNStack.Outputs.ElasticachePrimaryEndpoint
+  ElasticachePrimaryEndpointPort:
+    Condition: EnforcerCacheTypeIsElastiCache
+    Value: !GetAtt SFCNStack.Outputs.ElasticachePrimaryEndpointPort
+  ElasticacheReaderEndpoint:
+    Condition: EnforcerCacheTypeIsElastiCache
+    Value: !GetAtt SFCNStack.Outputs.ElasticacheReaderEndpoint
+  ElasticacheReaderEndpointPort:
+    Condition: EnforcerCacheTypeIsElastiCache
+    Value: !GetAtt SFCNStack.Outputs.ElasticacheReaderEndpointPort
