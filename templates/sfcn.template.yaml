@@ -1658,6 +1658,7 @@ Resources:
           import subprocess
           import shlex
           import cfnresponse
+          import base64
 
           def run_command(command):
               try:
@@ -1683,6 +1684,8 @@ Resources:
                       command = event['ResourceProperties']['Command']
                       data["Output"] = run_command(f"kubectl {command}")
                       print(data["Output"])
+                      if event['ResourceProperties'].get('Decode') == 'base64':
+                          data["Output"] = base64.b64decode(data["Output"]).decode('utf-8')
               except Exception:
                   logging.error('Unhandled exception', exc_info=True)
                   status = cfnresponse.FAILED
@@ -2013,6 +2016,7 @@ Resources:
     Properties:
       ServiceToken: !GetAtt KubectlFunction.Arn
       ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
+      Decode: base64
       Command: !Sub |-
         get secrets -n ${SystemNamespace} -o=jsonpath='{.items[?(@.metadata.annotations.kubernetes\.io/service-account\.name=="kasa-cdo")].data.token}'
 
@@ -2028,6 +2032,7 @@ Outputs:
     Value: !GetAtt EKSControlPlane.Outputs.EKSName
   CDOToken:
     Value: !GetAtt SecureFirewallCDOToken.Output
+    Description: Base-64 decoded token for the CDO service account.
   PublicSubnetRouteTable:
     Value: !Ref PublicSubnetRouteTableID
   ElasticachePrimaryEndpoint:
