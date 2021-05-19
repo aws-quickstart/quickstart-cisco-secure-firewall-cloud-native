@@ -2032,7 +2032,6 @@ Outputs:
     Value: !GetAtt EKSControlPlane.Outputs.EKSName
   CDOToken:
     Value: !GetAtt SecureFirewallCDOToken.Output
-    Description: Base-64 decoded token for the CDO service account.
   PublicSubnetRouteTable:
     Value: !Ref PublicSubnetRouteTableID
   ElasticachePrimaryEndpoint:

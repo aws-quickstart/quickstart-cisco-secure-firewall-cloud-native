@@ -497,6 +497,7 @@ Outputs:
     Value: !GetAtt SFCNStack.Outputs.EKSName
   CDOToken:
     Value: !GetAtt SFCNStack.Outputs.CDOToken
+    Description: Base-64 decoded token for the CDO service account.
   PublicSubnetRouteTable:
     Value: !GetAtt VPCStack.Outputs.PublicSubnetRouteTable
   ElasticachePrimaryEndpoint:
