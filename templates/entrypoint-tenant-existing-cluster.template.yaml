@@ -132,8 +132,8 @@ Parameters:
     Description: Instance tier to be used by enforcer workers
     Default: "vCPU4"
     Type: String
-    AllowedValues: [ "vCPU4", "vCPU8", "vCPU16" ]
-    ConstraintDescription: must specify vCPU4, vCPU8 or vCPU16
+    AllowedValues: [ "vCPU4" ]
+    ConstraintDescription: must specify vCPU4
   
   EnforcerCachePort:
     Type: Number

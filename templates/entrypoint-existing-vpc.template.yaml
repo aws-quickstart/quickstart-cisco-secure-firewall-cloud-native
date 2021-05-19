@@ -254,8 +254,8 @@ Parameters:
     Description: Instance tier to be used by enforcer workers
     Default: "vCPU4"
     Type: String
-    AllowedValues: [ "vCPU4", "vCPU8", "vCPU16" ]
-    ConstraintDescription: must specify vCPU4, vCPU8 or vCPU16
+    AllowedValues: [ "vCPU4" ]
+    ConstraintDescription: must specify vCPU4
 
   ControlNodeGroupMaxSize:
     Type: Number
@@ -311,16 +311,7 @@ Parameters:
   EnforcerCacheNodeType:
     Type: String
     Default: "cache.r5.large"
-    AllowedValues: [
-        cache.t2.micro, cache.t2.small, cache.t2.medium,
-        cache.t3.micro, cache.t3.small, cache.t3.medium,
-        cache.m4.large, cache.m4.xlarge, cache.m4.2xlarge, cache.m4.4xlarge, cache.m4.10xlarge,
-        cache.m5.large, cache.m5.xlarge, cache.m5.2xlarge, cache.m5.4xlarge, cache.m5.12xlarge, cache.m5.24xlarge,
-        cache.m6g.large, cache.m6g.xlarge, cache.m6g.2xlarge, cache.m6g.4xlarge, cache.m6g.12xlarge, cache.m6g.24xlarge,
-        cache.r4.large, cache.r4.xlarge, cache.r4.2xlarge, cache.r4.4xlarge, cache.r4.8xlarge, cache.r4.16xlarge,
-        cache.r5.large, cache.r5.xlarge, cache.r5.2xlarge, cache.r5.4xlarge, cache.r5.12xlarge, cache.r5.24xlarge,
-        cache.r6g.large, cache.r6g.xlarge, cache.r6g.2xlarge, cache.r6g.4xlarge, cache.r6g.12xlarge, cache.r6g.24xlarge
-    ]
+    AllowedValues: [ cache.m5.xlarge, cache.r5.large ]
     Description: EC2 instance type to use as Cache node, check region availaibility before selection
 
   EnforcerCacheAuthToken:
@@ -464,6 +455,8 @@ Outputs:
     Value: !GetAtt SFCNStack.Outputs.EKSEndpoint
   EKSName:
     Value: !GetAtt SFCNStack.Outputs.EKSName
+  CDOToken:
+    Value: !GetAtt SFCNStack.Outputs.CDOToken
   PublicSubnetRouteTable:
     Value: !Ref PublicSubnetRouteTableID
   ElasticachePrimaryEndpoint:
