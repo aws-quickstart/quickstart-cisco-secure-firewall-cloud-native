@@ -201,34 +201,6 @@ Parameters:
     AllowedValues: [ cache.m5.xlarge, cache.r5.large ]
     Description: EC2 instance type to use as Cache node, check region availaibility before selection
 
-  EnforcerCacheVpcId:
-    Type: "AWS::EC2::VPC::Id"
-    Description: ID of your existing VPC (e.g., vpc-0343606e)
-
-  EnforcerCachePublicSubnet1ID:
-    Type: "AWS::EC2::Subnet::Id"
-    Description: ID of the public DMZ subnet 1 (ASAc default 1), located in Availability Zone 1.
-
-  EnforcerCachePublicSubnet2ID:
-    Type: "AWS::EC2::Subnet::Id"
-    Description: ID of the public DMZ subnet 2 (ASAc default 2), located in Availability Zone 2.
-
-  EnforcerCacheWorkerSG0ID:
-    Type: "AWS::EC2::SecurityGroup::Id"
-    Description: ID of the security group of the default interface of the workers
-
-  EnforcerCacheWorkerSG1ID:
-    Type: "AWS::EC2::SecurityGroup::Id"
-    Description: ID of the security group of the first additional interface of the workers
-
-  EnforcerCacheWorkerSG2ID:
-    Type: "AWS::EC2::SecurityGroup::Id"
-    Description: ID of the security group of the second additional interface of the workers
-
-  EnforcerCacheWorkerSG3ID:
-    Type: "AWS::EC2::SecurityGroup::Id"
-    Description: ID of the security group of the third additional interface of the workers
-
   EnforcerCacheTransitEncryption:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
@@ -258,12 +230,12 @@ Resources:
       Parameters:
         Name: !Ref AWS::StackName
         VPCID: !Ref EnforcerCacheVpcId
-        PublicSubnet1ID: !Ref EnforcerCachePublicSubnet1ID
-        PublicSubnet2ID: !Ref EnforcerCachePublicSubnet2ID
-        WorkersSecurityGroup0ID: !Ref EnforcerCacheWorkerSG0ID
-        WorkersSecurityGroup1ID: !Ref EnforcerCacheWorkerSG1ID
-        WorkersSecurityGroup2ID: !Ref EnforcerCacheWorkerSG2ID
-        WorkersSecurityGroup3ID: !Ref EnforcerCacheWorkerSG3ID
+        PublicSubnet1ID: {Fn::ImportValue: !Sub "${ClusterID}-PublicSubnet1ID"}
+        PublicSubnet2ID: {Fn::ImportValue: !Sub "${ClusterID}-PublicSubnet2ID"}
+        WorkersSecurityGroup0ID: {Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup0ID"}
+        WorkersSecurityGroup1ID: {Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup1ID"}
+        WorkersSecurityGroup2ID: {Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup2ID"}
+        WorkersSecurityGroup3ID: {Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup3ID"}
         EnforcerCacheNodeType: !Ref EnforcerCacheNodeType
         EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
         EnforcerCachePort: !Ref EnforcerCachePort

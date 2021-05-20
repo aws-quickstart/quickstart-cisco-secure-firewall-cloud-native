@@ -1980,8 +1980,14 @@ Outputs:
     Value: !GetAtt EKSControlPlane.Outputs.EKSName
   CDOToken:
     Value: !GetAtt SecureFirewallCDOToken.Output
-  PublicSubnetRouteTable:
-    Value: !Ref PublicSubnetRouteTableID
+  WorkersSecurityGroup0ID:
+    Value: !Ref WorkersSecurityGroup0
+  WorkersSecurityGroup1ID:
+    Value: !Ref WorkersSecurityGroup1
+  WorkersSecurityGroup2ID:
+    Value: !Ref WorkersSecurityGroup2
+  WorkersSecurityGroup3ID:
+    Value: !Ref WorkersSecurityGroup3
   ElasticachePrimaryEndpoint:
     Condition: EnforcerCacheTypeIsElastiCache
     Value: !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint
