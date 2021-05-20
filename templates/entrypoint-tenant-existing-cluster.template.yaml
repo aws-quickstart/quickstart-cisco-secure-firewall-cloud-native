@@ -1,5 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
+Description: Deploys a Tenant of Cisco Secure Firewall Cloud Native into an existing EKS cluster
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -21,20 +23,27 @@ Metadata:
         Parameters:
           - DataplaneNamespace
           - EnforcerConfigurationTier
-          - EnforcerCachePort
           - EnforcerServiceRoles
-          - EnforcerCacheAuthToken
-          - EnforcerCacheType
-          - EnforcerCacheTransitEncryption
           - EnforcerAutoscaling
-          - ElasticachePrimaryEndpoint
+          - EnforcerCacheType
+          - EnforcerCacheNodeType
+          - EnforcerCacheVpcId
+          - EnforcerCachePublicSubnet1ID
+          - EnforcerCachePublicSubnet2ID
+          - EnforcerCacheWorkerSG0ID
+          - EnforcerCacheWorkerSG1ID
+          - EnforcerCacheWorkerSG2ID
+          - EnforcerCacheWorkerSG3ID
+          - EnforcerCachePort
+          - EnforcerCacheTransitEncryption
+          - EnforcerCacheAuthToken
     ParameterLabels:
       ClusterID:
         default: EKS cluster ID
       Version:
         default: Secure Firewall version
       Name:
-        default: Name
+        default: Tenant name
       DevhubApiKey:
         default: Devhub API Key
       DevhubUsername:
@@ -55,14 +64,27 @@ Metadata:
         default: Redis authentication token
       EnforcerCacheType:
         default: Cache type
+      EnforcerCacheNodeType:
+        default: Cache node type
+      EnforcerCacheVpcId:
+        default: VPC ID
+      EnforcerCachePublicSubnet1ID:
+        default: VPC Public Subnet 1 ID
+      EnforcerCachePublicSubnet2ID:
+        default: VPC Public Subnet 2 ID
+      EnforcerCacheWorkerSG0ID:
+        default: Worker security group 0 ID
+      EnforcerCacheWorkerSG1D:
+        default: Worker security group 1 ID
+      EnforcerCacheWorkerSG2ID:
+        default: Worker security group 2 ID
+      EnforcerCacheWorkerSG3ID:
+        default: Worker security group 3 ID
       EnforcerCacheTransitEncryption:
         default: In-Transit encryption
       EnforcerAutoscaling:
         default: Autoscale enforcer
-      ElasticachePrimaryEndpoint:
-        default: Redis host
-      
-          
+
 
 Parameters:
   QSS3BucketName:
@@ -163,7 +185,7 @@ Parameters:
     ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
     Description: |
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
-      Takes effect only if in-transit encryption is enabled
+      Takes effect only when in-transit encryption is enabled
 
   EnforcerCacheType:
     Type: String
@@ -171,8 +193,41 @@ Parameters:
     AllowedValues:
       - none
       - elasticache
-      - incluster
     Description: Type of External Cache to use for ASAc
+
+  EnforcerCacheNodeType:
+    Type: String
+    Default: "cache.r5.large"
+    AllowedValues: [ cache.m5.xlarge, cache.r5.large ]
+    Description: EC2 instance type to use as Cache node, check region availaibility before selection
+
+  EnforcerCacheVpcId:
+    Type: "AWS::EC2::VPC::Id"
+    Description: ID of your existing VPC (e.g., vpc-0343606e)
+
+  EnforcerCachePublicSubnet1ID:
+    Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the public DMZ subnet 1 (ASAc default 1), located in Availability Zone 1.
+
+  EnforcerCachePublicSubnet2ID:
+    Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the public DMZ subnet 2 (ASAc default 2), located in Availability Zone 2.
+
+  EnforcerCacheWorkerSG0ID:
+    Type: "AWS::EC2::SecurityGroup::Id"
+    Description: ID of the security group of the default interface of the workers
+
+  EnforcerCacheWorkerSG1ID:
+    Type: "AWS::EC2::SecurityGroup::Id"
+    Description: ID of the security group of the first additional interface of the workers
+
+  EnforcerCacheWorkerSG2ID:
+    Type: "AWS::EC2::SecurityGroup::Id"
+    Description: ID of the security group of the second additional interface of the workers
+
+  EnforcerCacheWorkerSG3ID:
+    Type: "AWS::EC2::SecurityGroup::Id"
+    Description: ID of the security group of the third additional interface of the workers
 
   EnforcerCacheTransitEncryption:
     Type: String
@@ -186,14 +241,34 @@ Parameters:
     Default: Disabled
     Description: Enable scaling of ASA with default metrics
 
-  ElasticachePrimaryEndpoint:
-    Type: String
-    Default: ""
-
 Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
+  EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
 
 Resources:
+  EnforcerElasticache:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnforcerCacheTypeIsElastiCache
+    Properties:
+      TemplateURL:
+        !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/sfcn-elasticache.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+      Parameters:
+        Name: !Ref AWS::StackName
+        VPCID: !Ref EnforcerCacheVpcId
+        PublicSubnet1ID: !Ref EnforcerCachePublicSubnet1ID
+        PublicSubnet2ID: !Ref EnforcerCachePublicSubnet2ID
+        WorkersSecurityGroup0ID: !Ref EnforcerCacheWorkerSG0ID
+        WorkersSecurityGroup1ID: !Ref EnforcerCacheWorkerSG1ID
+        WorkersSecurityGroup2ID: !Ref EnforcerCacheWorkerSG2ID
+        WorkersSecurityGroup3ID: !Ref EnforcerCacheWorkerSG3ID
+        EnforcerCacheNodeType: !Ref EnforcerCacheNodeType
+        EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
+        EnforcerCachePort: !Ref EnforcerCachePort
+        EnforcerCacheTransitEncryption: !Ref EnforcerCacheTransitEncryption
+
   SecureFirewall:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -213,10 +288,8 @@ Resources:
         DataplaneNamespace: !Ref DataplaneNamespace
         StorageType: !Ref StorageType
         EnforcerServiceRoles: !Ref EnforcerServiceRoles
-        EnforcerCacheType: !Ref EnforcerCacheType
-        ElasticachePrimaryEndpoint: !Ref ElasticachePrimaryEndpoint
+        EnforcerCacheHost: !If [ EnforcerCacheTypeIsElastiCache, !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint, "" ]
         EnforcerCachePort: !Ref EnforcerCachePort
-        EnforcerCacheTransitEncryption: !Ref EnforcerCacheTransitEncryption
-        EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken  
+        EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
         EnforcerAutoscaling: !Ref EnforcerAutoscaling
         EnforcerConfigurationTier: !Ref EnforcerConfigurationTier

@@ -305,7 +305,6 @@ Parameters:
     AllowedValues:
       - none
       - elasticache
-      - incluster
     Description: Type of External Cache to use for ASAc
 
   EnforcerCacheNodeType:
@@ -323,7 +322,7 @@ Parameters:
     ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
     Description: |
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
-      Required if in-transit encryption is enabled
+      Takes effect only when in-transit encryption is enabled
 
   EnforcerCacheTransitEncryption:
     Type: String
@@ -357,7 +356,7 @@ Parameters:
 
   FirewallVersion:
     Type: String
-    Default: v0.1.0-156
+    Default: v0.1.0-166
     AllowedPattern: ".+"
     Description: Helm chart version of the product
 
@@ -384,6 +383,13 @@ Parameters:
     AllowedValues: [ Enabled, Disabled ]
     Default: Disabled
     Description: Enable scaling of ASA with default metrics
+
+Rules:
+  EnforcerElasticacheRule:
+    RuleCondition: !Equals [ !Ref EnforcerCacheType, elasticache ]
+    Assertions:
+      - Assert: !Equals [ !Ref SecureFirewallDataplane, Enabled ]
+        AssertDescription: Cache type can be set to "elasticache" only if firewall data-plane is "Enabled"
 
 Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]

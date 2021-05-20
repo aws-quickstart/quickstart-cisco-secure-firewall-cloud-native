@@ -29,10 +29,8 @@ Metadata:
           - EnforcerCachePort
           - EnforcerServiceRoles
           - EnforcerCacheAuthToken
-          - EnforcerCacheType
-          - EnforcerCacheTransitEncryption
           - EnforcerAutoscaling
-          - ElasticachePrimaryEndpoint
+          - EnforcerCacheHost
     ParameterLabels:
       Name:
         default: Name
@@ -62,13 +60,9 @@ Metadata:
         default: Enforcer service roles
       EnforcerCacheAuthToken:
         default: Redis authentication token
-      EnforcerCacheType:
-        default: Cache type
-      EnforcerCacheTransitEncryption:
-        default: In-Transit encryption
       EnforcerAutoscaling:
         default: Autoscale enforcer
-      ElasticachePrimaryEndpoint:
+      EnforcerCacheHost:
         default: Redis host
       
 Parameters:
@@ -156,28 +150,13 @@ Parameters:
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
       Takes effect only if in-transit encryption is enabled
 
-  EnforcerCacheType:
-    Type: String
-    Default: "none"
-    AllowedValues:
-      - none
-      - elasticache
-      - incluster
-    Description: Type of External Cache to use for ASAc
-
-  EnforcerCacheTransitEncryption:
-    Type: String
-    AllowedValues: [ Enabled, Disabled ]
-    Default: Enabled
-    Description: Cannot be changed after creation, update requires replacement
-
   EnforcerAutoscaling:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Disabled
     Description: Enable scaling of ASA with default metrics
 
-  ElasticachePrimaryEndpoint:
+  EnforcerCacheHost:
     Type: String
     Default: ""
 
@@ -186,8 +165,6 @@ Parameters:
     Description: Helm chart release name
 
 Conditions:
-  EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
-  EnforcerCacheTransitEncryptionEnabled: !Equals [ !Ref EnforcerCacheTransitEncryption, Enabled ]
   EnforcerAutoscalingEnabled: !Equals [ !Ref EnforcerAutoscaling, Enabled ]
   DataplaneEnabled: !Equals [ !Ref Dataplane, Enabled ]
   ControlplaneEnabled: !Equals [ !Ref Controlplane, Enabled ]
@@ -258,9 +235,9 @@ Resources:
         "tags.controlPlane": !If [ ControlplaneEnabled, "true", "false"]
         "tags.dataPlane": !If [ DataplaneEnabled, "true", "false"]
         "dataPlane.serviceRoles": !Sub "{${EnforcerServiceRoles}}"
-        "dataPlane.redis.host": !If [ EnforcerCacheTypeIsElastiCache, !Ref ElasticachePrimaryEndpoint, "" ]
+        "dataPlane.redis.host": !Ref EnforcerCacheHost
         "dataPlane.redis.port": !Ref EnforcerCachePort
-        "dataPlane.redis.token": !If [ EnforcerCacheTransitEncryptionEnabled, !Ref EnforcerCacheAuthToken, "" ]
+        "dataPlane.redis.token": !Ref EnforcerCacheAuthToken
         "dataPlane.hpa.enable": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
         "dataPlane.configurationTier": !Ref EnforcerConfigurationTier
         "dataPlane.enableLicensing": !Ref LicensingEnabled

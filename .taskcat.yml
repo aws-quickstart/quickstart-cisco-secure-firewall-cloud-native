@@ -21,3 +21,7 @@ project:
 tests:
   sfcnbase:
     template: templates/entrypoint-new-vpc.template.yaml
+    parameters:
+      EnforcerCacheType: elasticache
+      SecureFirewallDataplane: Enabled
+      StorageType: efs

@@ -161,7 +161,6 @@ Parameters:
     AllowedValues:
       - none
       - elasticache
-      - incluster
     Description: Type of External Cache to use for ASAc
 
   EnforcerCacheNodeType:
@@ -254,14 +253,19 @@ Mappings:
       instanceType: m5.xlarge
       hugePagesSize: "128"
 
+Rules:
+  EnforcerElasticacheRule:
+    RuleCondition: !Equals [ !Ref EnforcerCacheType, elasticache ]
+    Assertions:
+      - Assert: !Equals [ !Ref SecureFirewallDataplane, Enabled ]
+        AssertDescription: Cache type can be set to "elasticache" only if firewall data-plane is "Enabled"
+
 Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
   EnableEFS: !Equals [ !Ref StorageType, "efs" ]
   EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
-  EnforcerCacheTransitEncryptionEnabled: !Equals [ !Ref EnforcerCacheTransitEncryption, Enabled ]
   UsePortieris: !Not [ !Equals [ !Ref PortierisVersion, none ] ]
   HasAdditionalEKSAdminRole: !Not [ !Equals [ !Ref AdditionalEKSAdminRoleArn, "" ] ]
-  EnforcerCacheAuthTokenIsBlank: !Equals [ !Ref EnforcerCacheAuthToken, "" ]
 
 Resources:
 
@@ -379,19 +383,6 @@ Resources:
     Properties:
       SubnetId: !Ref InsideSubnetAZ2
       RouteTableId: !Ref PublicSubnetRouteTableID
-
-
-  # Subnet Groups for ElastiCache
-
-  ASAcElastiCacheSubnetGroup:
-    Type: AWS::ElastiCache::SubnetGroup
-    Condition: EnforcerCacheTypeIsElastiCache
-    Properties:
-      CacheSubnetGroupName: !Sub "${EKSClusterName}"
-      Description: ASAc ElastiCache Subnet Group
-      SubnetIds:
-        - !Ref PublicSubnet1ID
-        - !Ref PublicSubnet2ID
 
   # Security Groups
 
@@ -565,70 +556,6 @@ Resources:
       IpProtocol: tcp
       FromPort: 2049
       ToPort: 2049
-
-  ElastiCacheSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Condition: EnforcerCacheTypeIsElastiCache
-    Properties:
-      GroupDescription: ASAc ElastiCache Security Group
-      GroupName: !Sub "${EKSClusterName}-elasticache"
-      VpcId: !Ref VPCID
-      SecurityGroupIngress:
-        - Description: "Allow worker interface-0 security group communication."
-          IpProtocol: tcp
-          FromPort: 6379
-          ToPort: 6379
-          SourceSecurityGroupId: !Ref WorkersSecurityGroup0
-        - Description: "Allow worker interface-1 security group communication."
-          IpProtocol: tcp
-          FromPort: 6379
-          ToPort: 6379
-          SourceSecurityGroupId: !Ref WorkersSecurityGroup1
-        - Description: "Allow worker interface-2 security group communication."
-          IpProtocol: tcp
-          FromPort: 6379
-          ToPort: 6379
-          SourceSecurityGroupId: !Ref WorkersSecurityGroup2
-        - Description: "Allow worker interface-3 security group communication."
-          IpProtocol: tcp
-          FromPort: 6379
-          ToPort: 6379
-          SourceSecurityGroupId: !Ref WorkersSecurityGroup3
-      SecurityGroupEgress:
-        - Description: "Allow all elasticache cluster IPv4 egress traffic"
-          IpProtocol: "-1"
-          FromPort: 0
-          ToPort: 0
-          CidrIp: 0.0.0.0/0
-        - Description: "Allow all elasticache cluster IPv6 egress traffic"
-          IpProtocol: "-1"
-          FromPort: 0
-          ToPort: 0
-          CidrIpv6: "::/0"
-
-  # ElastiCache setup for ASAc
-
-  ASAcElastiCacheReplicationGroup:
-    Type: AWS::ElastiCache::ReplicationGroup
-    Condition: EnforcerCacheTypeIsElastiCache
-    Properties:
-      ReplicationGroupId: !Ref EKSClusterName
-      ReplicationGroupDescription: ASAc ElastiCache Replication Group
-      NumCacheClusters: 1
-      Engine: Redis
-      EngineVersion: 6.x
-      CacheNodeType: !Ref EnforcerCacheNodeType
-      Port: !Ref EnforcerCachePort
-      # AuthToken can be set only if Transit Encryption is Enabled
-      AuthToken: !If [ EnforcerCacheTransitEncryptionEnabled,
-                       !If [ EnforcerCacheAuthTokenIsBlank, !Ref 'AWS::NoValue', !Ref EnforcerCacheAuthToken ],
-                       !Ref 'AWS::NoValue' ]
-      MultiAZEnabled: false
-      AutomaticFailoverEnabled: false
-      TransitEncryptionEnabled: !If [ EnforcerCacheTransitEncryptionEnabled, true, false ]
-      CacheSubnetGroupName: !Ref ASAcElastiCacheSubnetGroup
-      SecurityGroupIds:
-        - !Ref ElastiCacheSecurityGroup
 
   # IAM
 
@@ -1980,6 +1907,29 @@ Resources:
         {"pathPrefix": "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"},
         {"pathPrefix": "/mnt/coredump_repo"}, {"pathPrefix": "/home/ubuntu/fluentdout"}]}}'
 
+  EnforcerElasticache:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnforcerCacheTypeIsElastiCache
+    Properties:
+      TemplateURL:
+        !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/sfcn-elasticache.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+      Parameters:
+        Name: !GetAtt EKSControlPlane.Outputs.EKSName
+        VPCID: !Ref VPCID
+        PublicSubnet1ID: !Ref PublicSubnet1ID
+        PublicSubnet2ID: !Ref PublicSubnet2ID
+        WorkersSecurityGroup0ID: !Ref WorkersSecurityGroup0
+        WorkersSecurityGroup1ID: !Ref WorkersSecurityGroup1
+        WorkersSecurityGroup2ID: !Ref WorkersSecurityGroup2
+        WorkersSecurityGroup3ID: !Ref WorkersSecurityGroup3
+        EnforcerCacheNodeType: !Ref EnforcerCacheNodeType
+        EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
+        EnforcerCachePort: !Ref EnforcerCachePort
+        EnforcerCacheTransitEncryption: !Ref EnforcerCacheTransitEncryption
+
   SecureFirewall:
     Type: AWS::CloudFormation::Stack
     DependsOn:
@@ -2002,10 +1952,8 @@ Resources:
         StorageType: !Ref StorageType
         Dataplane: !Ref SecureFirewallDataplane
         EnforcerServiceRoles: !Ref EnforcerServiceRoles
-        EnforcerCacheType: !Ref EnforcerCacheType
-        ElasticachePrimaryEndpoint: !If [ EnforcerCacheTypeIsElastiCache, !GetAtt ASAcElastiCacheReplicationGroup.PrimaryEndPoint.Address, "" ]
+        EnforcerCacheHost: !If [ EnforcerCacheTypeIsElastiCache, !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint, "" ]
         EnforcerCachePort: !Ref EnforcerCachePort
-        EnforcerCacheTransitEncryption: !Ref EnforcerCacheTransitEncryption
         EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
         EnforcerAutoscaling: !Ref EnforcerAutoscaling
         EnforcerConfigurationTier: !Ref EnforcerConfigurationTier
@@ -2036,15 +1984,15 @@ Outputs:
     Value: !Ref PublicSubnetRouteTableID
   ElasticachePrimaryEndpoint:
     Condition: EnforcerCacheTypeIsElastiCache
-    Value: !GetAtt ASAcElastiCacheReplicationGroup.PrimaryEndPoint.Address
+    Value: !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint
     Description: ASAc Elasticache Primary Endpoint
   ElasticachePrimaryEndpointPort:
     Condition: EnforcerCacheTypeIsElastiCache
-    Value: !GetAtt ASAcElastiCacheReplicationGroup.PrimaryEndPoint.Port
+    Value: !GetAtt EnforcerElasticache.Outputs.PrimaryEndpointPort
   ElasticacheReaderEndpoint:
     Condition: EnforcerCacheTypeIsElastiCache
-    Value: !GetAtt ASAcElastiCacheReplicationGroup.ReaderEndPoint.Address
+    Value: !GetAtt EnforcerElasticache.Outputs.ReaderEndpoint
     Description: ASAc Elasticache Reader Endpoint
   ElasticacheReaderEndpointPort:
     Condition: EnforcerCacheTypeIsElastiCache
-    Value: !GetAtt ASAcElastiCacheReplicationGroup.ReaderEndPoint.Port
+    Value: !GetAtt EnforcerElasticache.Outputs.ReaderEndpointPort

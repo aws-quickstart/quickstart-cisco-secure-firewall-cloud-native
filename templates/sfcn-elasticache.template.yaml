@@ -1,0 +1,176 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Nested stack of Cisco Secure Firewall Cloud Native entrypoints to deploy Elasticache into an existing VPC
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Cache Configuration
+        Parameters:
+          - Name
+          - VPCID
+          - PublicSubnet1ID
+          - PublicSubnet2ID
+          - WorkersSecurityGroup0ID
+          - WorkersSecurityGroup1ID
+          - WorkersSecurityGroup2ID
+          - WorkersSecurityGroup3ID
+          - EnforcerCacheNodeType
+          - EnforcerCacheAuthToken
+          - EnforcerCachePort
+          - EnforcerCacheTransitEncryption
+
+Parameters:
+  Name:
+    Type: String
+    Description: Name to use when creating the Cache resources
+
+  VPCID:
+    Type: "AWS::EC2::VPC::Id"
+    Description: ID of your existing VPC (e.g., vpc-0343606e)
+
+  PublicSubnet1ID:
+    Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the public DMZ subnet 1 (ASAc default 1), located in Availability Zone 1.
+
+  PublicSubnet2ID:
+    Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the public DMZ subnet 2 (ASAc default 2), located in Availability Zone 2.
+
+  WorkersSecurityGroup0ID:
+    Type: "AWS::EC2::SecurityGroup::Id"
+    Description: ID of the security group of the default interface of the workers
+
+  WorkersSecurityGroup1ID:
+    Type: "AWS::EC2::SecurityGroup::Id"
+    Description: ID of the security group of the first additional interface of the workers
+
+  WorkersSecurityGroup2ID:
+    Type: "AWS::EC2::SecurityGroup::Id"
+    Description: ID of the security group of the second additional interface of the workers
+
+  WorkersSecurityGroup3ID:
+    Type: "AWS::EC2::SecurityGroup::Id"
+    Description: ID of the security group of the third additional interface of the workers
+
+  EnforcerCacheNodeType:
+    Type: String
+    Default: "cache.r5.large"
+    AllowedValues: [ cache.m5.xlarge, cache.r5.large ]
+    Description: EC2 instance type to use as Cache node, check region availaibility before selection
+
+  EnforcerCacheAuthToken:
+    Type: String
+    NoEcho: true
+    MaxLength: 128
+    Default: ""
+    AllowedPattern: "([a-zA-Z0-9!&#$^><-]{16,128})?"
+    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
+    Description: |
+        Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
+        Takes effect only if in-transit encryption is enabled
+
+  EnforcerCacheTransitEncryption:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: Cannot be changed after creation, update requires replacement
+
+  EnforcerCachePort:
+    Type: Number
+    Default: 6379
+    MinValue: 1
+    MaxValue: 65535
+    Description: Port number to use for communicating with Redis server
+
+
+Conditions:
+  EnforcerCacheTransitEncryptionEnabled: !Equals [ !Ref EnforcerCacheTransitEncryption, Enabled ]
+  EnforcerCacheAuthTokenIsBlank: !Equals [ !Ref EnforcerCacheAuthToken, "" ]
+
+
+Resources:
+  # Subnet Groups for ElastiCache
+  ASAcElastiCacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      CacheSubnetGroupName: !Ref Name
+      Description: ASAc ElastiCache Subnet Group
+      SubnetIds:
+        - !Ref PublicSubnet1ID
+        - !Ref PublicSubnet2ID
+
+  ElastiCacheSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ASAc ElastiCache Security Group
+      GroupName: !Ref Name
+      VpcId: !Ref VPCID
+      SecurityGroupIngress:
+        - Description: "Allow worker interface-0 security group communication."
+          IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !Ref WorkersSecurityGroup0ID
+        - Description: "Allow worker interface-1 security group communication."
+          IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !Ref WorkersSecurityGroup1ID
+        - Description: "Allow worker interface-2 security group communication."
+          IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !Ref WorkersSecurityGroup2ID
+        - Description: "Allow worker interface-3 security group communication."
+          IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !Ref WorkersSecurityGroup3ID
+      SecurityGroupEgress:
+        - Description: "Allow all elasticache cluster IPv4 egress traffic"
+          IpProtocol: "-1"
+          FromPort: 0
+          ToPort: 0
+          CidrIp: 0.0.0.0/0
+        - Description: "Allow all elasticache cluster IPv6 egress traffic"
+          IpProtocol: "-1"
+          FromPort: 0
+          ToPort: 0
+          CidrIpv6: "::/0"
+
+  # ElastiCache setup for ASAc
+
+  ASAcElastiCacheReplicationGroup:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupId: !Ref Name
+      ReplicationGroupDescription: ASAc ElastiCache Replication Group
+      NumCacheClusters: 1
+      Engine: Redis
+      EngineVersion: 6.x
+      CacheNodeType: !Ref EnforcerCacheNodeType
+      Port: !Ref EnforcerCachePort
+      # AuthToken can be set only if Transit Encryption is Enabled
+      AuthToken: !If [ EnforcerCacheTransitEncryptionEnabled,
+                       !If [ EnforcerCacheAuthTokenIsBlank, !Ref 'AWS::NoValue', !Ref EnforcerCacheAuthToken ],
+                       !Ref 'AWS::NoValue' ]
+      MultiAZEnabled: false
+      AutomaticFailoverEnabled: false
+      TransitEncryptionEnabled: !If [ EnforcerCacheTransitEncryptionEnabled, true, false ]
+      CacheSubnetGroupName: !Ref ASAcElastiCacheSubnetGroup
+      SecurityGroupIds:
+        - !Ref ElastiCacheSecurityGroup
+
+Outputs:
+  PrimaryEndpoint:
+    Value: !GetAtt ASAcElastiCacheReplicationGroup.PrimaryEndPoint.Address
+    Description: ASAc Elasticache Primary Endpoint
+  PrimaryEndpointPort:
+    Value: !GetAtt ASAcElastiCacheReplicationGroup.PrimaryEndPoint.Port
+  ReaderEndpoint:
+    Value: !GetAtt ASAcElastiCacheReplicationGroup.ReaderEndPoint.Address
+    Description: ASAc Elasticache Reader Endpoint
+  ReaderEndpointPort:
+    Value: !GetAtt ASAcElastiCacheReplicationGroup.ReaderEndPoint.Port
