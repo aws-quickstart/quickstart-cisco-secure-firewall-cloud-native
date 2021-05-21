@@ -27,13 +27,6 @@ Metadata:
           - EnforcerAutoscaling
           - EnforcerCacheType
           - EnforcerCacheNodeType
-          - EnforcerCacheVpcId
-          - EnforcerCachePublicSubnet1ID
-          - EnforcerCachePublicSubnet2ID
-          - EnforcerCacheWorkerSG0ID
-          - EnforcerCacheWorkerSG1ID
-          - EnforcerCacheWorkerSG2ID
-          - EnforcerCacheWorkerSG3ID
           - EnforcerCachePort
           - EnforcerCacheTransitEncryption
           - EnforcerCacheAuthToken
@@ -66,20 +59,6 @@ Metadata:
         default: Cache type
       EnforcerCacheNodeType:
         default: Cache node type
-      EnforcerCacheVpcId:
-        default: VPC ID
-      EnforcerCachePublicSubnet1ID:
-        default: VPC Public Subnet 1 ID
-      EnforcerCachePublicSubnet2ID:
-        default: VPC Public Subnet 2 ID
-      EnforcerCacheWorkerSG0ID:
-        default: Worker security group 0 ID
-      EnforcerCacheWorkerSG1D:
-        default: Worker security group 1 ID
-      EnforcerCacheWorkerSG2ID:
-        default: Worker security group 2 ID
-      EnforcerCacheWorkerSG3ID:
-        default: Worker security group 3 ID
       EnforcerCacheTransitEncryption:
         default: In-Transit encryption
       EnforcerAutoscaling:
@@ -229,7 +208,7 @@ Resources:
           S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
       Parameters:
         Name: !Ref AWS::StackName
-        VPCID: !Ref EnforcerCacheVpcId
+        VPCID: {Fn::ImportValue: !Sub "${ClusterID}-VPCID"}
         PublicSubnet1ID: {Fn::ImportValue: !Sub "${ClusterID}-PublicSubnet1ID"}
         PublicSubnet2ID: {Fn::ImportValue: !Sub "${ClusterID}-PublicSubnet2ID"}
         WorkersSecurityGroup0ID: {Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup0ID"}
