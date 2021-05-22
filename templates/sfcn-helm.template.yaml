@@ -237,9 +237,10 @@ Resources:
             minLicenseCount: 1
             maxLicenseCount: ${MaxLicenseCount}
             scalingRef:
-              kind: Deployment
+              kind: ${scalingRefKind}
               name: sfcn-enforcer
         - tokenNamespace: !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]
+          scalingRefKind: !If [ EnforcerAutoscalingEnabled, "HorizontalPodAutoscaler", "Deployment" ]
 
   SmartLicenseVpnRedirector:
     DependsOn: CSSMSecret
@@ -262,6 +263,7 @@ Resources:
             minLicenseCount: 1
             maxLicenseCount: 5
             scalingRef:
-              kind: Deployment
+              kind: ${scalingRefKind}
               name: sfcn-vpnredirector-enforcer
         - tokenNamespace: !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]
+          scalingRefKind: !If [ EnforcerAutoscalingEnabled, "HorizontalPodAutoscaler", "Deployment" ]
