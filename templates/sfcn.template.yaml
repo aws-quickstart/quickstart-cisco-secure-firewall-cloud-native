@@ -212,15 +212,21 @@ Parameters:
 
   FirewallVersion:
     Type: String
-    Default: v0.1.0-158
+    Default: v0.1.0-176
     AllowedPattern: ".+"
     Description: Helm chart version of the product
 
   SystemNamespace:
     Type: String
-    Default: kasa-system
+    Default: sfcn-system
     AllowedPattern: ".+"
     Description: The namespace where product components are installed.
+
+  SmartLicenseToken:
+    Type: String
+
+  MaxLicenseCount:
+    Type: Number
 
   EnforcerServiceRoles:
     Type: String
@@ -938,7 +944,7 @@ Resources:
 
             #!/bin/bash
 
-            echo "kasa - setting hugepages and doing modprobe"
+            echo "setting hugepages and doing modprobe"
 
             swapoff -a
             cd /etc && sudo sed -i.backup '/swap/s/^/#/g' fstab && cd ~
@@ -1290,7 +1296,7 @@ Resources:
 
               #!/bin/bash
 
-              echo "kasa - setting hugepages and doing modprobe"
+              echo "setting hugepages and doing modprobe"
 
               swapoff -a
               cd /etc && sudo sed -i.backup '/swap/s/^/#/g' fstab && cd ~
@@ -1884,7 +1890,7 @@ Resources:
       Values:
         "hostNetwork.enabled": "true"
         "dnsPolicy": "ClusterFirstWithHostNet"
-        "prometheus.url": "http://kasa-prometheus.kube-system.svc"
+        "prometheus.url": "http://sfcn-prometheus.kube-system.svc"
         "nodeSelector.css\\.cisco\\.com/nodetype": "configuration"
         "serviceAccount.name": "prometheus-adapter"
 
@@ -1945,12 +1951,14 @@ Resources:
       Parameters:
         ClusterID: !GetAtt EKSControlPlane.Outputs.EKSName
         Version: !Ref FirewallVersion
-        Name: "kasa"
+        Name: "sfcn"
         DevhubUsername: !Ref DevhubUsername
         DevhubApiKey: !Ref DevhubApiKey
         SystemNamespace: !Ref SystemNamespace
         StorageType: !Ref StorageType
         Dataplane: !Ref SecureFirewallDataplane
+        SmartLicenseToken: !Ref SmartLicenseToken
+        MaxLicenseCount: !Ref MaxLicenseCount
         EnforcerServiceRoles: !Ref EnforcerServiceRoles
         EnforcerCacheHost: !If [ EnforcerCacheTypeIsElastiCache, !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint, "" ]
         EnforcerCachePort: !Ref EnforcerCachePort
@@ -1966,7 +1974,7 @@ Resources:
       ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
       Decode: base64
       Command: !Sub |-
-        get secrets -n ${SystemNamespace} -o=jsonpath='{.items[?(@.metadata.annotations.kubernetes\.io/service-account\.name=="kasa-cdo")].data.token}'
+        get secrets -n ${SystemNamespace} -o=jsonpath='{.items[?(@.metadata.annotations.kubernetes\.io/service-account\.name=="sfcn-cdo")].data.token}'
 
 
 Outputs:

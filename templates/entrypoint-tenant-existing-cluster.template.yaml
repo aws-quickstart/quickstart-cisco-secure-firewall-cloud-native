@@ -19,6 +19,11 @@ Metadata:
         Parameters:
           - StorageType
       - Label:
+          default: (Optional) License configuration
+          Parameters:
+            - SmartLicenseToken
+            - MaxLicenseCount
+      - Label:
           default: Data-plane Configuration
         Parameters:
           - DataplaneNamespace
@@ -45,6 +50,10 @@ Metadata:
         default: Control-plane namespace
       DataplaneNamespace:
         default: Data-plane namespace
+      SmartLicenseToken:
+        default: Smart License token
+      MaxLicenseCount:
+        default: Maximum licenses count
       StorageType:
         default: Storage type
       EnforcerConfigurationTier:
@@ -114,35 +123,48 @@ Parameters:
     Type: String
     AllowedPattern: ".+"
     Description: Username of Cisco Devhub account
-  
+
   SystemNamespace:
     Type: String
     AllowedPattern: ".+"
-    Default: kasa-system
+    Default: sfcn-system
 
   DataplaneNamespace:
     Type: String
-  
+
+  SmartLicenseToken:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: A token from Smart Account that has Secure Firewall (SFW) licenses
+
+  MaxLicenseCount:
+    Type: Number
+    Default: 5
+    MinValue: 1
+    MaxValue: 999
+    Description: A maximum number of licenses allowed to be used when enforcer autoscaling is enabled
+
   StorageType:
     Type: String
     AllowedValues: [ local, efs ]
     Default: local
     Description: The type of a storage used to keep logs and deployments files.
-  
+
   EnforcerConfigurationTier:
     Description: Instance tier to be used by enforcer workers
     Default: "vCPU4"
     Type: String
     AllowedValues: [ "vCPU4" ]
     ConstraintDescription: must specify vCPU4
-  
+
   EnforcerCachePort:
     Type: Number
     Default: 6379
     MinValue: 1
     MaxValue: 65535
     Description: Port number to use for communicating with Redis server
-  
+
   EnforcerServiceRoles:
     Type: String
     Default: default
@@ -154,7 +176,7 @@ Parameters:
     Description: |
       Service roles of ASA separated by comma, no spaces allowed. If choosing the multiple service role option, ensure that at
       least as many enforcer worker nodes is set as the desired number for faster deployment
-  
+
   EnforcerCacheAuthToken:
     Type: String
     NoEcho: true
@@ -208,13 +230,13 @@ Resources:
           S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
       Parameters:
         Name: !Ref AWS::StackName
-        VPCID: {Fn::ImportValue: !Sub "${ClusterID}-VPCID"}
-        PublicSubnet1ID: {Fn::ImportValue: !Sub "${ClusterID}-PublicSubnet1ID"}
-        PublicSubnet2ID: {Fn::ImportValue: !Sub "${ClusterID}-PublicSubnet2ID"}
-        WorkersSecurityGroup0ID: {Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup0ID"}
-        WorkersSecurityGroup1ID: {Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup1ID"}
-        WorkersSecurityGroup2ID: {Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup2ID"}
-        WorkersSecurityGroup3ID: {Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup3ID"}
+        VPCID: { Fn::ImportValue: !Sub "${ClusterID}-VPCID" }
+        PublicSubnet1ID: { Fn::ImportValue: !Sub "${ClusterID}-PublicSubnet1ID" }
+        PublicSubnet2ID: { Fn::ImportValue: !Sub "${ClusterID}-PublicSubnet2ID" }
+        WorkersSecurityGroup0ID: { Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup0ID" }
+        WorkersSecurityGroup1ID: { Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup1ID" }
+        WorkersSecurityGroup2ID: { Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup2ID" }
+        WorkersSecurityGroup3ID: { Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup3ID" }
         EnforcerCacheNodeType: !Ref EnforcerCacheNodeType
         EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
         EnforcerCachePort: !Ref EnforcerCachePort
@@ -237,6 +259,8 @@ Resources:
         Name: !Ref Name
         SystemNamespace: !Ref SystemNamespace
         DataplaneNamespace: !Ref DataplaneNamespace
+        SmartLicenseToken: !Ref SmartLicenseToken
+        MaxLicenseCount: !Ref MaxLicenseCount
         StorageType: !Ref StorageType
         EnforcerServiceRoles: !Ref EnforcerServiceRoles
         EnforcerCacheHost: !If [ EnforcerCacheTypeIsElastiCache, !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint, "" ]

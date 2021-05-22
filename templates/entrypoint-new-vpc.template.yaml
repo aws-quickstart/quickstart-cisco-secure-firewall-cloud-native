@@ -18,6 +18,11 @@ Metadata:
           - EKSAdminUserArn
           - AdditionalEKSAdminRoleArn
       - Label:
+          default: (Optional) License configuration
+        Parameters:
+          - SmartLicenseToken
+          - MaxLicenseCount
+      - Label:
           default: Control-plane Configuration
         Parameters:
           - ControllerConfigurationTier
@@ -130,6 +135,10 @@ Metadata:
         default: Quick Start S3 bucket name
       QSS3KeyPrefix:
         default: Quick Start S3 key prefix
+      SmartLicenseToken:
+        default: Smart License token
+      MaxLicenseCount:
+        default: Maximum licenses count
       SecureFirewallDataplane:
         default: Secure Firewall data-plane installation
       DevhubUsername:
@@ -350,6 +359,19 @@ Parameters:
     MaxValue: 65535
     Description: Port number to use for communicating with Redis server
 
+  SmartLicenseToken:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: A token from Smart Account that has Secure Firewall (SFW) licenses
+
+  MaxLicenseCount:
+    Type: Number
+    Default: 5
+    MinValue: 1
+    MaxValue: 999
+    Description: A maximum number of licenses allowed to be used when enforcer autoscaling is enabled
+
   SecureFirewallDataplane:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
@@ -369,13 +391,13 @@ Parameters:
 
   FirewallVersion:
     Type: String
-    Default: v0.1.0-166
+    Default: v0.1.0-176
     AllowedPattern: ".+"
     Description: Helm chart version of the product
 
   SystemNamespace:
     Type: String
-    Default: kasa-system
+    Default: sfcn-system
     AllowedPattern: ".+"
     Description: The namespace where product components are installed.
 
@@ -463,6 +485,9 @@ Resources:
         AdditionalEKSAdminRoleArn: !Ref AdditionalEKSAdminRoleArn
         EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
         StorageType: !Ref StorageType
+        # Licensing
+        SmartLicenseToken: !Ref SmartLicenseToken
+        MaxLicenseCount: !Ref MaxLicenseCount
         # Control-plane configuration
         ControllerConfigurationTier: !Ref ControllerConfigurationTier
         ControlNodeGroupDesiredSize: !Ref ControlNodeGroupDesiredSize

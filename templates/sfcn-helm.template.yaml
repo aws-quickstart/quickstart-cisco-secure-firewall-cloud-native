@@ -1,95 +1,32 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Metadata:
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-      - Label:
-          default: Helm Chart
-        Parameters:
-          - ClusterID
-          - Name
-          - Version
-          - DevhubApiKey
-          - DevhubUsername
-          - SystemNamespace
-      - Label:
-          default: Global Configuration
-        Parameters:
-          - StorageType
-      - Label:
-          default: Control-plane Configuration
-        Parameters:
-          - Controlplane
-      - Label:
-          default: Data-plane Configuration
-        Parameters:
-          - Dataplane
-          - DataplaneNamespace
-          - EnforcerConfigurationTier
-          - EnforcerCachePort
-          - EnforcerServiceRoles
-          - EnforcerCacheAuthToken
-          - EnforcerAutoscaling
-          - EnforcerCacheHost
-    ParameterLabels:
-      Name:
-        default: Name
-      ClusterID:
-        default: EKS cluster ID
-      Version:
-        default: Secure Firewall version
-      DevhubApiKey:
-        default: Devhub API Key
-      DevhubUsername:
-        default: Devhub username
-      SystemNamespace:
-        default: Control-plane namespace
-      DataplaneNamespace:
-        default: Data-plane namespace
-      StorageType:
-        default: Storage type
-      Controlplane:
-        default: Control-plane toggle
-      Dataplane:
-        default: Data-plane toggle
-      EnforcerConfigurationTier:
-        default: Enforcer instance tier
-      EnforcerCachePort:
-        default: Redis port number
-      EnforcerServiceRoles:
-        default: Enforcer service roles
-      EnforcerCacheAuthToken:
-        default: Redis authentication token
-      EnforcerAutoscaling:
-        default: Autoscale enforcer
-      EnforcerCacheHost:
-        default: Redis host
-      
+Description: A nested stack of Cisco Secure Firewall Cloud Native that installs Secure Firewall Helm chart into an existing cluster.
+
 Parameters:
   ClusterID:
     AllowedPattern: ".+"
     Type: String
-  
+
   Version:
     Type: String
     AllowedPattern: ".+"
     Description: Helm chart version
-  
+
   DevhubApiKey:
     Type: String
     NoEcho: True
     AllowedPattern: ".+"
     Description: API key obtained from Cisco Devhub account
-  
+
   DevhubUsername:
     Type: String
     AllowedPattern: ".+"
     Description: Username of Cisco Devhub account
-  
+
   SystemNamespace:
     Type: String
     AllowedPattern: ".+"
-    Default: kasa-system
+    Default: sfcn-system
 
   DataplaneNamespace:
     Type: String
@@ -100,33 +37,40 @@ Parameters:
     AllowedValues: [ Enabled, Disabled ]
     Default: Enabled
     Description: Install Secure Firewall controlplane as part of Helm release
-  
+
   Dataplane:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Enabled
     Description: Install Secure Firewall dataplane as part of Helm release
 
+  SmartLicenseToken:
+    Type: String
+    NoEcho: true
+
+  MaxLicenseCount:
+    Type: Number
+
   StorageType:
     Type: String
     AllowedValues: [ local, efs ]
     Default: local
     Description: The type of a storage used to keep logs and deployments files.
-  
+
   EnforcerConfigurationTier:
     Description: Instance tier to be used by enforcer workers
     Default: "vCPU4"
     Type: String
     AllowedValues: [ "vCPU4" ]
     ConstraintDescription: must specify vCPU4
-  
+
   EnforcerCachePort:
     Type: Number
     Default: 6379
     MinValue: 1
     MaxValue: 65535
     Description: Port number to use for communicating with Redis server
-  
+
   EnforcerServiceRoles:
     Type: String
     Default: default
@@ -138,7 +82,7 @@ Parameters:
     Description: |
       Service roles of ASA separated by comma, no spaces allowed. If choosing the multiple service role option, ensure that at
       least as many enforcer worker nodes is set as the desired number for faster deployment
-  
+
   EnforcerCacheAuthToken:
     Type: String
     NoEcho: true
@@ -168,7 +112,18 @@ Conditions:
   EnforcerAutoscalingEnabled: !Equals [ !Ref EnforcerAutoscaling, Enabled ]
   DataplaneEnabled: !Equals [ !Ref Dataplane, Enabled ]
   ControlplaneEnabled: !Equals [ !Ref Controlplane, Enabled ]
-  DataplaneNamespaceProvided: !Not [ !Equals [ !Ref DataplaneNamespace, ""] ]
+  DataplaneNamespaceProvided: !Not [ !Equals [ !Ref DataplaneNamespace, "" ] ]
+  DefaultRolePresent: !Or
+    - !Equals [ !Ref EnforcerServiceRoles, "default" ]
+    - !Equals [ !Ref EnforcerServiceRoles, "default,vpnredirector" ]
+  VpnRedirectorRolePresent: !Equals [ !Ref EnforcerServiceRoles, "default,vpnredirector" ]
+  LicenseTokenProvided: !Not [ !Equals [ !Ref SmartLicenseToken, "" ] ]
+  LicenseTokenProvided&DefaultRolePresent: !And
+    - !Condition LicenseTokenProvided
+    - !Condition DefaultRolePresent
+  LicenseTokenProvided&VpnRedirectorRolePresent: !And
+    - !Condition LicenseTokenProvided
+    - !Condition VpnRedirectorRolePresent
 
 Resources:
   ChartName:
@@ -176,7 +131,7 @@ Resources:
     Properties:
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
-        ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartName --query '{Value: Parameters[0].Value || `kasa-bundle`}'
+        ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartName --query '{Value: Parameters[0].Value || `sfcn-bundle`}'
       IdField: 'Value'
 
   ChartRepo:
@@ -232,8 +187,8 @@ Resources:
         "global.imageCredentials.username": !Ref DevhubUsername
         "global.imageCredentials.password": !Ref DevhubApiKey
         "global.dataPlaneNamespace": !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]
-        "tags.controlPlane": !If [ ControlplaneEnabled, "true", "false"]
-        "tags.dataPlane": !If [ DataplaneEnabled, "true", "false"]
+        "tags.controlPlane": !If [ ControlplaneEnabled, "true", "false" ]
+        "tags.dataPlane": !If [ DataplaneEnabled, "true", "false" ]
         "dataPlane.serviceRoles": !Sub "{${EnforcerServiceRoles}}"
         "dataPlane.redis.host": !Ref EnforcerCacheHost
         "dataPlane.redis.port": !Ref EnforcerCachePort
@@ -241,4 +196,72 @@ Resources:
         "dataPlane.hpa.enable": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
         "dataPlane.configurationTier": !Ref EnforcerConfigurationTier
         "dataPlane.enableLicensing": !Ref LicensingEnabled
-        "snmpExporter.deployPrometheus": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
+        "scaledown.enable": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
+
+  CSSMSecret:
+    DependsOn: SecureFirewall
+    Condition: LicenseTokenProvided
+    Type: AWSQS::Kubernetes::Resource
+    Properties:
+      ClusterName: !Ref ClusterID
+      Namespace: !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]
+      Manifest: !Sub
+        - |-
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: cssm-token
+          data:
+            token: ${token}
+        - token:
+            Fn::Base64: !Ref SmartLicenseToken
+
+  SmartLicenseDefault:
+    DependsOn: CSSMSecret
+    Type: AWSQS::Kubernetes::Resource
+    Condition: LicenseTokenProvided&DefaultRolePresent
+    Properties:
+      ClusterName: !Ref ClusterID
+      Namespace: !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]
+      Manifest: !Sub
+        - |-
+          apiVersion: aegis.cisco.com/v1
+          kind: SmartLicense
+          metadata:
+            name: sfcn-enforcer
+          spec:
+            action: "REGISTER"
+            tokenSecret:
+              name: cssm-token
+              namespace: ${tokenNamespace}
+            minLicenseCount: 1
+            maxLicenseCount: ${MaxLicenseCount}
+            scalingRef:
+              kind: Deployment
+              name: sfcn-enforcer
+        - tokenNamespace: !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]
+
+  SmartLicenseVpnRedirector:
+    DependsOn: CSSMSecret
+    Type: AWSQS::Kubernetes::Resource
+    Condition: LicenseTokenProvided&VpnRedirectorRolePresent
+    Properties:
+      ClusterName: !Ref ClusterID
+      Namespace: !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]
+      Manifest: !Sub
+        - |-
+          apiVersion: aegis.cisco.com/v1
+          kind: SmartLicense
+          metadata:
+            name: sfcn-vpnredirector-enforcer
+          spec:
+            action: "REGISTER"
+            tokenSecret:
+              name: cssm-token
+              namespace: ${tokenNamespace}
+            minLicenseCount: 1
+            maxLicenseCount: 5
+            scalingRef:
+              kind: Deployment
+              name: sfcn-vpnredirector-enforcer
+        - tokenNamespace: !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]

@@ -2,25 +2,6 @@ AWSTemplateFormatVersion: "2010-09-09"
 
 Description: Nested stack of Cisco Secure Firewall Cloud Native entrypoints to deploy Elasticache into an existing VPC
 
-Metadata:
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-      - Label:
-          default: Cache Configuration
-        Parameters:
-          - Name
-          - VPCID
-          - PublicSubnet1ID
-          - PublicSubnet2ID
-          - WorkersSecurityGroup0ID
-          - WorkersSecurityGroup1ID
-          - WorkersSecurityGroup2ID
-          - WorkersSecurityGroup3ID
-          - EnforcerCacheNodeType
-          - EnforcerCacheAuthToken
-          - EnforcerCachePort
-          - EnforcerCacheTransitEncryption
-
 Parameters:
   Name:
     Type: String
@@ -68,8 +49,8 @@ Parameters:
     AllowedPattern: "([a-zA-Z0-9!&#$^><-]{16,128})?"
     ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
     Description: |
-        Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
-        Takes effect only if in-transit encryption is enabled
+      Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
+      Takes effect only if in-transit encryption is enabled
 
   EnforcerCacheTransitEncryption:
     Type: String
