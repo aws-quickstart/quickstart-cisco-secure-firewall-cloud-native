@@ -263,7 +263,6 @@ Resources:
             minLicenseCount: 1
             maxLicenseCount: 5
             scalingRef:
-              kind: ${scalingRefKind}
+              kind: Deployment
               name: sfcn-vpnredirector-enforcer
         - tokenNamespace: !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]
-          scalingRefKind: !If [ EnforcerAutoscalingEnabled, "HorizontalPodAutoscaler", "Deployment" ]
