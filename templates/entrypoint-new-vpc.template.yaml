@@ -391,7 +391,7 @@ Parameters:
 
   FirewallVersion:
     Type: String
-    Default: v0.1.0-176
+    Default: v0.1.0-183
     AllowedPattern: ".+"
     Description: Helm chart version of the product
 
@@ -534,25 +534,6 @@ Outputs:
     Export: { Name: !Sub '${AWS::StackName}-VPCID' }
   PublicSubnetRouteTable:
     Value: !GetAtt VPCStack.Outputs.PublicSubnetRouteTable
-    Export: { Name: !Sub '${AWS::StackName}-PublicSubnetRouteTable' }
-  PublicSubnet1ID:
-    Value: !GetAtt VPCStack.Outputs.PublicSubnet1ID
-    Export: { Name: !Sub '${AWS::StackName}-PublicSubnet1ID' }
-  PublicSubnet2ID:
-    Value: !GetAtt VPCStack.Outputs.PublicSubnet2ID
-    Export: { Name: !Sub '${AWS::StackName}-PublicSubnet2ID' }
-  WorkersSecurityGroup0ID:
-    Value: !GetAtt SFCNStack.Outputs.WorkersSecurityGroup0ID
-    Export: { Name: !Sub '${AWS::StackName}-WorkersSecurityGroup0ID' }
-  WorkersSecurityGroup1ID:
-    Value: !GetAtt SFCNStack.Outputs.WorkersSecurityGroup1ID
-    Export: { Name: !Sub '${AWS::StackName}-WorkersSecurityGroup1ID' }
-  WorkersSecurityGroup2ID:
-    Value: !GetAtt SFCNStack.Outputs.WorkersSecurityGroup2ID
-    Export: { Name: !Sub '${AWS::StackName}-WorkersSecurityGroup2ID' }
-  WorkersSecurityGroup3ID:
-    Value: !GetAtt SFCNStack.Outputs.WorkersSecurityGroup3ID
-    Export: { Name: !Sub '${AWS::StackName}-WorkersSecurityGroup3ID' }
   ElasticachePrimaryEndpoint:
     Condition: EnforcerCacheTypeIsElastiCache
     Value: !GetAtt SFCNStack.Outputs.ElasticachePrimaryEndpoint

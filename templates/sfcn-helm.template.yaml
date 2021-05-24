@@ -225,7 +225,7 @@ Resources:
       Namespace: !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]
       Manifest: !Sub
         - |-
-          apiVersion: aegis.cisco.com/v1
+          apiVersion: sfcn.cisco.com/v1
           kind: SmartLicense
           metadata:
             name: sfcn-enforcer
@@ -251,7 +251,7 @@ Resources:
       Namespace: !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]
       Manifest: !Sub
         - |-
-          apiVersion: aegis.cisco.com/v1
+          apiVersion: sfcn.cisco.com/v1
           kind: SmartLicense
           metadata:
             name: sfcn-vpnredirector-enforcer

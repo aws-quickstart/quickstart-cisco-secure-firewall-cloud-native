@@ -212,7 +212,7 @@ Parameters:
 
   FirewallVersion:
     Type: String
-    Default: v0.1.0-176
+    Default: v0.1.0-183
     AllowedPattern: ".+"
     Description: Helm chart version of the product
 
@@ -1204,7 +1204,7 @@ Resources:
 
               # make sure EIP is really attached with retry and runtime allocation
               attach_eip() {
-                local pool=kasa
+                local pool=sfcn
                 local retries=5
                 local count=0
                 local eni=$1
@@ -1740,7 +1740,7 @@ Resources:
         kind: StorageClass
         apiVersion: storage.k8s.io/v1
         metadata:
-          name: kasa-sc
+          name: sfcn-sc
         provisioner: efs.csi.aws.com
         reclaimPolicy: Retain
         mountOptions: [ tls ]
@@ -1748,7 +1748,7 @@ Resources:
           provisioningMode: efs-ap
           fileSystemId: ${EFSFileSystem}
           directoryPerms: "700"
-          basePath: /kasa
+          basePath: /sfcn
 
   DeleteAwsCni:
     Type: "Custom::Kubectl"
@@ -1986,16 +1986,14 @@ Outputs:
     Value: !GetAtt EKSControlPlane.Outputs.EKSEndpoint
   EKSName:
     Value: !GetAtt EKSControlPlane.Outputs.EKSName
+  FirewallVersion:
+    Value: !Ref FirewallVersion
+    Export: { Name: !Sub '${EKSClusterName}-FirewallVersion' }
+  SystemNamespace:
+    Value: !Ref SystemNamespace
+    Export: { Name: !Sub '${EKSClusterName}-SystemNamespace' }
   CDOToken:
     Value: !GetAtt SecureFirewallCDOToken.Output
-  WorkersSecurityGroup0ID:
-    Value: !Ref WorkersSecurityGroup0
-  WorkersSecurityGroup1ID:
-    Value: !Ref WorkersSecurityGroup1
-  WorkersSecurityGroup2ID:
-    Value: !Ref WorkersSecurityGroup2
-  WorkersSecurityGroup3ID:
-    Value: !Ref WorkersSecurityGroup3
   ElasticachePrimaryEndpoint:
     Condition: EnforcerCacheTypeIsElastiCache
     Value: !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint
@@ -2010,3 +2008,21 @@ Outputs:
   ElasticacheReaderEndpointPort:
     Condition: EnforcerCacheTypeIsElastiCache
     Value: !GetAtt EnforcerElasticache.Outputs.ReaderEndpointPort
+  PublicSubnet1ID:
+    Value: !Ref PublicSubnet1ID
+    Export: { Name: !Sub '${EKSClusterName}-PublicSubnet1ID' }
+  PublicSubnet2ID:
+    Value: !Ref PublicSubnet2ID
+    Export: { Name: !Sub '${EKSClusterName}-PublicSubnet2ID' }
+  WorkersSecurityGroup0ID:
+    Value: !Ref WorkersSecurityGroup0
+    Export: { Name: !Sub '${EKSClusterName}-WorkersSecurityGroup0ID' }
+  WorkersSecurityGroup1ID:
+    Value: !Ref WorkersSecurityGroup1
+    Export: { Name: !Sub '${EKSClusterName}-WorkersSecurityGroup1ID' }
+  WorkersSecurityGroup2ID:
+    Value: !Ref WorkersSecurityGroup2
+    Export: { Name: !Sub '${EKSClusterName}-WorkersSecurityGroup2ID' }
+  WorkersSecurityGroup3ID:
+    Value: !Ref WorkersSecurityGroup3
+    Export: { Name: !Sub '${EKSClusterName}-WorkersSecurityGroup3ID' }

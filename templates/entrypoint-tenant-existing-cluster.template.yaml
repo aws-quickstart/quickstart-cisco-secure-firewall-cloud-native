@@ -9,11 +9,9 @@ Metadata:
           default: Helm Chart
         Parameters:
           - ClusterID
-          - Version
           - Name
           - DevhubApiKey
           - DevhubUsername
-          - SystemNamespace
       - Label:
           default: Global Configuration
         Parameters:
@@ -38,16 +36,12 @@ Metadata:
     ParameterLabels:
       ClusterID:
         default: EKS cluster ID
-      Version:
-        default: Secure Firewall version
       Name:
         default: Tenant name
       DevhubApiKey:
         default: Devhub API Key
       DevhubUsername:
         default: Devhub username
-      SystemNamespace:
-        default: Control-plane namespace
       DataplaneNamespace:
         default: Data-plane namespace
       SmartLicenseToken:
@@ -103,11 +97,6 @@ Parameters:
     AllowedPattern: ".+"
     Type: String
 
-  Version:
-    Type: String
-    AllowedPattern: ".+"
-    Description: Helm chart version
-
   Name:
     Type: String
     AllowedPattern: ".+"
@@ -124,13 +113,9 @@ Parameters:
     AllowedPattern: ".+"
     Description: Username of Cisco Devhub account
 
-  SystemNamespace:
-    Type: String
-    AllowedPattern: ".+"
-    Default: sfcn-system
-
   DataplaneNamespace:
     Type: String
+    AllowedPattern: ".+"
 
   SmartLicenseToken:
     Type: String
@@ -252,12 +237,12 @@ Resources:
           S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
       Parameters:
         ClusterID: !Ref ClusterID
-        Version: !Ref Version
+        Version: { Fn::ImportValue: !Sub '${ClusterID}-FirewallVersion' }
         DevhubUsername: !Ref DevhubUsername
         DevhubApiKey: !Ref DevhubApiKey
         Controlplane: Disabled
         Name: !Ref Name
-        SystemNamespace: !Ref SystemNamespace
+        SystemNamespace: { Fn::ImportValue: !Sub '${ClusterID}-SystemNamespace' }
         DataplaneNamespace: !Ref DataplaneNamespace
         SmartLicenseToken: !Ref SmartLicenseToken
         MaxLicenseCount: !Ref MaxLicenseCount
