@@ -18,6 +18,11 @@ Metadata:
           - EKSAdminUserArn
           - AdditionalEKSAdminRoleArn
       - Label:
+          default: (Optional) License configuration
+        Parameters:
+          - SmartLicenseToken
+          - MaxLicenseCount
+      - Label:
           default: Control-plane Configuration
         Parameters:
           - ControllerConfigurationTier
@@ -133,6 +138,10 @@ Metadata:
         default: Quick Start S3 bucket name
       QSS3KeyPrefix:
         default: Quick Start S3 key prefix
+      SmartLicenseToken:
+        default: Smart License token
+      MaxLicenseCount:
+        default: Maximum licenses count
       SecureFirewallDataplane:
         default: Secure Firewall data-plane installation
       DevhubUsername:
@@ -305,7 +314,6 @@ Parameters:
     AllowedValues:
       - none
       - elasticache
-      - incluster
     Description: Type of External Cache to use for ASAc
 
   EnforcerCacheNodeType:
@@ -323,7 +331,7 @@ Parameters:
     ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
     Description: |
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
-      Required if in-transit encryption is enabled
+      Takes effect only when in-transit encryption is enabled
 
   EnforcerCacheTransitEncryption:
     Type: String
@@ -337,6 +345,19 @@ Parameters:
     MinValue: 1
     MaxValue: 65535
     Description: Port number to use for communicating with Redis server
+
+  SmartLicenseToken:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: A token from Smart Account that has Secure Firewall (SFW) licenses
+
+  MaxLicenseCount:
+    Type: Number
+    Default: 5
+    MinValue: 1
+    MaxValue: 999
+    Description: A maximum number of licenses allowed to be used when enforcer autoscaling is enabled
 
   SecureFirewallDataplane:
     Type: String
@@ -357,13 +378,13 @@ Parameters:
 
   FirewallVersion:
     Type: String
-    Default: v0.1.0-156
+    Default: v0.1.0-183
     AllowedPattern: ".+"
     Description: Helm chart version of the product
 
   SystemNamespace:
     Type: String
-    Default: kasa-system
+    Default: sfcn-system
     AllowedPattern: ".+"
     Description: The namespace where product components are installed.
 
@@ -384,6 +405,13 @@ Parameters:
     AllowedValues: [ Enabled, Disabled ]
     Default: Disabled
     Description: Enable scaling of ASA with default metrics
+
+Rules:
+  EnforcerElasticacheRule:
+    RuleCondition: !Equals [ !Ref EnforcerCacheType, elasticache ]
+    Assertions:
+      - Assert: !Equals [ !Ref SecureFirewallDataplane, Enabled ]
+        AssertDescription: Cache type can be set to "elasticache" only if firewall data-plane is "Enabled"
 
 Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
@@ -417,6 +445,9 @@ Resources:
         AdditionalEKSAdminRoleArn: !Ref AdditionalEKSAdminRoleArn
         EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
         StorageType: !Ref StorageType
+        # Licensing
+        SmartLicenseToken: !Ref SmartLicenseToken
+        MaxLicenseCount: !Ref MaxLicenseCount
         # Control-plane configuration
         ControllerConfigurationTier: !Ref ControllerConfigurationTier
         ControlNodeGroupDesiredSize: !Ref ControlNodeGroupDesiredSize
@@ -458,6 +489,9 @@ Outputs:
   CDOToken:
     Value: !GetAtt SFCNStack.Outputs.CDOToken
     Description: Base-64 decoded token for the CDO service account.
+  VPCID:
+    Value: !Ref VPCID
+    Export: { Name: !Sub '${AWS::StackName}-VPCID' }
   PublicSubnetRouteTable:
     Value: !Ref PublicSubnetRouteTableID
   ElasticachePrimaryEndpoint:
