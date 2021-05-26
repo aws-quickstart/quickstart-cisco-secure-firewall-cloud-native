@@ -6,21 +6,12 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Helm Chart
-        Parameters:
-          - ClusterID
-          - Name
-          - DevhubApiKey
-          - DevhubUsername
-      - Label:
           default: Global Configuration
         Parameters:
+          - ClusterID
           - StorageType
-      - Label:
-          default: (Optional) License configuration
-          Parameters:
-            - SmartLicenseToken
-            - MaxLicenseCount
+          - DevhubApiKey
+          - DevhubUsername
       - Label:
           default: Data-plane Configuration
         Parameters:
@@ -30,14 +21,22 @@ Metadata:
           - EnforcerAutoscaling
           - EnforcerCacheType
           - EnforcerCacheNodeType
-          - EnforcerCachePort
           - EnforcerCacheTransitEncryption
           - EnforcerCacheAuthToken
+      - Label:
+          default: (Optional) License configuration
+        Parameters:
+          - SmartLicenseToken
+          - MaxLicenseCount
+      - Label:
+          default: (Optional) AWS Quick Start configuration
+        Parameters:
+          - QSS3BucketName
+          - QSS3KeyPrefix
+          - QSS3BucketRegion
     ParameterLabels:
       ClusterID:
         default: EKS cluster ID
-      Name:
-        default: Tenant name
       DevhubApiKey:
         default: Devhub API Key
       DevhubUsername:
@@ -52,8 +51,6 @@ Metadata:
         default: Storage type
       EnforcerConfigurationTier:
         default: Enforcer instance tier
-      EnforcerCachePort:
-        default: Redis port number
       EnforcerServiceRoles:
         default: Enforcer service roles
       EnforcerCacheAuthToken:
@@ -96,11 +93,7 @@ Parameters:
   ClusterID:
     AllowedPattern: ".+"
     Type: String
-
-  Name:
-    Type: String
-    AllowedPattern: ".+"
-    Description: Helm chart release name
+    Description: EKS cluster name (a root stack name) with SFCN product deployed.
 
   DevhubApiKey:
     Type: String
@@ -116,6 +109,7 @@ Parameters:
   DataplaneNamespace:
     Type: String
     AllowedPattern: ".+"
+    Description: A Kubernetes namespace name for a tenant. Must be unique across tenants.
 
   SmartLicenseToken:
     Type: String
@@ -134,7 +128,7 @@ Parameters:
     Type: String
     AllowedValues: [ local, efs ]
     Default: local
-    Description: The type of a storage used to keep logs and deployments files.
+    Description: The type of a storage used to keep logs and deployments files. EFS can be used only if a parent stack has EFS option selected.
 
   EnforcerConfigurationTier:
     Description: Instance tier to be used by enforcer workers
@@ -142,13 +136,6 @@ Parameters:
     Type: String
     AllowedValues: [ "vCPU4" ]
     ConstraintDescription: must specify vCPU4
-
-  EnforcerCachePort:
-    Type: Number
-    Default: 6379
-    MinValue: 1
-    MaxValue: 65535
-    Description: Port number to use for communicating with Redis server
 
   EnforcerServiceRoles:
     Type: String
@@ -179,12 +166,12 @@ Parameters:
     AllowedValues:
       - none
       - elasticache
-    Description: Type of External Cache to use for ASAc
+    Description: Type of External Cache to use for CNFW
 
   EnforcerCacheNodeType:
     Type: String
-    Default: "cache.r5.large"
-    AllowedValues: [ cache.m5.xlarge, cache.r5.large ]
+    Default: "cache.m5.large"
+    AllowedValues: [ cache.m5.xlarge, cache.m5.large ]
     Description: EC2 instance type to use as Cache node, check region availaibility before selection
 
   EnforcerCacheTransitEncryption:
@@ -224,7 +211,6 @@ Resources:
         WorkersSecurityGroup3ID: { Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup3ID" }
         EnforcerCacheNodeType: !Ref EnforcerCacheNodeType
         EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
-        EnforcerCachePort: !Ref EnforcerCachePort
         EnforcerCacheTransitEncryption: !Ref EnforcerCacheTransitEncryption
 
   SecureFirewall:
@@ -241,7 +227,7 @@ Resources:
         DevhubUsername: !Ref DevhubUsername
         DevhubApiKey: !Ref DevhubApiKey
         Controlplane: Disabled
-        Name: !Ref Name
+        Name: !Sub "sfcn-${DataplaneNamespace}"
         SystemNamespace: { Fn::ImportValue: !Sub '${ClusterID}-SystemNamespace' }
         DataplaneNamespace: !Ref DataplaneNamespace
         SmartLicenseToken: !Ref SmartLicenseToken
@@ -249,7 +235,6 @@ Resources:
         StorageType: !Ref StorageType
         EnforcerServiceRoles: !Ref EnforcerServiceRoles
         EnforcerCacheHost: !If [ EnforcerCacheTypeIsElastiCache, !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint, "" ]
-        EnforcerCachePort: !Ref EnforcerCachePort
         EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
         EnforcerAutoscaling: !Ref EnforcerAutoscaling
         EnforcerConfigurationTier: !Ref EnforcerConfigurationTier

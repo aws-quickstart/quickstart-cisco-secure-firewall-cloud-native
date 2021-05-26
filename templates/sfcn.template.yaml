@@ -30,38 +30,38 @@ Parameters:
     Description: ID of your existing VPC (e.g., vpc-0343606e)
   PublicSubnet1ID:
     Type: "AWS::EC2::Subnet::Id"
-    Description: ID of the public DMZ subnet 1 (ASAc default 1), located in Availability Zone 1.
+    Description: ID of the public DMZ subnet 1 (CNFW default 1), located in Availability Zone 1.
   PrivateSubnet1ID:
     Type: "AWS::EC2::Subnet::Id"
     Description: ID of the private subnet 1, located in Availability Zone 1. Must have "kubernetes.io/role/internal-elb" tag attached.
   PublicSubnet2ID:
     Type: "AWS::EC2::Subnet::Id"
-    Description: ID of the public DMZ subnet 2 (ASAc default 2), located in Availability Zone 2.
+    Description: ID of the public DMZ subnet 2 (CNFW default 2), located in Availability Zone 2.
   PrivateSubnet2ID:
     Type: "AWS::EC2::Subnet::Id"
     Description: ID of the private subnet 2, located in Availability Zone 2. Must have "kubernetes.io/role/internal-elb" tag attached.
   PublicSubnetRouteTableID:
     Description: ID of VPC public subnet route table (e.g., rtb-0b9ce78da592f11e0)
     Type: String
-  ASAcOutsideSubnet1CIDR:
+  CNFWOutsideSubnet1CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
-    Description: CIDR block for the ASAc outside subnet 1, located in Availability Zone 1.
+    Description: CIDR block for the CNFW outside subnet 1, located in Availability Zone 1.
     Type: String
-  ASAcInsideSubnet1CIDR:
+  CNFWInsideSubnet1CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
-    Description: CIDR block for the ASAc inside subnet 1, located in Availability Zone 1.
+    Description: CIDR block for the CNFW inside subnet 1, located in Availability Zone 1.
     Type: String
-  ASAcOutsideSubnet2CIDR:
+  CNFWOutsideSubnet2CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
-    Description: CIDR block for the ASAc outside subnet 2, located in Availability Zone 2.
+    Description: CIDR block for the CNFW outside subnet 2, located in Availability Zone 2.
     Type: String
-  ASAcInsideSubnet2CIDR:
+  CNFWInsideSubnet2CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
-    Description: CIDR block for the ASAc inside subnet 2, located in Availability Zone 2.
+    Description: CIDR block for the CNFW inside subnet 2, located in Availability Zone 2.
     Type: String
 
   EKSClusterName:
@@ -129,12 +129,6 @@ Parameters:
     Default: local
     Description: The type of a storage used to keep logs and deployments files.
 
-  PortierisVersion:
-    Type: String
-    AllowedValues: [ v0.10.2, none ]
-    Default: none
-    Description: Deploy Portieris for image signature verification
-
   EnforcerNodeGroupMaxSize:
     Type: Number
     Default: 5
@@ -153,7 +147,7 @@ Parameters:
       - outside
       - inside
       - both
-    Description: ASAc interfaces to attach Elastic IPs.
+    Description: CNFW interfaces to attach Elastic IPs.
 
   EnforcerCacheType:
     Type: String
@@ -161,12 +155,12 @@ Parameters:
     AllowedValues:
       - none
       - elasticache
-    Description: Type of External Cache to use for ASAc
+    Description: Type of External Cache to use for CNFW
 
   EnforcerCacheNodeType:
     Type: String
-    Default: "cache.r5.large"
-    AllowedValues: [ cache.m5.xlarge, cache.r5.large ]
+    Default: "cache.m5.large"
+    AllowedValues: [ cache.m5.xlarge, cache.m5.large ]
     Description: EC2 instance type to use as Cache node, check region availaibility before selection
 
   EnforcerCacheAuthToken:
@@ -212,7 +206,7 @@ Parameters:
 
   FirewallVersion:
     Type: String
-    Default: v0.1.0-183
+    Default: v0.1.0-185
     AllowedPattern: ".+"
     Description: Helm chart version of the product
 
@@ -270,7 +264,6 @@ Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
   EnableEFS: !Equals [ !Ref StorageType, "efs" ]
   EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
-  UsePortieris: !Not [ !Equals [ !Ref PortierisVersion, none ] ]
   HasAdditionalEKSAdminRole: !Not [ !Equals [ !Ref AdditionalEKSAdminRoleArn, "" ] ]
 
 Resources:
@@ -310,7 +303,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPCID
-      CidrBlock: !Ref ASAcOutsideSubnet1CIDR
+      CidrBlock: !Ref CNFWOutsideSubnet1CIDR
       MapPublicIpOnLaunch: true
       AvailabilityZone: !Select [ 0, !GetAZs "" ]
       Tags:
@@ -331,7 +324,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPCID
-      CidrBlock: !Ref ASAcInsideSubnet1CIDR
+      CidrBlock: !Ref CNFWInsideSubnet1CIDR
       MapPublicIpOnLaunch: true
       AvailabilityZone: !Select [ 0, !GetAZs "" ]
       Tags:
@@ -352,7 +345,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPCID
-      CidrBlock: !Ref ASAcOutsideSubnet2CIDR
+      CidrBlock: !Ref CNFWOutsideSubnet2CIDR
       MapPublicIpOnLaunch: true
       AvailabilityZone: !Select [ 1, !GetAZs "" ]
       Tags:
@@ -373,7 +366,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPCID
-      CidrBlock: !Ref ASAcInsideSubnet2CIDR
+      CidrBlock: !Ref CNFWInsideSubnet2CIDR
       MapPublicIpOnLaunch: true
       AvailabilityZone: !Select [ 1, !GetAZs "" ]
       Tags:
@@ -489,17 +482,17 @@ Resources:
         - Key: Name
           Value: !Sub "${EKSClusterName}-workers-0"
       SecurityGroupIngress:
-        - Description: "Allow connections from first ASAc interface"
+        - Description: "Allow connections from first CNFW interface"
           IpProtocol: "-1"
           FromPort: 0
           ToPort: 65535
           SourceSecurityGroupId: !Ref WorkersSecurityGroup1
-        - Description: "Allow connections from second ASAc interface"
+        - Description: "Allow connections from second CNFW interface"
           IpProtocol: "-1"
           FromPort: 0
           ToPort: 65535
           SourceSecurityGroupId: !Ref WorkersSecurityGroup2
-        - Description: "Allow connections from third ASAc interface"
+        - Description: "Allow connections from third CNFW interface"
           IpProtocol: "-1"
           FromPort: 0
           ToPort: 65535
@@ -851,6 +844,19 @@ Resources:
             - HasAdditionalEKSAdminRole
             - !Sub ', {"groups": ["system:masters"], "rolearn": "${AdditionalEKSAdminRoleArn}", "username": "${AdditionalEKSAdminRoleArn}"}'
             - ""
+      # pass all the EKSControlPlane parameters to force update
+      _EKSClusterName: !Ref EKSClusterName
+      _KubernetesVersion: !Ref KubernetesVersion
+      _SecurityGroupIds: !Ref ControlPlaneSecurityGroup
+      _SubnetIds: !Join
+        - ","
+        - - !Ref PublicSubnet1ID
+          - !Ref PublicSubnet2ID
+          - !Ref PrivateSubnet1ID
+          - !Ref PrivateSubnet2ID
+      _RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/eks-quickstart-ControlPlane"
+      _FunctionRoleArn: !GetAtt IamStack.Outputs.KubernetesAdminRoleArn
+      _EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
 
   # EFS
 
@@ -887,31 +893,47 @@ Resources:
 
   # Node groups
 
-  CPWorkersGroup:
-    Type: AWS::EKS::Nodegroup
+  NodeInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: /
+      Roles:
+      - !Ref EC2WorkersRole
+
+  CPWorkersGroupUnmanaged:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
     DependsOn: [ CalicoCNI, AwsAuthConfigMap ]
     Properties:
-      NodegroupName: cpworkers
-      ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
-      NodeRole: !GetAtt EC2WorkersRole.Arn
-      Labels:
-        "css.cisco.com/nodetype": configuration
-      Subnets:
+      DesiredCapacity: !Ref ControlNodeGroupDesiredSize
+      MaxSize: !Ref ControlNodeGroupMaxSize
+      MinSize: "1"
+      LaunchTemplate:
+        LaunchTemplateId: !Ref CPLaunchTemplate
+        Version: !GetAtt CPLaunchTemplate.LatestVersionNumber
+      Tags:
+        - Key: Name
+          PropagateAtLaunch: true
+          Value: !Sub ${EKSControlPlane.Outputs.EKSName}-cpworkers
+        - Key: !Sub kubernetes.io/cluster/${EKSControlPlane.Outputs.EKSName}
+          PropagateAtLaunch: true
+          Value: owned
+        - Key: k8s.io/cluster-autoscaler/enabled
+          Value: 'true'
+          PropagateAtLaunch: true
+        - Key: !Sub 'k8s.io/cluster-autoscaler/${EKSControlPlane.Outputs.EKSName}'
+          Value: ''
+          PropagateAtLaunch: true
+      VPCZoneIdentifier:
         - !Ref PublicSubnet1ID
         - !Ref PublicSubnet2ID
-      ScalingConfig:
-        DesiredSize: !Ref ControlNodeGroupDesiredSize
-        MaxSize: !Ref ControlNodeGroupMaxSize
-        MinSize: 1
-      LaunchTemplate:
-        Id: !Ref CPLaunchTemplate
-        Version: !GetAtt CPLaunchTemplate.LatestVersionNumber
 
   CPLaunchTemplate:
     Type: "AWS::EC2::LaunchTemplate"
     Properties:
       LaunchTemplateName: !Sub "${EKSClusterName}-cpworkers"
       LaunchTemplateData:
+        IamInstanceProfile:
+          Arn: !GetAtt NodeInstanceProfile.Arn
         KeyName: !Ref KeyPairName
         ImageId: !FindInMap [ WorkerAMIMap, !Ref AWS::Region, "118" ]
         InstanceType: !FindInMap [ ConfigurationTierMap, !Ref ControllerConfigurationTier, instanceType ]
@@ -1087,35 +1109,45 @@ Resources:
             set -o xtrace
 
             /etc/eks/bootstrap.sh ${EKSControlPlane.Outputs.EKSName} \
+                     --kubelet-extra-args '--node-labels=sfcn.cisco.com/nodetype=configuration' \
                      --b64-cluster-ca ${EKSControlPlane.Outputs.CAData} \
                      --apiserver-endpoint ${EKSControlPlane.Outputs.EKSEndpoint} \
                      --use-max-pods true
 
-  EPWorkersGroup:
-    Type: AWS::EKS::Nodegroup
+  EPWorkersGroupUnmanaged:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
     DependsOn: [ CalicoCNI, AwsAuthConfigMap ]
     Properties:
-      NodegroupName: epworkers
-      ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
-      NodeRole: !GetAtt EC2WorkersRole.Arn
-      Labels:
-        "css.cisco.com/nodetype": enforcement
-      Subnets:
+      DesiredCapacity: !Ref EnforcerNodeGroupDesiredSize
+      MaxSize: !Ref EnforcerNodeGroupMaxSize
+      MinSize: "1"
+      LaunchTemplate:
+        LaunchTemplateId: !Ref EPLaunchTemplate
+        Version: !GetAtt EPLaunchTemplate.LatestVersionNumber
+      Tags:
+        - Key: Name
+          PropagateAtLaunch: true
+          Value: !Sub ${EKSControlPlane.Outputs.EKSName}-epworkers
+        - Key: !Sub kubernetes.io/cluster/${EKSControlPlane.Outputs.EKSName}
+          PropagateAtLaunch: true
+          Value: owned
+        - Key: k8s.io/cluster-autoscaler/enabled
+          Value: 'true'
+          PropagateAtLaunch: true
+        - Key: !Sub 'k8s.io/cluster-autoscaler/${EKSControlPlane.Outputs.EKSName}'
+          Value: ''
+          PropagateAtLaunch: true
+      VPCZoneIdentifier:
         - !Ref PublicSubnet1ID
         - !Ref PublicSubnet2ID
-      ScalingConfig:
-        DesiredSize: !Ref EnforcerNodeGroupDesiredSize
-        MaxSize: !Ref EnforcerNodeGroupMaxSize
-        MinSize: 1
-      LaunchTemplate:
-        Id: !Ref EPLaunchTemplate
-        Version: !GetAtt EPLaunchTemplate.LatestVersionNumber
 
   EPLaunchTemplate:
     Type: "AWS::EC2::LaunchTemplate"
     Properties:
       LaunchTemplateName: !Sub "${EKSClusterName}-epworkers"
       LaunchTemplateData:
+        IamInstanceProfile:
+          Arn: !GetAtt NodeInstanceProfile.Arn
         KeyName: !Ref KeyPairName
         ImageId: !FindInMap [ WorkerAMIMap, !Ref AWS::Region, "118" ]
         InstanceType: !FindInMap [ ConfigurationTierMap, !Ref EnforcerConfigurationTier, instanceType ]
@@ -1137,6 +1169,8 @@ Resources:
                 Value: owned
               - Key: k8s.io/cluster-autoscaler/node-template/resources/hugepages-2Mi
                 Value: 64Mi
+              - Key: !Sub kubernetes.io/cluster/${EKSControlPlane.Outputs.EKSName}        
+                Value: owned
         UserData: !Base64
           "Fn::Sub":
             - |
@@ -1474,7 +1508,7 @@ Resources:
                       corePath = env["COREDUMP_PATH"]
                       coreLimitString = env["CORE_SIZE_LIMIT"].rstrip('MB')
                       coreLimit = MULTIPLIER * MULTIPLIER * int(coreLimitString)
-                      logging.info("Core detectected in ASAc pod: %s ,Namespace: %s , dumping to path: %s",
+                      logging.info("Core detectected in EP pod: %s ,Namespace: %s , dumping to path: %s",
                                   podName, podNamespace, corePath)
                   else:
                       podName = "HOST"
@@ -1534,7 +1568,7 @@ Resources:
                        --b64-cluster-ca ${EKSControlPlane.Outputs.CAData} \
                        --apiserver-endpoint ${EKSControlPlane.Outputs.EKSEndpoint} \
                        --use-max-pods true \
-                       --kubelet-extra-args '--register-with-taints=cisco-nodetype=enforcement:NoSchedule'
+                       --kubelet-extra-args '--register-with-taints=cisco-nodetype=enforcement:NoSchedule --node-labels=sfcn.cisco.com/nodetype=enforcement'
 
             - HugePagesSize: !FindInMap [ ConfigurationTierMap, !Ref EnforcerConfigurationTier, hugePagesSize ]
 
@@ -1793,7 +1827,7 @@ Resources:
 
   ClusterAutoscaler:
     Type: "AWSQS::Kubernetes::Helm"
-    DependsOn: [ EPWorkersGroup, CPWorkersGroup ]
+    DependsOn: [ EPWorkersGroupUnmanaged, CPWorkersGroupUnmanaged ]
     Properties:
       ClusterID: !GetAtt EKSControlPlane.Outputs.EKSName
       Name: "autoscaler"
@@ -1802,7 +1836,7 @@ Resources:
       Repository: "https://kubernetes.github.io/autoscaler"
       Version: "9.3.0"
       Values:
-        "nodeSelector.css\\.cisco\\.com/nodetype": "configuration"
+        "nodeSelector.sfcn\\.cisco\\.com/nodetype": "configuration"
         "autoDiscovery.clusterName": !GetAtt EKSControlPlane.Outputs.EKSName
         "extraArgs.skip-nodes-with-system-pods": "false"
         "extraArgs.skip-nodes-with-local-storage": "false"
@@ -1820,9 +1854,9 @@ Resources:
       Repository: "https://charts.jetstack.io"
       Version: "v1.2.0"
       Values:
-        "nodeSelector.css\\.cisco\\.com/nodetype": "configuration"
-        "webhook.nodeSelector.css\\.cisco\\.com/nodetype": "configuration"
-        "cainjector.nodeSelector.css\\.cisco\\.com/nodetype": "configuration"
+        "nodeSelector.sfcn\\.cisco\\.com/nodetype": "configuration"
+        "webhook.nodeSelector.sfcn\\.cisco\\.com/nodetype": "configuration"
+        "cainjector.nodeSelector.sfcn\\.cisco\\.com/nodetype": "configuration"
         "installCRDs": "true"
         "webhook.hostNetwork": "true"
         "webhook.securePort": "10251"
@@ -1848,35 +1882,6 @@ Resources:
         "webhook.resources.requests.cpu": "25m"
         "webhook.resources.requests.memory": "30Mi"
 
-  Portieris:
-    Condition: UsePortieris
-    Type: "AWSQS::Kubernetes::Helm"
-    DependsOn: CertManager
-    Properties:
-      ClusterID: !GetAtt EKSControlPlane.Outputs.EKSName
-      Name: "portieris"
-      Namespace: "portieris"
-      # FIXME: ask for a real repo to host the chart, https://github.com/IBM/portieris/issues/306
-      Chart: "myhelmrepo/portieris"
-      Repository: "https://hamburgerbun.github.io/helmcharts"
-      Version: !Ref PortierisVersion
-      Values:
-        "UseCertManager": "true"
-        "replicaCount": "1"
-        "nodeSelector.css\\.cisco\\.com/nodetype": "configuration"
-        "useHostNetwork": "true"
-        "IBMContainerService": "false"
-
-  PortierisPatchClusterDNS:
-    Condition: UsePortieris
-    Type: "Custom::Kubectl"
-    DependsOn: Portieris
-    Properties:
-      ServiceToken: !GetAtt KubectlFunction.Arn
-      ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
-      Command: |-
-        patch deployment/portieris -n portieris --patch '{"spec": {"strategy": { "rollingUpdate": null, "type": "Recreate" }, "template": {"dnsPolicy": "ClusterFirstWithHostNet"}}}'
-
   PrometheusAdapter:
     Type: "AWSQS::Kubernetes::Helm"
     DependsOn: ClusterAutoscaler
@@ -1891,7 +1896,7 @@ Resources:
         "hostNetwork.enabled": "true"
         "dnsPolicy": "ClusterFirstWithHostNet"
         "prometheus.url": "http://sfcn-prometheus.kube-system.svc"
-        "nodeSelector.css\\.cisco\\.com/nodetype": "configuration"
+        "nodeSelector.sfcn\\.cisco\\.com/nodetype": "configuration"
         "serviceAccount.name": "prometheus-adapter"
 
   UpdatePodSecurityPolicy:
@@ -1942,6 +1947,7 @@ Resources:
       - ClusterAutoscaler
       - CertManager
       - PrometheusAdapter
+      - CleanupLambdas
     Properties:
       TemplateURL:
         !Sub
@@ -1997,14 +2003,14 @@ Outputs:
   ElasticachePrimaryEndpoint:
     Condition: EnforcerCacheTypeIsElastiCache
     Value: !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint
-    Description: ASAc Elasticache Primary Endpoint
+    Description: CNFW Elasticache Primary Endpoint
   ElasticachePrimaryEndpointPort:
     Condition: EnforcerCacheTypeIsElastiCache
     Value: !GetAtt EnforcerElasticache.Outputs.PrimaryEndpointPort
   ElasticacheReaderEndpoint:
     Condition: EnforcerCacheTypeIsElastiCache
     Value: !GetAtt EnforcerElasticache.Outputs.ReaderEndpoint
-    Description: ASAc Elasticache Reader Endpoint
+    Description: CNFW Elasticache Reader Endpoint
   ElasticacheReaderEndpointPort:
     Condition: EnforcerCacheTypeIsElastiCache
     Value: !GetAtt EnforcerElasticache.Outputs.ReaderEndpointPort
