@@ -13,11 +13,11 @@ Parameters:
 
   PublicSubnet1ID:
     Type: "AWS::EC2::Subnet::Id"
-    Description: ID of the public DMZ subnet 1 (ASAc default 1), located in Availability Zone 1.
+    Description: ID of the public DMZ subnet 1 (CNFW default 1), located in Availability Zone 1.
 
   PublicSubnet2ID:
     Type: "AWS::EC2::Subnet::Id"
-    Description: ID of the public DMZ subnet 2 (ASAc default 2), located in Availability Zone 2.
+    Description: ID of the public DMZ subnet 2 (CNFW default 2), located in Availability Zone 2.
 
   WorkersSecurityGroup0ID:
     Type: "AWS::EC2::SecurityGroup::Id"
@@ -37,8 +37,8 @@ Parameters:
 
   EnforcerCacheNodeType:
     Type: String
-    Default: "cache.r5.large"
-    AllowedValues: [ cache.m5.xlarge, cache.r5.large ]
+    Default: "cache.m5.large"
+    AllowedValues: [ cache.m5.xlarge, cache.m5.large ]
     Description: EC2 instance type to use as Cache node, check region availaibility before selection
 
   EnforcerCacheAuthToken:
@@ -73,11 +73,11 @@ Conditions:
 
 Resources:
   # Subnet Groups for ElastiCache
-  ASAcElastiCacheSubnetGroup:
+  CNFWElastiCacheSubnetGroup:
     Type: AWS::ElastiCache::SubnetGroup
     Properties:
       CacheSubnetGroupName: !Ref Name
-      Description: ASAc ElastiCache Subnet Group
+      Description: CNFW ElastiCache Subnet Group
       SubnetIds:
         - !Ref PublicSubnet1ID
         - !Ref PublicSubnet2ID
@@ -85,7 +85,7 @@ Resources:
   ElastiCacheSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: ASAc ElastiCache Security Group
+      GroupDescription: CNFW ElastiCache Security Group
       GroupName: !Ref Name
       VpcId: !Ref VPCID
       SecurityGroupIngress:
@@ -121,13 +121,13 @@ Resources:
           ToPort: 0
           CidrIpv6: "::/0"
 
-  # ElastiCache setup for ASAc
+  # ElastiCache setup for CNFW
 
-  ASAcElastiCacheReplicationGroup:
+  CNFWElastiCacheReplicationGroup:
     Type: AWS::ElastiCache::ReplicationGroup
     Properties:
       ReplicationGroupId: !Ref Name
-      ReplicationGroupDescription: ASAc ElastiCache Replication Group
+      ReplicationGroupDescription: CNFW ElastiCache Replication Group
       NumCacheClusters: 1
       Engine: Redis
       EngineVersion: 6.x
@@ -140,18 +140,18 @@ Resources:
       MultiAZEnabled: false
       AutomaticFailoverEnabled: false
       TransitEncryptionEnabled: !If [ EnforcerCacheTransitEncryptionEnabled, true, false ]
-      CacheSubnetGroupName: !Ref ASAcElastiCacheSubnetGroup
+      CacheSubnetGroupName: !Ref CNFWElastiCacheSubnetGroup
       SecurityGroupIds:
         - !Ref ElastiCacheSecurityGroup
 
 Outputs:
   PrimaryEndpoint:
-    Value: !GetAtt ASAcElastiCacheReplicationGroup.PrimaryEndPoint.Address
-    Description: ASAc Elasticache Primary Endpoint
+    Value: !GetAtt CNFWElastiCacheReplicationGroup.PrimaryEndPoint.Address
+    Description: CNFW Elasticache Primary Endpoint
   PrimaryEndpointPort:
-    Value: !GetAtt ASAcElastiCacheReplicationGroup.PrimaryEndPoint.Port
+    Value: !GetAtt CNFWElastiCacheReplicationGroup.PrimaryEndPoint.Port
   ReaderEndpoint:
-    Value: !GetAtt ASAcElastiCacheReplicationGroup.ReaderEndPoint.Address
-    Description: ASAc Elasticache Reader Endpoint
+    Value: !GetAtt CNFWElastiCacheReplicationGroup.ReaderEndPoint.Address
+    Description: CNFW Elasticache Reader Endpoint
   ReaderEndpointPort:
-    Value: !GetAtt ASAcElastiCacheReplicationGroup.ReaderEndPoint.Port
+    Value: !GetAtt CNFWElastiCacheReplicationGroup.ReaderEndPoint.Port
