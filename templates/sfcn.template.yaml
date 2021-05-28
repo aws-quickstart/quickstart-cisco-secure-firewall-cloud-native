@@ -1904,7 +1904,12 @@ Resources:
         {"pathPrefix": "/opt/cni/bin"}, {"pathPrefix": "/etc/cni/net.d"},
         {"pathPrefix": "/var/lib/cni/networks"}, {"pathPrefix": "/var/run/nodeagent"},
         {"pathPrefix": "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"},
-        {"pathPrefix": "/mnt/coredump_repo"}, {"pathPrefix": "/home/ubuntu/fluentdout"}]}}'
+        {"pathPrefix": "/mnt/coredump_repo"}, {"pathPrefix": "/home/ubuntu/fluentdout"},
+        {"pathPrefix": "/var/lib/kubelet"},
+        {"pathPrefix": "/var/run/efs"},
+        {"pathPrefix": "/var/amazon/efs"},
+        {"pathPrefix": "/etc/amazon/efs"}
+        ]}}'
 
   EnforcerElasticache:
     Type: AWS::CloudFormation::Stack
