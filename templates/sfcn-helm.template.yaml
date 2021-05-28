@@ -12,17 +12,6 @@ Parameters:
     AllowedPattern: ".+"
     Description: Helm chart version
 
-  DevhubApiKey:
-    Type: String
-    NoEcho: True
-    AllowedPattern: ".+"
-    Description: API key obtained from Cisco Devhub account
-
-  DevhubUsername:
-    Type: String
-    AllowedPattern: ".+"
-    Description: Username of Cisco Devhub account
-
   SystemNamespace:
     Type: String
     AllowedPattern: ".+"
@@ -80,8 +69,7 @@ Parameters:
       Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
       and upto 15 characters long.
     Description: |
-      Service roles of ASA separated by comma, no spaces allowed. If choosing the multiple service role option, ensure that at
-      least as many enforcer worker nodes is set as the desired number for faster deployment
+      The service role of the data plane node. Leave default if you deployed the SFCN with the default setting of 1 data plane node. Each additional service role requires a corresponding data plane node.
 
   EnforcerCacheAuthToken:
     Type: String
@@ -98,7 +86,7 @@ Parameters:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Disabled
-    Description: Enable scaling of ASA with default metrics
+    Description: Enable the default Enforcer autoscaling.
 
   EnforcerCacheHost:
     Type: String
@@ -139,7 +127,23 @@ Resources:
     Properties:
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
-        ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartRepo --query '{Value: Parameters[0].Value || `https://devhub.cisco.com/artifactory/asac-ci-helm`}'
+        ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartRepo --query '{Value: Parameters[0].Value || `https://d2rxbueeojmoz9.cloudfront.net`}'
+      IdField: 'Value'
+
+  ChartRepoUsername:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub |
+        ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartRepoUsername --query '{Value: Parameters[0].Value || ``}'
+      IdField: 'Value'
+
+  ChartRepoPassword:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub |
+        ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartRepoPassword --query '{Value: Parameters[0].Value || ``}' --with-decryption
       IdField: 'Value'
 
   ContainerRegistry:
@@ -150,7 +154,23 @@ Resources:
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallContainerRegistry --query '{Value: Parameters[0].Value || `709825985650.dkr.ecr.us-east-1.amazonaws.com`}'
       IdField: 'Value'
 
-  ArtifactoryRepo:
+  ContainerRegistryUsername:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub |
+        ssm get-parameters --names /CSFCN/${ClusterID}/firewallContainerRegistryUsername --query '{Value: Parameters[0].Value || ``}'
+      IdField: 'Value'
+
+  ContainerRegistryPassword:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub |
+        ssm get-parameters --names /CSFCN/${ClusterID}/firewallContainerRegistryPassword --query '{Value: Parameters[0].Value || ``}' --with-decryption
+      IdField: 'Value'
+
+  ContainerRepo:
     Type: Custom::CliQuery
     Properties:
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
@@ -172,20 +192,20 @@ Resources:
       ClusterID: !Ref ClusterID
       Name: !Ref Name
       Namespace: !Ref SystemNamespace
-      Chart: !Ref ChartName
+      Chart: !GetAtt ChartName.Value
       Version: !Ref Version
-      Repository: !Ref ChartRepo
+      Repository: !GetAtt ChartRepo.Value
       RepositoryOptions:
-        Username: !Ref DevhubUsername
-        Password: !Ref DevhubApiKey
+        Username: !GetAtt ChartRepoUsername.Value
+        Password: !GetAtt ChartRepoPassword.Value
       Values:
         "global.acceptEULA": "yes"
         "global.platform": "eks"
         "global.storageType": !Ref StorageType
-        "global.imageCredentials.registry": !Ref ContainerRegistry
-        "global.imageCredentials.artifactoryRepo": !Ref ArtifactoryRepo
-        "global.imageCredentials.username": !Ref DevhubUsername
-        "global.imageCredentials.password": !Ref DevhubApiKey
+        "global.imageCredentials.registry": !GetAtt ContainerRegistry.Value
+        "global.imageCredentials.artifactoryRepo": !GetAtt ContainerRepo.Value
+        "global.imageCredentials.username": !GetAtt ContainerRegistryUsername.Value
+        "global.imageCredentials.password": !GetAtt ContainerRegistryPassword.Value
         "global.dataPlaneNamespace": !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]
         "tags.controlPlane": !If [ ControlplaneEnabled, "true", "false" ]
         "tags.dataPlane": !If [ DataplaneEnabled, "true", "false" ]
@@ -195,7 +215,7 @@ Resources:
         "dataPlane.redis.token": !Ref EnforcerCacheAuthToken
         "dataPlane.hpa.enable": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
         "dataPlane.configurationTier": !Ref EnforcerConfigurationTier
-        "dataPlane.enableLicensing": !Ref LicensingEnabled
+        "dataPlane.enableLicensing": !GetAtt LicensingEnabled.Value
         "scaledown.enable": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
 
   CSSMSecret:

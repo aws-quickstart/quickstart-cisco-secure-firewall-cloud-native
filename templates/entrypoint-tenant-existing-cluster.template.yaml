@@ -6,30 +6,34 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Global Configuration
+          default: Required Configuration
         Parameters:
           - ClusterID
-          - StorageType
-          - DevhubApiKey
-          - DevhubUsername
-      - Label:
-          default: Data-plane Configuration
-        Parameters:
           - DataplaneNamespace
-          - EnforcerConfigurationTier
+      - Label:
+          default: Basic Configuration - Global
+        Parameters:
+          - StorageType
+      - Label:
+          default: Basic Configuration - Data Plane
+        Parameters:
+          - EnforcerCacheType
+      - Label:
+          default: Basic Configuration - Firewall
+        Parameters:
           - EnforcerServiceRoles
           - EnforcerAutoscaling
-          - EnforcerCacheType
+          - SmartLicenseToken
+          - MaxLicenseCount
+      - Label:
+          default: Advanced Configuration - Data Plane
+        Parameters:
+          - EnforcerConfigurationTier
           - EnforcerCacheNodeType
           - EnforcerCacheTransitEncryption
           - EnforcerCacheAuthToken
       - Label:
-          default: (Optional) License configuration
-        Parameters:
-          - SmartLicenseToken
-          - MaxLicenseCount
-      - Label:
-          default: (Optional) AWS Quick Start configuration
+          default: (Read-only, do not change) AWS Quick Start configuration
         Parameters:
           - QSS3BucketName
           - QSS3KeyPrefix
@@ -37,12 +41,8 @@ Metadata:
     ParameterLabels:
       ClusterID:
         default: EKS cluster ID
-      DevhubApiKey:
-        default: Devhub API Key
-      DevhubUsername:
-        default: Devhub username
       DataplaneNamespace:
-        default: Data-plane namespace
+        default: Namespace
       SmartLicenseToken:
         default: Smart License token
       MaxLicenseCount:
@@ -62,7 +62,7 @@ Metadata:
       EnforcerCacheTransitEncryption:
         default: In-Transit encryption
       EnforcerAutoscaling:
-        default: Autoscale enforcer
+        default: Enforcer autoscaling
 
 
 Parameters:
@@ -94,17 +94,6 @@ Parameters:
     AllowedPattern: ".+"
     Type: String
     Description: EKS cluster name (a root stack name) with SFCN product deployed.
-
-  DevhubApiKey:
-    Type: String
-    NoEcho: True
-    AllowedPattern: ".+"
-    Description: API key obtained from Cisco Devhub account
-
-  DevhubUsername:
-    Type: String
-    AllowedPattern: ".+"
-    Description: Username of Cisco Devhub account
 
   DataplaneNamespace:
     Type: String
@@ -146,8 +135,7 @@ Parameters:
       Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
       and upto 15 characters long.
     Description: |
-      Service roles of ASA separated by comma, no spaces allowed. If choosing the multiple service role option, ensure that at
-      least as many enforcer worker nodes is set as the desired number for faster deployment
+      The service role of the data plane node. Leave default if you deployed the SFCN with the default setting of 1 data plane node. Each additional service role requires a corresponding data plane node.
 
   EnforcerCacheAuthToken:
     Type: String
@@ -184,7 +172,7 @@ Parameters:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Disabled
-    Description: Enable scaling of ASA with default metrics
+    Description: Enable the default Enforcer autoscaling.
 
 Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
@@ -224,8 +212,6 @@ Resources:
       Parameters:
         ClusterID: !Ref ClusterID
         Version: { Fn::ImportValue: !Sub '${ClusterID}-FirewallVersion' }
-        DevhubUsername: !Ref DevhubUsername
-        DevhubApiKey: !Ref DevhubApiKey
         Controlplane: Disabled
         Name: !Sub "sfcn-${DataplaneNamespace}"
         SystemNamespace: { Fn::ImportValue: !Sub '${ClusterID}-SystemNamespace' }

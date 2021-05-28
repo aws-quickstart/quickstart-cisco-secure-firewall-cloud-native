@@ -191,22 +191,11 @@ Parameters:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Enabled
-    Description: Secure Firewall data-plane installation
-
-  DevhubUsername:
-    Type: String
-    AllowedPattern: ".+"
-    Description: Username of Cisco Devhub account
-
-  DevhubApiKey:
-    Type: String
-    NoEcho: true
-    AllowedPattern: ".+"
-    Description: API key obtained from Cisco Devhub account
+    Description: Disable if you need control plane components only for multi-tenancy use-case.
 
   FirewallVersion:
     Type: String
-    Default: v0.1.0-185
+    Default: v1.0.0
     AllowedPattern: ".+"
     Description: Helm chart version of the product
 
@@ -231,14 +220,13 @@ Parameters:
       Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
       and upto 15 characters long.
     Description: |
-      Service roles of ASA separated by comma, no spaces allowed. If choosing the multiple service role option, ensure that at
-      least as many enforcer worker nodes is set as the desired number for faster deployment
+      The service role of the data plane node. Leave default if you deployed the SFCN with the default setting of 1 data plane node. Each additional service role requires a corresponding data plane node.
 
   EnforcerAutoscaling:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Disabled
-    Description: Enable scaling of ASA with default metrics
+    Description: Enable the default Enforcer autoscaling.
 
 Mappings:
   WorkerAMIMap:
@@ -258,7 +246,7 @@ Rules:
     RuleCondition: !Equals [ !Ref EnforcerCacheType, elasticache ]
     Assertions:
       - Assert: !Equals [ !Ref SecureFirewallDataplane, Enabled ]
-        AssertDescription: Cache type can be set to "elasticache" only if firewall data-plane is "Enabled"
+        AssertDescription: Cache type can be set to "elasticache" only if firewall data plane is "Enabled"
 
 Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
@@ -1805,7 +1793,7 @@ Resources:
     Properties:
       ServiceToken: !GetAtt KubectlFunction.Arn
       ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
-      # In order for ASA to manipulate the ip routing rule table, we have to disable route refresh interval.
+      # In order for CNFW to manipulate the ip routing rule table, we have to disable route refresh interval.
       Command: "set env daemonset/calico-node -n kube-system FELIX_ROUTEREFRESHINTERVAL='0'"
 
   MetricsServer:
@@ -1958,8 +1946,6 @@ Resources:
         ClusterID: !GetAtt EKSControlPlane.Outputs.EKSName
         Version: !Ref FirewallVersion
         Name: "sfcn"
-        DevhubUsername: !Ref DevhubUsername
-        DevhubApiKey: !Ref DevhubApiKey
         SystemNamespace: !Ref SystemNamespace
         StorageType: !Ref StorageType
         Dataplane: !Ref SecureFirewallDataplane

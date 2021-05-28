@@ -16,8 +16,6 @@ project:
     QSS3BucketRegion: $[taskcat_current_region]
     KeyPairName: $[taskcat_getkeypair] # Sets "cikey" by default. Override with your own value
     EKSAdminUserArn: "" # Override with your own value
-    DevhubUsername: "" # Override with your own value
-    DevhubApiKey: "" # Override with your own value
 tests:
   sfcnbase:
     template: templates/entrypoint-new-vpc.template.yaml
