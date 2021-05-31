@@ -109,22 +109,22 @@ Metadata:
         default: VPC ID
       PublicSubnet1ID:
         default: Public subnet 1 ID
-      CNFWOutsideSubnet1CIDR:
-        default: CNFW outside subnet 1 CIDR
-      CNFWInsideSubnet1CIDR:
-        default: CNFW inside subnet 1 CIDR
-      PrivateSubnet1ID:
-        default: Private subnet 1 CIDR
       PublicSubnet2ID:
         default: Public subnet 2 ID
-      CNFWOutsideSubnet2CIDR:
-        default: CNFW outside subnet 2 CIDR
-      CNFWInsideSubnet2CIDR:
-        default: CNFW inside subnet 2 CIDR
+      PrivateSubnet1ID:
+        default: Private subnet 1 ID
       PrivateSubnet2ID:
         default: Private subnet 2 ID
       PublicSubnetRouteTableID:
         default: Public subnets route table ID
+      CNFWOutsideSubnet1CIDR:
+        default: CNFW outside subnet 1 CIDR
+      CNFWInsideSubnet1CIDR:
+        default: CNFW inside subnet 1 CIDR
+      CNFWOutsideSubnet2CIDR:
+        default: CNFW outside subnet 2 CIDR
+      CNFWInsideSubnet2CIDR:
+        default: CNFW inside subnet 2 CIDR
       EnforcerCacheType:
         default: Cache type
       EnforcerCacheNodeType:
@@ -348,7 +348,7 @@ Parameters:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Enabled
-    Description: Disable if you need control plane components only for multi-tenancy use-case.
+    Description: This is enabled by default for a full deployment with control plane and data plane components. To deploy control plane components only (for multi-tenancy), disable this setting.
 
   FirewallVersion:
     Type: String
@@ -371,7 +371,7 @@ Parameters:
       Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
       and upto 15 characters long.
     Description: |
-      The service role of the data plane node. Leave default if you deployed the SFCN with the default setting of 1 data plane node. Each additional service role requires a corresponding data plane node.
+      The service role of the data plane node. Leave the setting as “default” if you selected 1 data plane node. Each additional service role requires a corresponding data plane node.
 
   EnforcerAutoscaling:
     Type: String

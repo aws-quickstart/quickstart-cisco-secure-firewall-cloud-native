@@ -27,7 +27,7 @@ Parameters:
 
   VPCID:
     Type: "AWS::EC2::VPC::Id"
-    Description: ID of your existing VPC (e.g., vpc-0343606e)
+    Description: ID of your existing VPC (e.g., vpc-0343606e).
   PublicSubnet1ID:
     Type: "AWS::EC2::Subnet::Id"
     Description: ID of the public DMZ subnet 1 (CNFW default 1), located in Availability Zone 1.
@@ -41,26 +41,26 @@ Parameters:
     Type: "AWS::EC2::Subnet::Id"
     Description: ID of the private subnet 2, located in Availability Zone 2. Must have "kubernetes.io/role/internal-elb" tag attached.
   PublicSubnetRouteTableID:
-    Description: ID of VPC public subnet route table (e.g., rtb-0b9ce78da592f11e0)
+    Description: ID of VPC public subnet route table (e.g., rtb-0b9ce78da592f11e0).
     Type: String
   CNFWOutsideSubnet1CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28.
     Description: CIDR block for the CNFW outside subnet 1, located in Availability Zone 1.
     Type: String
   CNFWInsideSubnet1CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28.
     Description: CIDR block for the CNFW inside subnet 1, located in Availability Zone 1.
     Type: String
   CNFWOutsideSubnet2CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28.
     Description: CIDR block for the CNFW outside subnet 2, located in Availability Zone 2.
     Type: String
   CNFWInsideSubnet2CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28.
     Description: CIDR block for the CNFW inside subnet 2, located in Availability Zone 2.
     Type: String
 
@@ -76,8 +76,7 @@ Parameters:
     Description: The desired Kubernetes version for your cluster.
 
   KeyPairName:
-    Description: Name of an existing key pair, which allows you
-      to securely connect to your instance after it launches.
+    Description: Name of an existing key pair, which allows you to securely connect to your instance after it launches.
     Type: AWS::EC2::KeyPair::KeyName
 
   EKSAdminUserArn:
@@ -95,19 +94,19 @@ Parameters:
     Type: String
     Default: ""
     AllowedPattern: ^$|^\s*(api|audit|authenticator|controllerManager|scheduler)\s*(,\s*(api|audit|authenticator|controllerManager|scheduler)\s*)*$
-    ConstraintDescription: Comma separated list of allowed values - api, audit, authenticator, controllerManager and scheduler
+    ConstraintDescription: Comma separated list of allowed values - api, audit, authenticator, controllerManager and scheduler.
     Description: |
       Cluster control plane logging options (api, audit, authenticator, controllerManager and scheduler); comma separated.
 
   ControllerConfigurationTier:
-    Description: Instance tier to be used by controller workers
+    Description: Instance tier to be used by controller workers.
     Default: "vCPU4"
     Type: String
     AllowedValues: [ "vCPU4" ]
     ConstraintDescription: must specify vCPU4
 
   EnforcerConfigurationTier:
-    Description: Instance tier to be used by enforcer workers
+    Description: Instance tier to be used by enforcer workers.
     Default: "vCPU4"
     Type: String
     AllowedValues: [ "vCPU4" ]
@@ -155,13 +154,13 @@ Parameters:
     AllowedValues:
       - none
       - elasticache
-    Description: Type of External Cache to use for CNFW
+    Description: Type of External Cache to use for CNFW.
 
   EnforcerCacheNodeType:
     Type: String
     Default: "cache.m5.large"
     AllowedValues: [ cache.m5.xlarge, cache.m5.large ]
-    Description: EC2 instance type to use as Cache node, check region availaibility before selection
+    Description: EC2 instance type to use as Cache node, check region availaibility before selection.
 
   EnforcerCacheAuthToken:
     Type: String
@@ -169,35 +168,35 @@ Parameters:
     MaxLength: 128
     Default: ""
     AllowedPattern: "([a-zA-Z0-9!&#$^><-]{16,128})?"
-    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
+    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters.
     Description: |
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
-      Takes effect only if in-transit encryption is enabled
+      Takes effect only if in-transit encryption is enabled.
 
   EnforcerCacheTransitEncryption:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Enabled
-    Description: Cannot be changed after creation, update requires replacement
+    Description: Cannot be changed after creation, update requires replacement.
 
   EnforcerCachePort:
     Type: Number
     Default: 6379
     MinValue: 1
     MaxValue: 65535
-    Description: Port number to use for communicating with Redis server
+    Description: Port number to use for communicating with Redis server.
 
   SecureFirewallDataplane:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Enabled
-    Description: Disable if you need control plane components only for multi-tenancy use-case.
+    Description: This is enabled by default for a full deployment with control plane and data plane components. To deploy control plane components only (for multi-tenancy), disable this setting.
 
   FirewallVersion:
     Type: String
     Default: v1.0.0
     AllowedPattern: ".+"
-    Description: Helm chart version of the product
+    Description: Helm chart version of the product.
 
   SystemNamespace:
     Type: String
@@ -220,7 +219,7 @@ Parameters:
       Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
       and upto 15 characters long.
     Description: |
-      The service role of the data plane node. Leave default if you deployed the SFCN with the default setting of 1 data plane node. Each additional service role requires a corresponding data plane node.
+      The service role of the data plane node. Leave the setting as “default” if you selected 1 data plane node. Each additional service role requires a corresponding data plane node.
 
   EnforcerAutoscaling:
     Type: String
@@ -246,7 +245,7 @@ Rules:
     RuleCondition: !Equals [ !Ref EnforcerCacheType, elasticache ]
     Assertions:
       - Assert: !Equals [ !Ref SecureFirewallDataplane, Enabled ]
-        AssertDescription: Cache type can be set to "elasticache" only if firewall data plane is "Enabled"
+        AssertDescription: Cache type can be set to "elasticache" only if firewall data plane is "Enabled".
 
 Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
@@ -406,7 +405,7 @@ Resources:
   ControlPlaneSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Description: Allow SG members to access k8s api
+      Description: Allow SG members to access k8s api.
       GroupId: !Ref ControlPlaneSecurityGroup
       SourceSecurityGroupId: !Ref ControlPlaneSecurityGroup
       IpProtocol: tcp
@@ -470,7 +469,7 @@ Resources:
         - Key: Name
           Value: !Sub "${EKSClusterName}-workers-0"
       SecurityGroupIngress:
-        - Description: "Allow connections from first CNFW interface"
+        - Description: "Allow connections from first CNFW interface."
           IpProtocol: "-1"
           FromPort: 0
           ToPort: 65535

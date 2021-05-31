@@ -10,7 +10,7 @@ Parameters:
   Version:
     Type: String
     AllowedPattern: ".+"
-    Description: Helm chart version
+    Description: Helm chart version.
 
   SystemNamespace:
     Type: String
@@ -25,13 +25,13 @@ Parameters:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Enabled
-    Description: Install Secure Firewall controlplane as part of Helm release
+    Description: Install Secure Firewall controlplane as part of Helm release.
 
   Dataplane:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Enabled
-    Description: Install Secure Firewall dataplane as part of Helm release
+    Description: Install Secure Firewall dataplane as part of Helm release.
 
   SmartLicenseToken:
     Type: String
@@ -47,7 +47,7 @@ Parameters:
     Description: The type of a storage used to keep logs and deployments files.
 
   EnforcerConfigurationTier:
-    Description: Instance tier to be used by enforcer workers
+    Description: Instance tier to be used by enforcer workers.
     Default: "vCPU4"
     Type: String
     AllowedValues: [ "vCPU4" ]
@@ -58,7 +58,7 @@ Parameters:
     Default: 6379
     MinValue: 1
     MaxValue: 65535
-    Description: Port number to use for communicating with Redis server
+    Description: Port number to use for communicating with Redis server.
 
   EnforcerServiceRoles:
     Type: String
@@ -69,7 +69,7 @@ Parameters:
       Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
       and upto 15 characters long.
     Description: |
-      The service role of the data plane node. Leave default if you deployed the SFCN with the default setting of 1 data plane node. Each additional service role requires a corresponding data plane node.
+      The service role of the data plane node. Leave the setting as “default” if you selected 1 data plane node. Each additional service role requires a corresponding data plane node.
 
   EnforcerCacheAuthToken:
     Type: String
@@ -77,10 +77,10 @@ Parameters:
     MaxLength: 128
     AllowedPattern: "([a-zA-Z0-9!&#$^><-]{16,128})?"
     Default: ""
-    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
+    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters.
     Description: |
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
-      Takes effect only if in-transit encryption is enabled
+      Takes effect only if in-transit encryption is enabled.
 
   EnforcerAutoscaling:
     Type: String
@@ -94,7 +94,7 @@ Parameters:
 
   Name:
     Type: String
-    Description: Helm chart release name
+    Description: Helm chart release name.
 
 Conditions:
   EnforcerAutoscalingEnabled: !Equals [ !Ref EnforcerAutoscaling, Enabled ]
