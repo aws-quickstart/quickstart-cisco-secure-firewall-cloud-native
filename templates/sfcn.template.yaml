@@ -1976,9 +1976,9 @@ Resources:
 Outputs:
   CAData:
     Value: !GetAtt EKSControlPlane.Outputs.CAData
-  EKSEndpoint:
+  ClusterEndpoint:
     Value: !GetAtt EKSControlPlane.Outputs.EKSEndpoint
-  EKSName:
+  ClusterName:
     Value: !GetAtt EKSControlPlane.Outputs.EKSName
   FirewallVersion:
     Value: !Ref FirewallVersion

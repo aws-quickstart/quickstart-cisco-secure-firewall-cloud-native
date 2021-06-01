@@ -447,10 +447,10 @@ Resources:
 Outputs:
   CAData:
     Value: !GetAtt SFCNStack.Outputs.CAData
-  EKSEndpoint:
-    Value: !GetAtt SFCNStack.Outputs.EKSEndpoint
-  EKSName:
-    Value: !GetAtt SFCNStack.Outputs.EKSName
+  ClusterEndpoint:
+    Value: !GetAtt SFCNStack.Outputs.ClusterEndpoint
+  ClusterName:
+    Value: !GetAtt SFCNStack.Outputs.ClusterName
   CDOToken:
     Value: !GetAtt SFCNStack.Outputs.CDOToken
     Description: Base-64 decoded token for the CDO service account.
