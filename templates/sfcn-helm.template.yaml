@@ -69,7 +69,7 @@ Parameters:
       Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
       and upto 15 characters long.
     Description: |
-      The service role of the data plane node. Leave the setting as “default” if you selected 1 data plane node. Each additional service role requires a corresponding data plane node.
+      The service role of the data plane node. Leave the setting as "default" if you selected 1 data plane node. Each additional service role requires a corresponding data plane node.
 
   EnforcerCacheAuthToken:
     Type: String
@@ -281,7 +281,7 @@ Resources:
               name: cssm-token
               namespace: ${tokenNamespace}
             minLicenseCount: 1
-            maxLicenseCount: 5
+            maxLicenseCount: 4
             scalingRef:
               kind: Deployment
               name: sfcn-vpnredirector-enforcer

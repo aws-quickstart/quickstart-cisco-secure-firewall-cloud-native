@@ -181,7 +181,7 @@ Parameters:
 
   VPCID:
     Type: "AWS::EC2::VPC::Id"
-    Description: ID of your existing VPC (e.g., vpc-0343606e)
+    Description: ID of your existing VPC (e.g., vpc-0343606e).
   PublicSubnet1ID:
     Type: "AWS::EC2::Subnet::Id"
     Description: ID of the public DMZ subnet 1 (CNFW default 1), located in Availability Zone 1.
@@ -195,7 +195,7 @@ Parameters:
     Type: "AWS::EC2::Subnet::Id"
     Description: ID of the private subnet 2, located in Availability Zone 2. Must have "kubernetes.io/role/internal-elb" tag attached.
   PublicSubnetRouteTableID:
-    Description: ID of VPC public subnet route table (e.g., rtb-0b9ce78da592f11e0)
+    Description: ID of VPC public subnet route table (e.g., rtb-0b9ce78da592f11e0).
     Type: String
   CNFWOutsideSubnet1CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
@@ -226,8 +226,7 @@ Parameters:
     Description: The desired Kubernetes version for your cluster.
 
   KeyPairName:
-    Description: Name of an existing key pair, which allows you
-      to securely connect to your instance after it launches.
+    Description: Name of an existing key pair, which allows you to securely connect to your instance after it launches.
     Type: AWS::EC2::KeyPair::KeyName
 
   EKSAdminUserArn:
@@ -335,14 +334,13 @@ Parameters:
     Type: String
     NoEcho: true
     Default: ""
-    Description: A token from Smart Account that has Secure Firewall (SFW) licenses
+    Description: A token from Smart Account that has Secure Firewall (SFW) licenses.
 
   MaxLicenseCount:
     Type: Number
-    Default: 5
+    Default: 4
     MinValue: 1
-    MaxValue: 999
-    Description: A maximum number of licenses allowed to be used when enforcer autoscaling is enabled
+    Description: A maximum number of licenses allowed to be used by the default Enforcer when it is scaled up.
 
   SecureFirewallDataplane:
     Type: String
@@ -371,7 +369,7 @@ Parameters:
       Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
       and upto 15 characters long.
     Description: |
-      The service role of the data plane node. Leave the setting as “default” if you selected 1 data plane node. Each additional service role requires a corresponding data plane node.
+      The service role of the data plane node. Leave the setting as "default" if you selected 1 data plane node. Each additional service role requires a corresponding data plane node.
 
   EnforcerAutoscaling:
     Type: String
@@ -447,8 +445,6 @@ Resources:
         EnforcerAutoscaling: !Ref EnforcerAutoscaling
 
 Outputs:
-  EksArn:
-    Value: !GetAtt SFCNStack.Outputs.EksArn
   CAData:
     Value: !GetAtt SFCNStack.Outputs.CAData
   EKSEndpoint:
@@ -458,6 +454,10 @@ Outputs:
   CDOToken:
     Value: !GetAtt SFCNStack.Outputs.CDOToken
     Description: Base-64 decoded token for the CDO service account.
+  FirewallVersion:
+    Value: !GetAtt SFCNStack.Outputs.FirewallVersion
+  SystemNamespace:
+    Value: !GetAtt SFCNStack.Outputs.SystemNamespace
   VPCID:
     Value: !Ref VPCID
     Export: { Name: !Sub '${AWS::StackName}-VPCID' }

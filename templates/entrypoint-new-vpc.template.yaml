@@ -348,14 +348,13 @@ Parameters:
     Type: String
     NoEcho: true
     Default: ""
-    Description: A token from Smart Account that has Secure Firewall (SFW) licenses
+    Description: A token from Smart Account that has Secure Firewall (SFW) licenses.
 
   MaxLicenseCount:
     Type: Number
-    Default: 5
+    Default: 4
     MinValue: 1
-    MaxValue: 999
-    Description: A maximum number of licenses allowed to be used when enforcer autoscaling is enabled
+    Description: A maximum number of licenses allowed to be used by the default Enforcer when it is scaled up.
 
   SecureFirewallDataplane:
     Type: String
@@ -384,7 +383,7 @@ Parameters:
       Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
       and upto 15 characters long.
     Description: |
-      The service role of the data plane node. Leave the setting as “default” if you selected 1 data plane node. Each additional service role requires a corresponding data plane node.
+      The service role of the data plane node. Leave the setting as "default" if you selected 1 data plane node. Each additional service role requires a corresponding data plane node.
 
   EnforcerAutoscaling:
     Type: String
@@ -487,8 +486,6 @@ Resources:
         EnforcerAutoscaling: !Ref EnforcerAutoscaling
 
 Outputs:
-  EksArn:
-    Value: !GetAtt SFCNStack.Outputs.EksArn
   CAData:
     Value: !GetAtt SFCNStack.Outputs.CAData
   EKSEndpoint:
@@ -498,6 +495,10 @@ Outputs:
   CDOToken:
     Value: !GetAtt SFCNStack.Outputs.CDOToken
     Description: Base-64 decoded token for the CDO service account.
+  FirewallVersion:
+    Value: !GetAtt SFCNStack.Outputs.FirewallVersion
+  SystemNamespace:
+    Value: !GetAtt SFCNStack.Outputs.SystemNamespace
   VPCID:
     Value: !GetAtt VPCStack.Outputs.VPCID
     Export: { Name: !Sub '${AWS::StackName}-VPCID' }
