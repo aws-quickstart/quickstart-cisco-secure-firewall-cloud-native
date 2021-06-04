@@ -1050,6 +1050,12 @@ Resources:
             # override default docker ulimits according to STO's recommendation
             sudo bash -c "cat > /etc/docker/daemon.json" <<EOF
             {
+                "log-driver": "json-file",
+                "log-opts": {
+                    "max-size": "20m",
+                    "max-file": "3",
+                    "compress": "true"
+                },
                 "default-ulimits": {
                     "nofile": {
                         "Hard": 1024,
@@ -1414,6 +1420,12 @@ Resources:
               # override default docker ulimits according to STO's recommendation
               sudo bash -c "cat > /etc/docker/daemon.json" <<EOF
               {
+                  "log-driver": "json-file",
+                  "log-opts": {
+                      "max-size": "20m",
+                      "max-file": "3",
+                      "compress": "true"
+                  },
                   "default-ulimits": {
                       "nofile": {
                           "Hard": 1024,
