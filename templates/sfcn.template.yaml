@@ -173,6 +173,18 @@ Parameters:
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
       Takes effect only if in-transit encryption is enabled.
 
+  EnforcerCacheStorageKey:
+    Type: String
+    NoEcho: true
+    MaxLength: 64
+    Default: ""
+    AllowedPattern: "^([A-F0-9]{64})?$"
+    ConstraintDescription: Must be a string of length 64 consisting of uppercase hexadecimal characters (A-F,0-9).
+    Description: |
+      User provided key to encrypt sensitive data in the cache.
+      Must consist of 64 uppercase hexadecimal characters (A-F,0-9).
+      Required when 'elasticache' cache type is specified.
+
   EnforcerCacheTransitEncryption:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
@@ -246,12 +258,13 @@ Rules:
     Assertions:
       - Assert: !Equals [ !Ref SecureFirewallDataplane, Enabled ]
         AssertDescription: Cache type can be set to "elasticache" only if firewall data plane is "Enabled".
+      - Assert: !Not [ !Equals [ !Ref EnforcerCacheStorageKey, "" ] ]
+        AssertDescription: Cache storage key must not be empty when cache type is set to "elasticache".
 
 Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
   EnableEFS: !Equals [ !Ref StorageType, "efs" ]
   EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
-  HasAdditionalEKSAdminRole: !Not [ !Equals [ !Ref AdditionalEKSAdminRoleArn, "" ] ]
 
 Resources:
 
@@ -730,7 +743,7 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-controlplane.template.yaml'
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/amazon-eks-controlplane.template.yaml'
         - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
           S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
       Parameters:
@@ -744,106 +757,23 @@ Resources:
             - !Ref PrivateSubnet1ID
             - !Ref PrivateSubnet2ID
         RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/eks-quickstart-ControlPlane"
+        CustomNodeRole: !Ref EC2WorkersRole
         FunctionRoleArn: !GetAtt IamStack.Outputs.KubernetesAdminRoleArn
+        AdditionalEKSAdminUserArn: !Ref EKSAdminUserArn
+        AdditionalEKSAdminRoleArn: !Ref AdditionalEKSAdminRoleArn
         EKSPublicAccessEndpoint: "Enabled"
         EKSPrivateAccessEndpoint: "Disabled"
         EKSEncryptSecrets: "Disabled"
         EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
 
-  # Fix for the issue when on updating EKSControlPlane it drops the NodeGroup role entry in "aws-auth" configmap.
-  # The contents of the configmap is re-applied explicitly to overcome the issue.
-  # The issue is opened on "quickstart-amazon-eks" repo: https://github.com/aws-quickstart/quickstart-amazon-eks/issues/299
+  # TODO: remove it altogether in v1.0.1, it was kept for backward compatibility with existing stacks
   AwsAuthConfigMap:
     Type: "Custom::KubeManifest"
     Properties:
       ServiceToken: !GetAtt ApplyKubernetesManifestFunction.Arn
       ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
-      Manifest: !Sub
-        - |-
-          kind: ConfigMap
-          apiVersion: v1
-          metadata:
-            name: aws-auth
-            namespace: kube-system
-          data:
-            mapRoles: >-
-              [
-                {
-                  "groups": [
-                    "aws-auth-admin"
-                  ],
-                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-eks-cluster"
-                },
-                {
-                  "groups": [
-                    "aws-auth-admin"
-                  ],
-                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/CloudFormation-Kubernetes-VPC"
-                },
-                {
-                  "groups": [
-                    "system:bootstrappers",
-                    "system:nodes",
-                    "eks:kube-proxy-windows"
-                  ],
-                  "rolearn": "${EC2WorkersRole.Arn}",
-                  "username": "system:node:{{EC2PrivateDNSName}}"
-                },
-                {
-                  "groups": [
-                    "system:masters"
-                  ],
-                  "rolearn": "${IamStack.Outputs.KubernetesAdminRoleArn}",
-                  "username": "${IamStack.Outputs.KubernetesAdminRoleArn}"
-                },
-                {
-                  "groups": [
-                    "system:masters"
-                  ],
-                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-helm",
-                  "username": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-helm"
-                },
-                {
-                  "groups": [
-                    "system:masters"
-                  ],
-                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-get",
-                  "username": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-get"
-                },
-                {
-                  "groups": [
-                    "system:masters"
-                  ],
-                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-resource",
-                  "username": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-resource"
-                },
-                {
-                  "groups": [
-                    "system:masters"
-                  ],
-                  "rolearn": "${EKSAdminUserArn}",
-                  "username": "${EKSAdminUserArn}"
-                } ${AdditionalEKSAdminRoleArnEntry}
-              ]
-            mapUsers: >-
-              [{"userarn":"${EKSAdminUserArn}","username":"${EKSAdminUserArn}","groups":["system:masters"]}]
-        - AdditionalEKSAdminRoleArnEntry: !If
-            - HasAdditionalEKSAdminRole
-            - !Sub ', {"groups": ["system:masters"], "rolearn": "${AdditionalEKSAdminRoleArn}", "username": "${AdditionalEKSAdminRoleArn}"}'
-            - ""
-      # pass all the EKSControlPlane parameters to force update
-      _EKSClusterName: !Ref EKSClusterName
-      _KubernetesVersion: !Ref KubernetesVersion
-      _SecurityGroupIds: !Ref ControlPlaneSecurityGroup
-      _SubnetIds: !Join
-        - ","
-        - - !Ref PublicSubnet1ID
-          - !Ref PublicSubnet2ID
-          - !Ref PrivateSubnet1ID
-          - !Ref PrivateSubnet2ID
-      _RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/eks-quickstart-ControlPlane"
-      _FunctionRoleArn: !GetAtt IamStack.Outputs.KubernetesAdminRoleArn
-      _EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
+      # No-op
+      Manifest: ""
 
   # EFS
 
@@ -885,11 +815,11 @@ Resources:
     Properties:
       Path: /
       Roles:
-      - !Ref EC2WorkersRole
+        - !Ref EC2WorkersRole
 
   CPWorkersGroupUnmanaged:
     Type: "AWS::AutoScaling::AutoScalingGroup"
-    DependsOn: [ CalicoCNI, AwsAuthConfigMap ]
+    DependsOn: [ CalicoCNI ]
     Properties:
       DesiredCapacity: !Ref ControlNodeGroupDesiredSize
       MaxSize: !Ref ControlNodeGroupMaxSize
@@ -1050,6 +980,12 @@ Resources:
             # override default docker ulimits according to STO's recommendation
             sudo bash -c "cat > /etc/docker/daemon.json" <<EOF
             {
+                "log-driver": "json-file",
+                "log-opts": {
+                    "max-size": "20m",
+                    "max-file": "3",
+                    "compress": "true"
+                },
                 "default-ulimits": {
                     "nofile": {
                         "Hard": 1024,
@@ -1103,7 +1039,7 @@ Resources:
 
   EPWorkersGroupUnmanaged:
     Type: "AWS::AutoScaling::AutoScalingGroup"
-    DependsOn: [ CalicoCNI, AwsAuthConfigMap ]
+    DependsOn: [ CalicoCNI ]
     Properties:
       DesiredCapacity: !Ref EnforcerNodeGroupDesiredSize
       MaxSize: !Ref EnforcerNodeGroupMaxSize
@@ -1156,7 +1092,7 @@ Resources:
                 Value: owned
               - Key: k8s.io/cluster-autoscaler/node-template/resources/hugepages-2Mi
                 Value: 64Mi
-              - Key: !Sub kubernetes.io/cluster/${EKSControlPlane.Outputs.EKSName}        
+              - Key: !Sub kubernetes.io/cluster/${EKSControlPlane.Outputs.EKSName}
                 Value: owned
         UserData: !Base64
           "Fn::Sub":
@@ -1414,6 +1350,12 @@ Resources:
               # override default docker ulimits according to STO's recommendation
               sudo bash -c "cat > /etc/docker/daemon.json" <<EOF
               {
+                  "log-driver": "json-file",
+                  "log-opts": {
+                      "max-size": "20m",
+                      "max-file": "3",
+                      "compress": "true"
+                  },
                   "default-ulimits": {
                       "nofile": {
                           "Hard": 1024,
@@ -1708,6 +1650,9 @@ Resources:
                   manifest_text = http_get(event['ResourceProperties']["Url"]) \
                     if event['ResourceProperties'].get("Url") \
                     else event['ResourceProperties']["Manifest"]
+                  if not manifest_text:
+                      print("Manifest text is empty, exiting...")
+                      return
                   with open(manifest_file, 'w') as f:
                       f.write(manifest_text)
                   create_kubeconfig(event['ResourceProperties']['ClusterName'])
@@ -1959,6 +1904,7 @@ Resources:
         EnforcerCacheHost: !If [ EnforcerCacheTypeIsElastiCache, !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint, "" ]
         EnforcerCachePort: !Ref EnforcerCachePort
         EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
+        EnforcerCacheStorageKey: !Ref EnforcerCacheStorageKey
         EnforcerAutoscaling: !Ref EnforcerAutoscaling
         EnforcerConfigurationTier: !Ref EnforcerConfigurationTier
 

@@ -32,6 +32,7 @@ Metadata:
           - EnforcerCacheNodeType
           - EnforcerCacheTransitEncryption
           - EnforcerCacheAuthToken
+          - EnforcerCacheStorageKey
       - Label:
           default: (Read-only, do not change) AWS Quick Start configuration
         Parameters:
@@ -55,6 +56,8 @@ Metadata:
         default: Enforcer service roles
       EnforcerCacheAuthToken:
         default: Redis authentication token
+      EnforcerCacheStorageKey:
+        default: Redis key to encrypt sensitive data
       EnforcerCacheType:
         default: Cache type
       EnforcerCacheNodeType:
@@ -142,10 +145,22 @@ Parameters:
     MaxLength: 128
     AllowedPattern: "([a-zA-Z0-9!&#$^><-]{16,128})?"
     Default: ""
-    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
+    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters.
     Description: |
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
-      Takes effect only when in-transit encryption is enabled
+      Takes effect only when in-transit encryption is enabled.
+
+  EnforcerCacheStorageKey:
+    Type: String
+    NoEcho: true
+    MaxLength: 64
+    Default: ""
+    AllowedPattern: "^([A-F0-9]{64})?$"
+    ConstraintDescription: Must be a string of length 64 consisting of uppercase hexadecimal characters (A-F,0-9).
+    Description: |
+      User provided key to encrypt sensitive data in the cache.
+      Must consist of 64 uppercase hexadecimal characters (A-F,0-9).
+      Required when 'elasticache' cache type is specified.
 
   EnforcerCacheType:
     Type: String
@@ -172,6 +187,13 @@ Parameters:
     AllowedValues: [ Enabled, Disabled ]
     Default: Disabled
     Description: Enable the default Enforcer autoscaling.
+
+Rules:
+  EnforcerElasticacheRule:
+    RuleCondition: !Equals [ !Ref EnforcerCacheType, elasticache ]
+    Assertions:
+      - Assert: !Not [ !Equals [ !Ref EnforcerCacheStorageKey, "" ] ]
+        AssertDescription: Cache storage key must not be empty when cache type is set to "elasticache".
 
 Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
@@ -221,5 +243,6 @@ Resources:
         EnforcerServiceRoles: !Ref EnforcerServiceRoles
         EnforcerCacheHost: !If [ EnforcerCacheTypeIsElastiCache, !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint, "" ]
         EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
+        EnforcerCacheStorageKey: !Ref EnforcerCacheStorageKey
         EnforcerAutoscaling: !Ref EnforcerAutoscaling
         EnforcerConfigurationTier: !Ref EnforcerConfigurationTier

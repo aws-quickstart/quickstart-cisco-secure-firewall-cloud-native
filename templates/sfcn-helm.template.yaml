@@ -82,6 +82,18 @@ Parameters:
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
       Takes effect only if in-transit encryption is enabled.
 
+  EnforcerCacheStorageKey:
+    Type: String
+    NoEcho: true
+    MaxLength: 64
+    Default: ""
+    AllowedPattern: "^([A-F0-9]{64})?$"
+    ConstraintDescription: Must be a string of length 64 consisting of uppercase hexadecimal characters (A-F,0-9).
+    Description: |
+      User provided key to encrypt sensitive data in the cache.
+      Must consist of 64 uppercase hexadecimal characters (A-F,0-9).
+      Required when 'elasticache' cache type is specified.
+
   EnforcerAutoscaling:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
@@ -212,6 +224,7 @@ Resources:
         "dataPlane.serviceRoles": !Sub "{${EnforcerServiceRoles}}"
         "dataPlane.redis.host": !Ref EnforcerCacheHost
         "dataPlane.redis.port": !Ref EnforcerCachePort
+        "dataPlane.redis.storage_key": !Ref EnforcerCacheStorageKey
         "dataPlane.redis.token": !Ref EnforcerCacheAuthToken
         "dataPlane.hpa.enable": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
         "dataPlane.configurationTier": !Ref EnforcerConfigurationTier
