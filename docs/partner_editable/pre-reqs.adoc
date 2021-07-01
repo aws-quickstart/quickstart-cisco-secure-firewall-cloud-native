@@ -2,6 +2,9 @@
 
 ==== Prepare your AWS account
 
+* Run Cisco Secure Firewall Cloud Native AWS Quick Start prerequisites stack 
+https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https://sfcn-quickstart.s3.amazonaws.com/quickstart-cisco-secure-firewall-cloud-native/templates/entrypoint-new-vpc.template.yaml&param_QSS3BucketName=sfcn-quickstart&param_FirewallVersion=v1.0.0
+
 _Describe any setup required in the AWS account prior to template launch_
 
 ==== Prepare your {partner-company-name} account
