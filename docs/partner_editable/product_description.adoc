@@ -16,12 +16,12 @@ Cisco has built a scalable Remote Access VPN solution natively on Amazon EKS sub
 
 ** *Key components of Cisco Secure Firewall Cloud Native platform*
 
-* Control Point (CP): The Control Point is responsible for config validation, compilation and distribution, licensing, route management. CP pods accept configuration from REST APIs, Kubectl+YAML, or Cisco Defense Orchestrator.
-* Enforcement Point (EP): CNFW EP pods are responsible for L3/L4 and VPN traffic handling and VPN termination.
-* Redirector: Redirector pod is responsible for intelligent load balancing remote access VPN traffic. When the redirector receives a request, it contacts Redis DB and provides Fully Qualified Domain Name (FQDN) of the enforcement pods handling the least number of VPN sessions.
-* ElastiCache for Redis DB: The Redis database has information on VPN sessions. The redirector uses this information to enable smart load balancing and recovery.
-* Cisco Defense Orchestrator: Cisco Defense Orchestrator is cisco’s cloud-based firewall management platform for management and monitoring.
-* Amazon EKS cluster: Cisco Secure Firewall runs on Amazon EKS cluster and uses K8s constructs like Horizontal Pod Autoscaler, auto-healing, and custom metric operator, etc. 
-* Amazon EFS: CP and EP are deployed on Amazon EFS
-* Amazon Lambda: This architecture uses Amazon Lambda functions for orchestration and automation
+* *Control Point (CP):* The Control Point is responsible for config validation, compilation and distribution, licensing, route management. CP pods accept configuration from REST APIs, Kubectl+YAML, or Cisco Defense Orchestrator.
+* *Enforcement Point (EP):* CNFW EP pods are responsible for L3/L4 and VPN traffic handling and VPN termination.
+* *Redirector:* Redirector pod is responsible for intelligent load balancing remote access VPN traffic. When the redirector receives a request, it contacts Redis DB and provides Fully Qualified Domain Name (FQDN) of the enforcement pods handling the least number of VPN sessions.
+* *ElastiCache for Redis DB:* The Redis database has information on VPN sessions. The redirector uses this information to enable smart load balancing and recovery.
+* *Cisco Defense Orchestrator:* Cisco Defense Orchestrator is cisco’s cloud-based firewall management platform for management and monitoring.
+* *Amazon EKS cluster:* Cisco Secure Firewall runs on Amazon EKS cluster and uses K8s constructs like Horizontal Pod Autoscaler, auto-healing, and custom metric operator, etc. 
+* *Amazon EFS:* CP and EP are deployed on Amazon EFS
+* *Amazon Lambda:* This architecture uses Amazon Lambda functions for orchestration and automation
 

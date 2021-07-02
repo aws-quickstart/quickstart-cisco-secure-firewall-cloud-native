@@ -3,4 +3,8 @@
 // Include links if helpful. 
 // You don't need to list AWS services or point to general info about AWS; the boilerplate already covers this.
 
-This Quick Start also assumes familiarity with <knowledge expectations specific to this Quick Start>.
+This Quick Start also assumes familiarity with basic concepts in networking, VPN, Kubernetes, containers, kubectl, yaml, Cisco ASA, Cisco Defense Orchestrator, AWS components and services.
+
+* Cisco Secure Firewall Cloud Native: https://www.cisco.com/c/en/us/products/security/secure-firewall-cloud-native/index.html
+* Cisco Anyconnect VPN: https://www.cisco.com/c/en/us/products/security/anyconnect-secure-mobility-client/index.html
+* Cisco Defence Orchestrator: https://docs.defenseorchestrator.com/#:~:text=Cisco%20Defense%20Orchestrator%20(CDO)%20is,achieve%20a%20consistent%20security%20implementation.
