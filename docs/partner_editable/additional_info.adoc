@@ -4,20 +4,75 @@
 == Test the deployment
 // If steps are required to test the deployment, add them here. If not, remove the heading
 
+* Once Cisco Secure Firewall Cloud Native stack is deployed, run the following commands to check the SFCN cluster
+
+    export NS=<namespace>
+    aws eks --region <region> update-kubeconfig --name <sfcn-cluster-name>
+
+  Example:
+    export NS=sfcn-system
+    aws eks --region us-east-1 update-kubeconfig --name answami-sfcn
+
+* Check pods using *kubectl get pods -n $NS*
+
+* Check nodes using *kubectl get nodes -n $NS*
+
+* Check CNFW configuration using *kubectl get asacommand -A --field-selector spec.command="show run"*
+
 == Post-deployment steps
 // If post-deployment steps are required, add them here. If not, remove the heading
+
+* Once the Cisco Secure Firewall Cloud Native cluster is up i.e., nodes and pods are up, access GitHub samples to configure CNFW firewalls. 
+* Cisco Secure Firewall Github Repository: https://github.com/CiscoDevNet/sfcn
+* Clone this https://github.com/CiscoDevNet/sfcn.git
+* Go to sfcn/samples/
+* Check basic folder for interface, network, access-list and routes sample YAML file 
+* Go to sfcn/samples/ra-vpn/redirector-lb/ for RAVPN sample YAML file 
+* Go to sfcn/samples/ra-vpn/s2s-backhaul/ for DC backhaul sample YAML file 
+* Make changes to YAML file and apply it using kubectl 
+  kubectl apply -f <filename>.yaml
 
 == Best practices for using {partner-product-short-name} on AWS
 // Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating data, backups, ensuring high performance, high availability, etc. Link to software documentation for detailed information.
 
-_Add any best practices for using the software._
-
-== Security
-// Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating data, backups, ensuring high performance, high availability, etc. Link to software documentation for detailed information.
-
-_Add any security-related information._
+* Deploy Cisco Secure Firewall Cloud Native with a minimum of two control points.
+* Deploy Cisco Secure Firewall Cloud Native with a minimum of two enforcement points.
+* For resiliency, Cisco recommends using RAVPN with SFCN redirector and elasticache for Redis.
+* Cisco recommends using EFS storage. 
 
 == Other useful information
 //Provide any other information of interest to users, especially focusing on areas where AWS or cloud usage differs from on-premises usage.
 
-_Add any other details that will help the customer use the software on AWS._
+Cisco CNGW (containerized firewall) uses Cisco ASA configuration. You can use ASA CLI in the YAML file.
+
+*Example:*
+
+apiVersion: cnfw.cisco.com/v1
+kind: ASAConfiguration
+metadata:
+  name: interface-example
+  labels:
+    sfcn.cisco.com/service-role: default
+spec:
+  order: 1
+  description: "DHCP interfaces taking the AWS-assigned IPs"
+  cliLines: |
+
+    interface Management0/0
+    nameif management
+    ip address dhcp
+    no shutdown
+
+    interface TenGigabitEthernet0/0
+    nameif outside
+    ip address dhcp
+    security-level 100
+    no shutdown
+
+    interface TenGigabitEthernet0/1
+    nameif inside
+    ip address dhcp
+    no shutdown
+
+*kubectl apply -f interfaces.yaml -n $NS*
+|
