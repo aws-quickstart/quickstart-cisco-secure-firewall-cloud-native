@@ -4,15 +4,23 @@
 
 // Space needed to maintain table headers
 |VPCs | 1
+|VPC endpoint | 1
+|Subnet | 8
+|Route Table | 3
 |Internet Gateway | 1
-|NAT Gateway| 1
+|Security Group | 6
+|NAT Gateway| 2
 |Elastic Kubernetes Services Cluster | 1
+|Kubernetes Helm | 4
 |Auto Scaling groups | 2
+|Lambda Function | 3
 |Route53 | 1
-|EC2 instance (m5.xlarge) for SFCN control point | 1 (user can add more instances)
-|EC2 instance (m5.xlarge) for CNFW enforcement point | 1 (user can add more instances)
-|EC2 instance (m5.xlarge) for SFCN redirector point | 1 
+|EC2 instance (m5.xlarge) for SFCN control point | 1 (minimum)
+|EC2 instance (m5.xlarge) for CNFW enforcement point | 1 (minimum)
+|EC2 instance (m5.xlarge) for SFCN redirector point | 1 (optional)
+|EC2 instance (m5.xlarge) for ElastiCache for Redis | 1 (optional)
 |Elastic IP addresses | 2
-|AWS Identity and Access Management (IAM) roles | 1
-|Security groups | 2
+|AWS Identity and Access Management (IAM) roles | 18
+|AWS Identity and Access Management (IAM) policy | 2
+|S3 bucket | 3
 |===
