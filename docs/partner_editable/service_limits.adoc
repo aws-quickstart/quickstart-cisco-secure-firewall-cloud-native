@@ -19,6 +19,7 @@
 |EC2 instance (m5.xlarge) for CNFW enforcement point | 1 (minimum)
 |EC2 instance (m5.xlarge) for SFCN redirector point | 1 (optional)
 |EC2 instance (m5.xlarge) for ElastiCache for Redis | 1 (optional)
+|Elastic File Storage | 1 per cluster (optional)
 |Elastic IP addresses | 2
 |AWS Identity and Access Management (IAM) roles | 18
 |AWS Identity and Access Management (IAM) policy | 2
