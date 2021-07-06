@@ -22,5 +22,5 @@
 |Elastic IP addresses | 2
 |AWS Identity and Access Management (IAM) roles | 18
 |AWS Identity and Access Management (IAM) policy | 2
-|S3 bucket | 3
+|S3 bucket | 1
 |===
