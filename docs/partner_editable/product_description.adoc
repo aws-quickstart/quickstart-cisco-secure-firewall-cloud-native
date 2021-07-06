@@ -2,7 +2,6 @@
 // Briefly describe the software. Use consistent and clear branding. 
 // Include the benefits of using the software on AWS, and provide details on usage scenarios.
 
-
 Today, companies invest in making their security controls scalable and dynamic to meet the ever-increasing demand on their network(s). In many cases, the response is a massive shift to Kubernetes® (K8s®) orchestrated infrastructure that provides a cloud-native, scalable, and resilient infrastructure. 
 Cisco has built a scalable Remote Access VPN solution natively on Amazon EKS subscribed through AWS marketplace and deployed via an AWS Quickstart. It gives you the flexibility to provision, run, and scale containerized security services. Cisco Secure Firewall Cloud Native brings together the benefits of Kubernetes and Cisco’s industry-leading security technologies, providing a resilient architecture for infrastructure security at scale.
 
