@@ -2,15 +2,135 @@
 
 ==== Prepare your AWS account
 
+* User should have programmatic access enabled to perform all the deployment activities
+* User must create and use the following IAM policy to deploy Cisco Secure Firewall Cloud Native: 
+
+SFCNFullAccess IAM Policy
+  {
+      "Version": "2012-10-17",
+      "Statement": [
+          {
+              "Action": [
+                  "ec2:*",
+                  "elasticfilesystem:*",
+                  "elasticache:*",
+                  "kms:DescribeKey",
+                  "kms:ListAliases",
+                  "s3:*",
+                  "iam:*",
+                  "elasticloadbalancing:*",
+                  "cloudwatch:*",
+                  "autoscaling:*",
+                  "eks:*",
+                  "ec2-instance-connect:SendSSHPublicKey",
+                  "lambda:*",
+                  "states:DescribeStateMachine",
+                  "states:ListStateMachines",
+                  "tag:GetResources",
+                  "xray:GetTraceSummaries",
+                  "xray:BatchGetTraces",
+                  "ds:CreateComputer",
+                  "ds:DescribeDirectories",
+                  "logs:*",
+                  "ssm:*",
+                  "ec2messages:*",
+                  "cloudformation:*",
+                  "ssmmessages:CreateControlChannel",
+                  "ssmmessages:CreateDataChannel",
+                  "ssmmessages:OpenControlChannel",
+                  "ssmmessages:OpenDataChannel"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+          },
+          {
+              "Action": "iam:CreateServiceLinkedRole",
+              "Effect": "Allow",
+              "Resource": "*",
+              "Condition": {
+                  "StringLike": {
+                      "iam:AWSServiceName": [
+                          "elasticfilesystem.amazonaws.com"
+                      ]
+                  }
+              }
+          },
+          {
+              "Action": "iam:CreateServiceLinkedRole",
+              "Effect": "Allow",
+              "Resource": "arn:aws:iam::*:role/aws-service-role/elasticache.amazonaws.com/AWSServiceRoleForElastiCache",
+              "Condition": {
+                  "StringLike": {
+                      "iam:AWSServiceName": "elasticache.amazonaws.com"
+                  }
+              }
+          },
+          {
+              "Effect": "Allow",
+              "Action": "iam:CreateServiceLinkedRole",
+              "Resource": "*",
+              "Condition": {
+                  "StringEquals": {
+                      "iam:AWSServiceName": [
+                          "autoscaling.amazonaws.com",
+                          "ec2scheduled.amazonaws.com",
+                          "elasticloadbalancing.amazonaws.com",
+                          "spot.amazonaws.com",
+                          "spotfleet.amazonaws.com",
+                          "transitgateway.amazonaws.com"
+                      ]
+                  }
+              }
+          },
+          {
+              "Effect": "Allow",
+              "Action": "iam:PassRole",
+              "Resource": "*",
+              "Condition": {
+                  "StringEquals": {
+                      "iam:PassedToService": "lambda.amazonaws.com"
+                  }
+              }
+          },
+          {
+              "Effect": "Allow",
+              "Action": "iam:CreateServiceLinkedRole",
+              "Resource": "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*",
+              "Condition": {
+                  "StringLike": {
+                      "iam:AWSServiceName": "ssm.amazonaws.com"
+                  }
+              }
+          },
+          {
+              "Effect": "Allow",
+              "Action": [
+                  "iam:DeleteServiceLinkedRole",
+                  "iam:GetServiceLinkedRoleDeletionStatus"
+              ],
+              "Resource": "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*"
+          }
+      ]
+  }
+
 * Run Cisco Secure Firewall Cloud Native AWS Quick Start prerequisites stack 
 https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https://sfcn-quickstart.s3.amazonaws.com/quickstart-cisco-secure-firewall-cloud-native/templates/entrypoint-new-vpc.template.yaml&param_QSS3BucketName=sfcn-quickstart&param_FirewallVersion=v1.0.0
 
-_Describe any setup required in the AWS account prior to template launch_
-
 ==== Prepare your {partner-company-name} account
 
-_Describe any setup required in the partner portal/account prior to template launch_
+* Obtain Cisco Secure Firewall Cloud Native license from your Cisco accounts team and add it to your Cisco smart account.
+* If the license is not available, SFCN architecture with a single enforcement point will still work with 100 Kbps max throughput. 
 
 ==== Prepare for the deployment
 
-_Describe any preparation required to complete the product build, such as obtaining licenses or placing files in S3_
+* Create At least one Amazon EC2 key pair.
+* For RAVPN user-case create the following resources: 
+    ** A registered domain (example: mydomain.com)
+    ** Created a hosted zone
+    ** Download and upload Cisco AnyConnect VPN package(s) (Windows, Linux, Mac, Andriod and iOS)
+    ** Create AnyConnect client profile(s).
+
+* Note: 
+    ** You can register a new domain using Route 53.
+    ** You can make Route53 the DNS service for an existing domain.
+    ** You can move a domain to another registrar and use another DNS service.

@@ -29,13 +29,11 @@
 * Check basic folder for interface, network, access-list and routes sample YAML file 
 * Go to sfcn/samples/ra-vpn/redirector-lb/ for RAVPN sample YAML file 
 * Go to sfcn/samples/ra-vpn/s2s-backhaul/ for DC backhaul sample YAML file 
-* Make changes to YAML file and apply it using kubectl 
-  kubectl apply -f <filename>.yaml
+* Make changes to YAML file and apply it using kubectl apply -f <filename>.yaml
 
 == Best practices for using {partner-product-short-name} on AWS
 // Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating data, backups, ensuring high performance, high availability, etc. Link to software documentation for detailed information.
 
-* Deploy Cisco Secure Firewall Cloud Native with a minimum of two control points.
 * Deploy Cisco Secure Firewall Cloud Native with a minimum of two enforcement points.
 * For resiliency, Cisco recommends using RAVPN with SFCN redirector and elasticache for Redis.
 * Cisco recommends using EFS storage. 

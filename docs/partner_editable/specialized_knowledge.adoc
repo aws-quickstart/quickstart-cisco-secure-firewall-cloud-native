@@ -8,6 +8,7 @@ This Quick Start also assumes familiarity with basic concepts in networking, VPN
 ** *Links*
 
 * Cisco Secure Firewall Cloud Native page: http://cs.co/SFCN
+* Cisco Secure Firewall Cloud Native getting started guide: http://cs.co/SFCN-getting-started
 * Cisco Secure Firewall Cloud Native At-a-Glance: http://cs.co/SFCN-at-a-glance
 * Scalable Security with Cisco Secure Firewall Cloud Native (blog): http://cs.co/SFCN-blog
 * A New Way of Firewalling with Cisco Secure Firewall Cloud Native (blog): http://cs.co/SFCN-business-blog
