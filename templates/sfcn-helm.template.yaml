@@ -1,6 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: A nested stack of Cisco Secure Firewall Cloud Native that installs Secure Firewall Helm chart into an existing cluster.
+Description: A nested stack of Cisco Secure Firewall Cloud Native that installs Secure Firewall Helm chart into an existing cluster (qs-1s3afab72).
+
+Metadata:
+  cfn-lint: { config: { ignore_checks: [ W9002, W9003, W9004, W9006 ] } }
 
 Parameters:
   ClusterID:
@@ -129,6 +132,8 @@ Resources:
   ChartName:
     Type: Custom::CliQuery
     Properties:
+      # Here and in other cases the Version is added to re-read values from SSM upon the Version change
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartName --query '{Value: Parameters[0].Value || `sfcn-bundle`}'
@@ -137,6 +142,7 @@ Resources:
   ChartRepo:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartRepo --query '{Value: Parameters[0].Value || `https://d2rxbueeojmoz9.cloudfront.net`}'
@@ -145,6 +151,7 @@ Resources:
   ChartRepoUsername:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartRepoUsername --query '{Value: Parameters[0].Value || ``}'
@@ -153,6 +160,7 @@ Resources:
   ChartRepoPassword:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartRepoPassword --query '{Value: Parameters[0].Value || ``}' --with-decryption
@@ -161,6 +169,7 @@ Resources:
   ContainerRegistry:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallContainerRegistry --query '{Value: Parameters[0].Value || `709825985650.dkr.ecr.us-east-1.amazonaws.com`}'
@@ -169,6 +178,7 @@ Resources:
   ContainerRegistryUsername:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallContainerRegistryUsername --query '{Value: Parameters[0].Value || ``}'
@@ -177,6 +187,7 @@ Resources:
   ContainerRegistryPassword:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallContainerRegistryPassword --query '{Value: Parameters[0].Value || ``}' --with-decryption
@@ -185,6 +196,7 @@ Resources:
   ContainerRepo:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallContainerRepo --query '{Value: Parameters[0].Value || `cisco/sfcn/prod`}'
@@ -193,6 +205,7 @@ Resources:
   LicensingEnabled:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/licensingEnabled --query '{Value: Parameters[0].Value || `"true"`}'

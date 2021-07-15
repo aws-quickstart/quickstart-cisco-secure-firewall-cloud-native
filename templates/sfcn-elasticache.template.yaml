@@ -1,6 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: Nested stack of Cisco Secure Firewall Cloud Native entrypoints to deploy Elasticache into an existing VPC.
+Description: Nested stack of Cisco Secure Firewall Cloud Native entrypoints to deploy Elasticache into an existing VPC (qs-1s3afab6o).
+
+Metadata:
+  cfn-lint: { config: { ignore_checks: [ W9002, W9003, W9004, W9006 ] } }
 
 Parameters:
   Name:

@@ -1,5 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Nested stack of Cisco Secure Firewall Cloud Native Quickstart entrypoints that deployes all CSFCN resources.
+Description: Nested stack of Cisco Secure Firewall Cloud Native Quickstart entrypoints that deployes all CSFCN resources (qs-1s3afab27).
+Metadata:
+  cfn-lint: { config: { ignore_checks: [ W9002, W9003, W9004, W9006 ] } }
 Parameters:
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -240,13 +242,6 @@ Parameters:
     Description: Enable the default Enforcer autoscaling.
 
 Mappings:
-  WorkerAMIMap:
-    us-east-1:
-      "118": ami-04e0aace2faaea0c0
-      "119": ami-06f995c5e133ad46c
-    us-east-2:
-      "118": ami-0883f55ce0673c383
-      "119": ami-00238099ab28c3007
   ConfigurationTierMap:
     "vCPU4":
       instanceType: m5.xlarge
@@ -294,6 +289,13 @@ Resources:
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub "ec2 describe-vpcs --vpc-id ${VPCID} --query 'Vpcs[0].{CidrBlock: CidrBlock}'"
       IdField: 'CidrBlock'
+
+  UbuntuAMI:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub "ec2 describe-images --filters 'Name=name,Values=ubuntu-eks/k8s_${KubernetesVersion}/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20210423.1' --query '{Value: Images[*].[ImageId][0][0]}'"
+      IdField: 'Value'
 
   # Inside/Outside subnets are created for the first two Availability Zones of the current region.
   # Each subnet uses a /20 netmask (4096 IPv4 addresses).
@@ -571,9 +573,9 @@ Resources:
             Action:
               - "sts:AssumeRole"
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-        - "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEKS_CNI_Policy"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
       Policies:
         # Allow nodes to signal CF resources from user-data
         - PolicyName: cfn-signal
@@ -583,7 +585,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - cloudformation:SignalResource
-                Resource: "*"
+                Resource: !Sub "arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*"
         # Allow route53ingress controller to manage route53 records
         - PolicyName: !Sub "${EKSClusterName}-workers-route53-policy"
           PolicyDocument:
@@ -593,7 +595,9 @@ Resources:
                 Action:
                   - "route53:ChangeResourceRecordSets"
                   - "route53:ListResourceRecordSets"
-                Resource: "*"
+                  - "route53:ListHostedZones"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:route53:::hostedzone/*"
 
         # Allow worker to associate EIP
         - PolicyName: !Sub "${EKSClusterName}-workers-eip-policy"
@@ -608,7 +612,9 @@ Resources:
                   - "ec2:DescribeNetworkInterfaceAttribute"
                   - "ec2:DescribeNetworkInterfaces"
                   - "ec2:DescribeRegions"
-                Resource: "*"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:elastic-ip/*"
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:network-interface/*"
 
         # Allow worker nodes to manage additional ENIs
         - PolicyName: !Sub "${EKSClusterName}-workers-eni-policy"
@@ -622,7 +628,10 @@ Resources:
                   - "ec2:AttachNetworkInterface"
                   - "ec2:CreateNetworkInterface"
                   - "ec2:ModifyNetworkInterfaceAttribute"
-                Resource: "*"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:elastic-ip/*"
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:network-interface/*"
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:subnet/*"
 
         # Allow worker nodes to perform CA API calls
         - PolicyName: !Sub "${EKSClusterName}-workers-autoscaler-policy"
@@ -638,7 +647,9 @@ Resources:
                   - "autoscaling:SetDesiredCapacity"
                   - "autoscaling:TerminateInstanceInAutoScalingGroup"
                   - "ec2:DescribeLaunchTemplateVersions"
-                Resource: "*"
+                Resource:
+                  - "*"
+                  - !Sub "arn:${AWS::Partition}:autoscaling:${AWS::Region}:${AWS::AccountId}:autoScalingGroup:*:autoScalingGroupName/*"
 
         # Allow worker nodes to update S3 buckets created for the cluster
         - PolicyName: !Sub "${EKSClusterName}-workers-s3-policy"
@@ -654,7 +665,9 @@ Resources:
                   - "s3:DeleteObject"
                   - "s3:ListBucket"
                   - "s3:GetBucketLocation"
-                Resource: "*"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::*/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::*"
 
         # Allow worker nodes to update Route Tables for ipv4subnetpool integration
         - PolicyName: !Sub "${EKSClusterName}-workers-route-table-policy"
@@ -667,7 +680,8 @@ Resources:
                   - "ec2:CreateRoute"
                   - "ec2:ReplaceRoute"
                   - "ec2:DeleteRoute"
-                Resource: "*"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:route-table/*"
 
   OIDCProviderArn:
     Condition: EnableEFS
@@ -719,18 +733,22 @@ Resources:
                 Action:
                   - "elasticfilesystem:DescribeAccessPoints"
                   - "elasticfilesystem:DescribeFileSystems"
-                Resource: "*"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:elasticfilesystem:${AWS::Region}:${AWS::AccountId}:access-point/*"
+                  - !Sub "arn:${AWS::Partition}:elasticfilesystem:${AWS::Region}:${AWS::AccountId}:file-system/*"
               - Effect: Allow
                 Action:
                   - "elasticfilesystem:CreateAccessPoint"
-                Resource: "*"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:elasticfilesystem:${AWS::Region}:${AWS::AccountId}:file-system/*"
                 Condition:
                   StringLike:
                     "aws:RequestTag/efs.csi.aws.com/cluster": "true"
               - Effect: Allow
                 Action:
                   - "elasticfilesystem:DeleteAccessPoint"
-                Resource: "*"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:elasticfilesystem:${AWS::Region}:${AWS::AccountId}:access-point/*"
                 Condition:
                   StringEquals:
                     "aws:ResourceTag/efs.csi.aws.com/cluster": "true"
@@ -852,7 +870,7 @@ Resources:
         IamInstanceProfile:
           Arn: !GetAtt NodeInstanceProfile.Arn
         KeyName: !Ref KeyPairName
-        ImageId: !FindInMap [ WorkerAMIMap, !Ref AWS::Region, "118" ]
+        ImageId: !GetAtt UbuntuAMI.Value
         InstanceType: !FindInMap [ ConfigurationTierMap, !Ref ControllerConfigurationTier, instanceType ]
         NetworkInterfaces:
           - DeviceIndex: 0
@@ -1082,7 +1100,7 @@ Resources:
         IamInstanceProfile:
           Arn: !GetAtt NodeInstanceProfile.Arn
         KeyName: !Ref KeyPairName
-        ImageId: !FindInMap [ WorkerAMIMap, !Ref AWS::Region, "118" ]
+        ImageId: !GetAtt UbuntuAMI.Value
         InstanceType: !FindInMap [ ConfigurationTierMap, !Ref EnforcerConfigurationTier, instanceType ]
         NetworkInterfaces:
           - DeviceIndex: 0
@@ -1368,13 +1386,13 @@ Resources:
                   },
                   "default-ulimits": {
                       "nofile": {
-                          "Hard": 1024,
-                          "Soft": 1024,
+                          "Hard": 8192,
+                          "Soft": 8192,
                           "Name": "nofile"
                       },
                       "nproc": {
-                          "Hard": 4096,
-                          "Soft": 4096,
+                          "Hard": 65536,
+                          "Soft": 65536,
                           "Name": "nproc"
                       }
                   }

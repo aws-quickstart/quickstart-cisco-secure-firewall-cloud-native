@@ -1,8 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: Deploys Cisco Secure Firewall Cloud Native into a new EKS cluster of an existing VPC.
+Description: Deploys Cisco Secure Firewall Cloud Native into a new EKS cluster of an existing VPC (qs-1s3afab4m).
 
 Metadata:
+  cfn-lint: { config: { ignore_checks: [ W9006 ] } }
   QuickStartDocumentation:
     EntrypointName: "Launch into existing VPC"
     Order: 2

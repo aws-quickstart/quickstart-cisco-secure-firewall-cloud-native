@@ -1,8 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: Deploys a Tenant of Cisco Secure Firewall Cloud Native into an existing EKS cluster.
+Description: Deploys a Tenant of Cisco Secure Firewall Cloud Native into an existing EKS cluster (qs-1s3afab5b).
 
 Metadata:
+  cfn-lint: { config: { ignore_checks: [ W9006 ] } }
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -66,6 +67,12 @@ Metadata:
         default: In-Transit encryption
       EnforcerAutoscaling:
         default: Enforcer autoscaling
+      QSS3BucketName:
+        default: Quick Start S3 Bucket Name
+      QSS3KeyPrefix:
+        default: Quick Start S3 Key Prefix
+      QSS3BucketRegion:
+        default: Quick Start S3 bucket Region
 
 
 Parameters:
