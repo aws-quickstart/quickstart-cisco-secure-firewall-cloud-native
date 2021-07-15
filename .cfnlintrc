@@ -1,1 +1,7 @@
 override_spec: ./.override-spec.json
+append_rules:
+  - ./qs-cfn-lint-rules/qs_cfn_lint_rules/
+templates:
+  - ./templates/**/*.yaml
+ignore_templates:
+  - ./templates/amazon-eks-controlplane.template.yaml
