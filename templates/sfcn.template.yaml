@@ -876,6 +876,16 @@ Resources:
             MIME-Version: 1.0
 
             --MIMEBOUNDARY
+            Content-Type: text/cloud-config; charset="us-ascii"
+            MIME-Version: 1.0
+            Content-Transfer-Encoding: 7bit
+            Content-Disposition: attachment; filename="cloud-config.txt"
+
+            #cloud-config
+            cloud_final_modules:
+            - [scripts-user, always]
+
+            --MIMEBOUNDARY
             Content-Disposition: attachment; filename="03-configure-instance.sh"
             Content-Transfer-Encoding: 7bit
             Content-Type: text/x-shellscript
