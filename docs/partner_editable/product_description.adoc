@@ -2,4 +2,24 @@
 // Briefly describe the software. Use consistent and clear branding. 
 // Include the benefits of using the software on AWS, and provide details on usage scenarios.
 
-<Describe how the software works on AWS.>
+Today, companies invest in making their security controls scalable and dynamic to meet the ever-increasing demand on their network(s). In many cases, the response is a massive shift to Kubernetes® (K8s®) orchestrated infrastructure that provides a cloud-native, scalable, and resilient infrastructure. 
+Cisco has built a scalable Remote Access VPN solution natively on Amazon EKS subscribed through AWS marketplace and deployed via an AWS Quickstart. It gives you the flexibility to provision, run, and scale containerized security services. Cisco Secure Firewall Cloud Native brings together the benefits of Kubernetes and Cisco’s industry-leading security technologies, providing a resilient architecture for infrastructure security at scale.
+
+** *Key Capabilities of Cisco Secure Firewall Cloud Native*
+
+* Modular and scalable architecture
+* Native Kubernetes deployment via CRD and Helm chart and management via Kubectl and Cisco Defense Orchestrator
+* Custom metrics and Horizonal Pod autoscaling support
+* Data externalization for stateless services via a high-performance Amazon ElastiCache for Redis™ database
+* Multi-AZ, multi-region, and multi-tenant support 
+
+** *Key components of Cisco Secure Firewall Cloud Native platform*
+
+* *Control Point (CP):* The Control Point is responsible for config validation, compilation and distribution, licensing, route management. CP pods accept configuration from REST APIs, Kubectl+YAML, or Cisco Defense Orchestrator.
+* *Enforcement Point (EP):* CNFW EP pods are responsible for L3/L4 and VPN traffic handling and VPN termination.
+* *Redirector:* Redirector pod is responsible for intelligent load balancing remote access VPN traffic. When the redirector receives a request, it contacts Redis DB and provides Fully Qualified Domain Name (FQDN) of the enforcement pods handling the least number of VPN sessions.
+* *ElastiCache for Redis DB:* The Redis database has information on VPN sessions. The redirector uses this information to enable smart load balancing and recovery.
+* *Cisco Defense Orchestrator:* Cisco Defense Orchestrator is cisco’s cloud-based firewall management platform for management and monitoring.
+* *Amazon EKS cluster:* Cisco Secure Firewall runs on Amazon EKS cluster and uses K8s constructs like Horizontal Pod Autoscaler, auto-healing, and custom metric operator, etc. 
+* *Amazon EFS:* CP and EP are deployed on Amazon EFS
+* *Amazon Lambda:* This architecture uses Amazon Lambda functions for orchestration and automation
