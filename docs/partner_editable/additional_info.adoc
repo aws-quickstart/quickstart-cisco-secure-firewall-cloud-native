@@ -4,20 +4,101 @@
 == Test the deployment
 // If steps are required to test the deployment, add them here. If not, remove the heading
 
+. Once Cisco Secure Firewall Cloud Native stack is deployed, run the following commands to check the SFCN cluster:
+
+    export NS=<namespace>
+    aws eks --region <region> update-kubeconfig --name <sfcn-cluster-name>
+
+  Example:
+    export NS=sfcn-system
+    aws eks --region us-east-1 update-kubeconfig --name answami-sfcn
+
+. Check pods using *kubectl get pods -n $NS*
+
+. Check nodes using *kubectl get nodes -n $NS*
+
+. Check CNFW configuration using *kubectl get asacommand -A --field-selector spec.command="show run"*
+
+. You can capture different metrics for the SFCN based on service roles. See https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-metrics.html[Metrics Configuration^] in the Cisco Secure Firewall Cloud Native Getting Started Guide for more information.
+
 == Post-deployment steps
 // If post-deployment steps are required, add them here. If not, remove the heading
+
+Once the Cisco Secure Firewall Cloud Native cluster is up i.e., nodes and pods are up, access the GitHub samples to configure CNFW firewalls:
+ 
+. Navigate to the Cisco Secure Firewall Github Repository: https://github.com/CiscoDevNet/sfcn
+. Clone this https://github.com/CiscoDevNet/sfcn.git
+. Go to sfcn/samples/
+. Check the basic folder for interface, network, access-list, and routes sample YAML files 
+. Go to sfcn/samples/ra-vpn/redirector-lb/ for RAVPN sample YAML files 
+. Go to sfcn/samples/ra-vpn/s2s-backhaul/ for DC backhaul sample YAML files 
+. Modify YAML files to suit your configuration and apply using kubectl apply -f <filename>.yaml
+
+Vist https://www.cisco.com/c/en/us/products/security/secure-firewall-cloud-native/index.html[Cisco Secure Firewall Cloud Native^] for the most current information and resources about the product.
+
 
 == Best practices for using {partner-product-short-name} on AWS
 // Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating data, backups, ensuring high performance, high availability, etc. Link to software documentation for detailed information.
 
-_Add any best practices for using the software._
+See the following guidelines and best practices for the Secure Firewall Cloud Native.
 
-== Security
-// Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating data, backups, ensuring high performance, high availability, etc. Link to software documentation for detailed information.
+=== Deployment Guidelines
 
-_Add any security-related information._
+* Deploy Cisco Secure Firewall Cloud Native with a minimum of two enforcement points.
+* For resiliency, Cisco recommends using RAVPN with SFCN redirector and elasticache for Redis.
+* Cisco recommends using EFS storage. 
+
+=== Service Roles
+
+Service Roles are used to define and separate duties between enforcement points in the cluster. The mandatory "sfcn.cisco.com/service-role" label is used to match and apply configurations to their respective pods. When you have two service roles deployed, "default" and "vpnredirector" for example, then configuration(s) will only be applied to the enforcer pods with the same label.
+
+This allows you to apply elements such as ACLs, routes, etc. to your default enforcer while limiting the vpnredirector configuration to only to what is needed for its role in the cluster. The use of service roles in segmenting workloads in the Secure Firewall Cloud Native is further explained in the https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg.html[Secure Firewall Getting Started Guide^].
+
+=== Full and Delta Deployments
+
+When modifying ASAConfigurations, the control plane will make a best-effort attempt to conduct a delta deployment. This means that only the CLI lines that were modified within the spec are operated upon in order to minimize disruption.
+
+If a delta deployment fails, by default a full deployment will be attempted afterward. This involves the full desired set of ASAConfigurations being reapplied onto the enforcement points.
+
+*Note*: Full deployments may lead to traffic disruption and/or VPN sessions getting dropped. When testing or experimenting with configuration changes, we recommend that you apply them outside of peak traffic hours.
+
+
 
 == Other useful information
 //Provide any other information of interest to users, especially focusing on areas where AWS or cloud usage differs from on-premises usage.
 
-_Add any other details that will help the customer use the software on AWS._
+Cisco CNGW (containerized firewall) uses Cisco ASA configuration. You can use ASA CLI in the YAML file.
+
+*Note*: The use of shorthand ASA CLI syntax is not supported in this release. In other words, using int instead of interface or net instead of network will cause delta deployments to fail. We recommend you use full syntax when working on production clusters.
+
+*Example:*
+
+apiVersion: cnfw.cisco.com/v1
+kind: ASAConfiguration
+metadata:
+  name: interface-example
+  labels:
+    sfcn.cisco.com/service-role: default
+spec:
+  order: 1
+  description: "DHCP interfaces taking the AWS-assigned IPs"
+  cliLines: |
+
+    interface Management0/0
+    nameif management
+    ip address dhcp
+    no shutdown
+
+    interface TenGigabitEthernet0/0
+    nameif outside
+    ip address dhcp
+    security-level 100
+    no shutdown
+
+    interface TenGigabitEthernet0/1
+    nameif inside
+    ip address dhcp
+    no shutdown
+
+*kubectl apply -f interfaces.yaml -n $NS*
+|
