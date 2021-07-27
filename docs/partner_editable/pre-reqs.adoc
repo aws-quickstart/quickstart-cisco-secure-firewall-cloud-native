@@ -1,13 +1,138 @@
 // If no preperation is required, remove all content from here
 
-==== Prepare your AWS account
+==== Prepare your AWS account and users
 
-_Describe any setup required in the AWS account prior to template launch_
+Follow AWS Identity and Access Management (IAM) best practices to create a new IAM user for each person that requires administrator access. Create credentials for each user, depending on the type of access the user requires:
+
+* **Programmatic access**: The IAM user might need to make API calls, use the AWS CLI, or use the Tools for Windows PowerShell. In that case, create an access key (access key ID and a secret access key) for that user. 
+* **AWS Management Console access**: If the user needs to access the AWS Management Console, create a password for the user. Disabling console access for a user prevents them from signing in the to the AWS Management Console using their user name and password. It does not change their permissions or prevent them from accessing the console using an assumed role.
+
+As a best practice, create only the credentials that the user needs. For example, for a user who requires access only through the AWS Management Console, do not create access keys. Users who require programmatic access enabled to perform all the deployment activities must create and use the following IAM policy (SFCNFullAccess) to deploy Cisco Secure Firewall Cloud Native: 
+[source,SFCNFullAccess IAM Policy,options="nowrap"]
+SFCNFullAccess IAM Policy 
+  { 
+      "Version": "2012-10-17", 
+      "Statement": [ 
+          { 
+              "Action": [ 
+                  "ec2:*", 
+                  "elasticfilesystem:*", 
+                  "elasticache:*", 
+                  "kms:DescribeKey", 
+                  "kms:ListAliases", 
+                  "s3:*", 
+                  "iam:*", 
+                  "elasticloadbalancing:*", 
+                  "cloudwatch:*", 
+                  "autoscaling:*", 
+                  "eks:*", 
+                  "ec2-instance-connect:SendSSHPublicKey", 
+                  "lambda:*", 
+                  "states:DescribeStateMachine", 
+                  "states:ListStateMachines", 
+                  "tag:GetResources", 
+                  "xray:GetTraceSummaries", 
+                  "xray:BatchGetTraces", 
+                  "ds:CreateComputer", 
+                  "ds:DescribeDirectories", 
+                  "logs:*", 
+                  "ssm:*", 
+                  "ec2messages:*", 
+                  "cloudformation:*", 
+                  "ssmmessages:CreateControlChannel", 
+                  "ssmmessages:CreateDataChannel", 
+                  "ssmmessages:OpenControlChannel", 
+                  "ssmmessages:OpenDataChannel" 
+              ], 
+              "Effect": "Allow", 
+              "Resource": "*" 
+          }, 
+          { 
+              "Action": "iam:CreateServiceLinkedRole", 
+              "Effect": "Allow", 
+              "Resource": "*", 
+              "Condition": { 
+                  "StringLike": { 
+                      "iam:AWSServiceName": [ 
+                          "elasticfilesystem.amazonaws.com" 
+                      ] 
+                  } 
+              } 
+          }, 
+          { 
+              "Action": "iam:CreateServiceLinkedRole", 
+              "Effect": "Allow", 
+              "Resource": "arn:aws:iam::*:role/aws-service-role/elasticache.amazonaws.com/AWSServiceRoleForElastiCache", 
+              "Condition": { 
+                  "StringLike": { 
+                      "iam:AWSServiceName": "elasticache.amazonaws.com" 
+                  } 
+              } 
+          }, 
+          { 
+              "Effect": "Allow", 
+              "Action": "iam:CreateServiceLinkedRole", 
+              "Resource": "*", 
+              "Condition": { 
+                  "StringEquals": { 
+                      "iam:AWSServiceName": [ 
+                          "autoscaling.amazonaws.com", 
+                          "ec2scheduled.amazonaws.com", 
+                          "elasticloadbalancing.amazonaws.com", 
+                          "spot.amazonaws.com", 
+                          "spotfleet.amazonaws.com", 
+                          "transitgateway.amazonaws.com" 
+                      ] 
+                  } 
+              } 
+          }, 
+          { 
+              "Effect": "Allow", 
+              "Action": "iam:PassRole", 
+              "Resource": "*", 
+              "Condition": { 
+                  "StringEquals": { 
+                      "iam:PassedToService": "lambda.amazonaws.com" 
+                  } 
+              } 
+          }, 
+          { 
+              "Effect": "Allow", 
+              "Action": "iam:CreateServiceLinkedRole", 
+              "Resource": "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*", 
+              "Condition": { 
+                  "StringLike": { 
+                      "iam:AWSServiceName": "ssm.amazonaws.com" 
+                  } 
+              } 
+          }, 
+          { 
+              "Effect": "Allow", 
+              "Action": [ 
+                  "iam:DeleteServiceLinkedRole", 
+                  "iam:GetServiceLinkedRoleDeletionStatus" 
+              ], +
+              "Resource": "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*" 
+          } 
+      ] 
+  } 
+
+* Run Cisco Secure Firewall Cloud Native AWS Quick Start https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https://sfcn-quickstart.s3.amazonaws.com/quickstart-cisco-secure-firewall-cloud-native/templates/entrypoint-new-vpc.template.yaml&param_QSS3BucketName=sfcn-quickstart&param_FirewallVersion=v1.0.0[prerequisites stack^].
 
 ==== Prepare your {partner-company-name} account
 
-_Describe any setup required in the partner portal/account prior to template launch_
+* Obtain Cisco Secure Firewall Cloud Native license from your Cisco accounts team and add it to your Cisco smart account.
+* If the license is not available, SFCN architecture with a single enforcement point will still work with 100 Kbps max throughput. 
+* The https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-licensing.html[Licensing chapter^] provides complete information about licensing the product.
 
 ==== Prepare for the deployment
 
-_Describe any preparation required to complete the product build, such as obtaining licenses or placing files in S3_
+* Create At least one Amazon EC2 key pair.
+* For RAVPN use-case create the following resources: 
+    ** A registered domain (example: mydomain.com)
+    ** Created a hosted zone
+    ** Download and upload Cisco AnyConnect VPN package(s) (Windows, Linux, Mac, Andriod and iOS)
+    ** Create AnyConnect client profile(s).
+
+* Note: See the Use Cases in the https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-route53.html[Secure Firewall Cloud Native Getting Started Guide^] for complete information about RAVPN configuration.
+    
