@@ -31,8 +31,9 @@ You might be required to run the enable command before being able to execute any
 
 Install ec2instanceconnect (pip install ec2instanceconnectcli), and add the following to your shell profile:
 
-*EKS mssh*
+[source,*EKS mssh*,options="nowrap"]
 
+*EKS mssh*
 function sshn() {
   PS3="Select a node to ssh: "
   select node in $(kubectl get nodes | grep -v NAME | awk '{print $1}')
@@ -66,6 +67,7 @@ In the event the deployed status shows the configuration has been deployed to on
 
 By default, the system forwards the combined logs for all SFCN-related containers running in the cluster to a central logging service. Use the following kubectl command to view the logs:
 
+[source,$ POD=$(grep -m 1 logging-server,options="nowrap"]
 POD=$(grep -m 1 logging-server <<< "`kubectl get pods -n $NS --no-headers=true -o custom-columns=':metadata.name'`")
 kubectl logs -n $NS pod/$POD -c logging-server
 
@@ -74,6 +76,7 @@ Optionally, the parameter -f can be added to continuously tail the log. Note tha
 Alternatively, it is possible to login to the logging server:
 
 *kubectl exec -n $NS -it $POD -c logging-server -- /bin/sh*
+
 [source,$ cd /var/log/logs,options="nowrap"]
 $ cd /var/log/logs
 $ ls
@@ -89,7 +92,7 @@ Unified container logs are formatted as follows:
 <year-month-day> <time> <node name> <pod namespace> <pod name> <container name> -- <log message> -- <extra JSON-formatted log metadata>
 
 For example, an entry from a configuration pod may look like this:
-
+[source,2021-03-18 21:28:00 ,options="nowrap"]
 2021-03-18 21:28:00 ip-1-1-1-1.ec2.internal sfcn-system sfcn-configurer-1111111111-22222 manager --
 2021-03-18T21:28:00.806Z INFO controllers.SNMPExporter Reconciliation started {"namespace": "sfcn-system"} -- {"_SDATA":{"k8s":{
 The unified logs are also stored and periodically rotated on the node where the logging-server is running at /home/ubuntu/var-log/.
