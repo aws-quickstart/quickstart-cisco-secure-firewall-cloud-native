@@ -74,6 +74,7 @@ Optionally, the parameter -f can be added to continuously tail the log. Note tha
 Alternatively, it is possible to login to the logging server:
 
 *kubectl exec -n $NS -it $POD -c logging-server -- /bin/sh*
+[source,$ cd /var/log/logs,options="nowrap"]
 $ cd /var/log/logs
 $ ls
   messages-kv.log  messages.log
