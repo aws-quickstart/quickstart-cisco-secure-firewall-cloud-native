@@ -6,15 +6,15 @@ End-to-end Ciso Secure Firewall Cloud Native workflow:
 
 [#SFCN End-to-End Workflow]
 .End-to-End Workflow for {partner-product-short-name} on AWS
-image::../images/workflow.png[SFCN End-to-End Workflow]
+image::../images/prepare-aws-account.png[SFCN End-to-End Workflow]
 
-** *Step 1 - Creating IAM users*
+** *Step 1 - Create IAM users and EKS admin*
 * Create the user in the AWS Management Console, the AWS CLI, Tools for Windows PowerShell, or by using an AWS API operation. If you create the user in the AWS Management Console, then most of the steps are handled automatically via a wizard, based on your choices. If you create the users programmatically, then you must perform each of those steps individually.
 * Create credentials for the user, depending on the type of access the user requires:
 *** **Programmatic access**: The IAM user might need to make API calls, use the AWS CLI, or use the Tools for Windows PowerShell. In that case, create an access key (access key ID and a secret access key) for that user. 
 *** **AWS Management Console access**: If the user needs to access the AWS Management Console, create a password for the user. Disabling console access for a user prevents them from signing in the to the AWS Management Console using their user name and password. It does not change their permissions or prevent them from accessing the console using an assumed role.
  
-** *Step 2 - Create the IAM Access Policy* Users who require programmatic access enabled to perform all the deployment activities must create and use the IAM policy (SFCNFullAccess) to deploy Cisco Secure Firewall Cloud Native.
+** *Step 2 - Create IAM Access Policy* Users who require programmatic access enabled to perform all the deployment activities must create and use the IAM policy (SFCNFullAccess) to deploy Cisco Secure Firewall Cloud Native.
 
 * Sign in to the AWS Management Console and open the IAM console.
 * In the navigation pane on the left, choose Policies.
@@ -136,7 +136,7 @@ SFCNFullAccess IAM Policy
 *** Description ― Optionally, enter a description for the policy that you are creating.
 * Review the policy Summary to see the permissions that are granted by your policy. Then choose Create policy to save your work.
 
-** *Step 4 - Attach a Policy to the IAM Use* IAM users must explicitly be given permissions to administer credentials or IAM resources.
+** *Step 3 - Attach IAM access policy to the IAM user* IAM users must explicitly be given permissions to administer credentials or IAM resources.
 * Sign in to the AWS Management Console and open the IAM console.
 * Choose Users in the navigation pane, choose the name of the user whose permissions you want to modify, and then choose the Permissions tab.
 * Choose Add permissions, and then choose Attach existing policies directly to user.
@@ -145,22 +145,40 @@ SFCNFullAccess IAM Policy
 * You can also create a new managed policy by choosing Create policy. If you do, return to this browser tab or window when the new policy is done. Choose Refresh; and then select the check box for the new policy to attach it to your user. For more information, see Creating IAM policies.
 * Choose Next: Review to see the list of policies that are to be attached to the user. Then choose Add
 
-** *Step 5 - Run Cisco Secure Firewall Cloud Native AWS prerequistes stack* https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https://sfcn-quickstart.s3.amazonaws.com/quickstart-cisco-secure-firewall-cloud-native/templates/entrypoint-new-vpc.template.yaml&param_QSS3BucketName=sfcn-quickstart&param_FirewallVersion=v1.0.0[prerequisites stack^].
+** *Step 4 - Create SFCN cluster prerequisite stack* 
+* Run Cisco Secure Firewall Cloud Native https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https://sfcn-quickstart.s3.amazonaws.com/quickstart-cisco-secure-firewall-cloud-native/templates/entrypoint-new-vpc.template.yaml&param_QSS3BucketName=sfcn-quickstart&param_FirewallVersion=v1.0.0[prerequisites stack^].
 
 ==== Prepare your {partner-company-name} account
 
 * Obtain Cisco Secure Firewall Cloud Native license from your Cisco accounts team and add it to your Cisco smart account.
-* If the license is not available, SFCN architecture with a single enforcement point will still work with 100 Kbps max throughput. 
-* The https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-licensing.html[Licensing chapter^] provides complete information about licensing the product.
+* If the license is unavailable, Cisco SFCN can run with a single enforcement point at 100 Kbps throughput. 
+* The https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-licensing.html[Cisco Secure Firewall Cloud Native Licensing chapter^] provides complete information about licensing the product.
 
 ==== Prepare for the deployment
 
-* Create At least one Amazon EC2 key pair.
-* For RAVPN use-case create the following resources: 
-    ** A registered domain (example: mydomain.com)
-    ** Created a hosted zone
+* Create At least one Amazon EC2 key pair. This quickstart created EC2 instance with key pair you provided. 
+* Download the AnyConnect package files from https://software.cisco.com/download/home/286281283/type/282364313/release/[Cisco Software Download portal^] (The recommended AnyConnect versions are 4.8 or higher)
+*** anyconnect-linux64-4.9.05042-webdeploy-k9.pkg
+*** anyconnect-win-4.9.05042-webdeploy-k9.pkg
+*** anyconnect-macos-4.9.05042-webdeploy-k9.pkg
+
+* **Usecase1:** Scalable remote access VPN with Route53
+    ** Create/register a domain on Amazon Route53 (example: vpn.mydomain.com).
     ** Download and upload Cisco AnyConnect VPN package(s) (Windows, Linux, Mac, Andriod and iOS)
     ** Create AnyConnect client profile(s).
+    ** Create a S3 bucket and upload Cisco Anyconnect Images and Anyconnect Profile to S3. 
+
+* **Usecase2:** Scalable remote access VPN with SFCN redirector, ElastiCache and Route53 (Smart VPN load balancing)
+    ** Create/register a domain on Amazon Route53 (example: vpn.mydomain.com).
+    ** Download and upload Cisco AnyConnect VPN package(s) (Windows, Linux, Mac, Andriod and iOS)
+    ** Create AnyConnect client profile(s).
+    ** Create a S3 bucket and upload Cisco Anyconnect Images and Anyconnect Profile to S3. 
+
+* **Usecase3:** Multi-tenancy
+    ** Create/register a domain on Amazon Route53 (example: vpn.mydomain.com).
+    ** Download and upload Cisco AnyConnect VPN package(s) (Windows, Linux, Mac, Andriod and iOS)
+    ** Create AnyConnect client profile(s).
+    ** Create a S3 bucket and upload Cisco Anyconnect Images and Anyconnect Profile to S3. 
 
 * Note: See the Use Cases in the https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-route53.html[Secure Firewall Cloud Native Getting Started Guide^] for complete information about RAVPN configuration.
     
