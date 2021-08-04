@@ -2,12 +2,25 @@
 
 ==== Prepare your AWS account and users
 
-Follow AWS Identity and Access Management (IAM) best practices to create a new IAM user for each person that requires administrator access. Create credentials for each user, depending on the type of access the user requires:
+End-to-end Ciso Secure Firewall Cloud Native workflow: 
 
-* **Programmatic access**: The IAM user might need to make API calls, use the AWS CLI, or use the Tools for Windows PowerShell. In that case, create an access key (access key ID and a secret access key) for that user. 
-* **AWS Management Console access**: If the user needs to access the AWS Management Console, create a password for the user. Disabling console access for a user prevents them from signing in the to the AWS Management Console using their user name and password. It does not change their permissions or prevent them from accessing the console using an assumed role.
+[#SFCN End-to-End Workflow]
+.End-to-End Workflow for {partner-product-short-name} on AWS
+image::../images/workflow.png[SFCN End-to-End Workflow]
 
-As a best practice, create only the credentials that the user needs. For example, for a user who requires access only through the AWS Management Console, do not create access keys. Users who require programmatic access enabled to perform all the deployment activities must create and use the following IAM policy (SFCNFullAccess) to deploy Cisco Secure Firewall Cloud Native: 
+** *Step 1 - Creating IAM users*
+* Create the user in the AWS Management Console, the AWS CLI, Tools for Windows PowerShell, or by using an AWS API operation. If you create the user in the AWS Management Console, then most of the steps are handled automatically via a wizard, based on your choices. If you create the users programmatically, then you must perform each of those steps individually.
+* Create credentials for the user, depending on the type of access the user requires:
+*** **Programmatic access**: The IAM user might need to make API calls, use the AWS CLI, or use the Tools for Windows PowerShell. In that case, create an access key (access key ID and a secret access key) for that user. 
+*** **AWS Management Console access**: If the user needs to access the AWS Management Console, create a password for the user. Disabling console access for a user prevents them from signing in the to the AWS Management Console using their user name and password. It does not change their permissions or prevent them from accessing the console using an assumed role.
+ 
+** *Step 2 - Create the IAM Access Policy* Users who require programmatic access enabled to perform all the deployment activities must create and use the IAM policy (SFCNFullAccess) to deploy Cisco Secure Firewall Cloud Native.
+
+* Sign in to the AWS Management Console and open the IAM console.
+* In the navigation pane on the left, choose Policies.
+* Choose Create Policy.
+* Choose the JSON tab.
+* Type or paste the following JSON policy document. 
 [source,SFCNFullAccess IAM Policy,options="nowrap"]
 SFCNFullAccess IAM Policy 
   { 
@@ -116,6 +129,24 @@ SFCNFullAccess IAM Policy
           } 
       ] 
   } 
+* Resolve any security warnings, errors, or general warnings generated during policy validation, and then choose Review policy.
+* When you are finished, choose Next: Tags.
+* On the Review policy page:
+*** Name ― Type the name for this policy: SFCNFullAccess.
+*** Description ― Optionally, enter a description for the policy that you are creating.
+* Review the policy Summary to see the permissions that are granted by your policy. Then choose Create policy to save your work.
+
+** *Step 4 - Attach a Policy to the IAM Use* IAM users must explicitly be given permissions to administer credentials or IAM resources.
+* Sign in to the AWS Management Console and open the IAM console.
+* Choose Users in the navigation pane, choose the name of the user whose permissions you want to modify, and then choose the Permissions tab.
+* Choose Add permissions, and then choose Attach existing policies directly to user.
+* Select the SFCNFullAccess managed policy that you created for the SFCN administrator user:
+*** Use the Search feature to filter the policies by name.
+* You can also create a new managed policy by choosing Create policy. If you do, return to this browser tab or window when the new policy is done. Choose Refresh; and then select the check box for the new policy to attach it to your user. For more information, see Creating IAM policies.
+* Choose Next: Review to see the list of policies that are to be attached to the user. Then choose Add
+
+
+
 
 * Run Cisco Secure Firewall Cloud Native AWS Quick Start https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https://sfcn-quickstart.s3.amazonaws.com/quickstart-cisco-secure-firewall-cloud-native/templates/entrypoint-new-vpc.template.yaml&param_QSS3BucketName=sfcn-quickstart&param_FirewallVersion=v1.0.0[prerequisites stack^].
 
