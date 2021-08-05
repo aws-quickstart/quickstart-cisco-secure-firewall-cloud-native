@@ -99,4 +99,3 @@ spec:
     no shutdown
 
 *kubectl apply -f interfaces.yaml -n $NS*
-|

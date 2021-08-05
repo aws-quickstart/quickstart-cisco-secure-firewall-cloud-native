@@ -7,3 +7,22 @@ This Quick Start provides three deployment options:
 * *Deploy a new tenant into an existing {partner-product-short-name} cluster*. This option adds a new tenant in the {partner-product-short-name} cluster in your existing AWS infrastructure.
 
 The Quick Start provides separate templates for these options. It also lets you configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and {partner-product-short-name} settings, as discussed later in this guide.
+
+* **Usecase1:** Scalable remote access VPN with Route53
+    ** Create/register a domain on Amazon Route53 (example: vpn.mydomain.com).
+    ** Download and upload Cisco AnyConnect VPN package(s) (Windows, Linux, Mac, Andriod and iOS)
+    ** Create AnyConnect client profile(s).
+    ** Create a S3 bucket and upload Cisco Anyconnect Images and Anyconnect Profile to S3. 
+* **Usecase2:** Scalable remote access VPN with SFCN redirector, ElastiCache and Route53 (Smart VPN load balancing)
+    ** Create/register a domain on Amazon Route53 (example: vpn.mydomain.com).
+    ** Download and upload Cisco AnyConnect VPN package(s) (Windows, Linux, Mac, Andriod and iOS)
+    ** Create AnyConnect client profile(s).
+    ** Create a S3 bucket and upload Cisco Anyconnect Images and Anyconnect Profile to S3. 
+* **Usecase3:** Multi-tenancy
+    ** Create/register a domain on Amazon Route53 (example: vpn.mydomain.com).
+    ** Download and upload Cisco AnyConnect VPN package(s) (Windows, Linux, Mac, Andriod and iOS)
+    ** Create AnyConnect client profile(s).
+    ** Create a S3 bucket and upload Cisco Anyconnect Images and Anyconnect Profile to S3. 
+* Note: See the Use Cases in the https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-route53.html[Secure Firewall Cloud Native Getting Started Guide^] for complete information about RAVPN configuration.
+
+		
