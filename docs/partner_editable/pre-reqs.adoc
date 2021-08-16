@@ -156,18 +156,16 @@ SFCNFullAccess IAM Policy
 
 ==== Prepare for the deployment
 
-* Create At least one Amazon EC2 key pair, this quickstart created EC2 instance with key pair you provided. Ensure that at least one Amazon EC2 key pair exists in your AWS account in the Region where you plan to deploy the Secure Firewall Cloud Native RA-VPN solution. Make note of the key pair name. You need it to create a secret to allow the cluster to pull down files from your S3 bucket. See https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-aws.html#Cisco_Task.dita_7f6b3cc2-4435-493c-8100-c5f31923612f[Create a key pair^] for more information.
+* Create At least one Amazon EC2 key pair: Ensure that at least one Amazon EC2 key pair exists in your AWS account in the Region where you plan to deploy the Secure Firewall Cloud Native RA-VPN solution. Make note of the key pair name. You need it to create a secret to allow the cluster to pull down files from your S3 bucket. See https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-aws.html#Cisco_Task.dita_7f6b3cc2-4435-493c-8100-c5f31923612f[Create a key pair^] for more information.
 * Download the AnyConnect package files from https://software.cisco.com/download/home/286281283/type/282364313/release/[Cisco Software Download portal^] (The recommended AnyConnect version is 4.8 or higher)
 *** anyconnect-linux64-4.9.05042-webdeploy-k9.pkg
 *** anyconnect-win-4.9.05042-webdeploy-k9.pkg
 *** anyconnect-macos-4.9.05042-webdeploy-k9.pkg
 * Create AnyConnect client profile(s).
-* Create a S3 bucket and upload Cisco Anyconnect image(s) and Anyconnect profile(s) to S3. 
+* Create a S3 bucket and upload Cisco Anyconnect image(s) and Anyconnect profile(s) to S3: Make the files available for uploading to the cluster. This can be done by either serving them over HTTP/HTTPS or syncing them to an S3 bucket. This example shows the S3 bucket used to provision the cluster.
+*** aws s3 cp . s3://$BUCKET --recursive --exclude "*" --include "anyconnect-*"
 * Register a domain on AWS route53 (example: vpn.mydomain.com): Register a domain to serve as your VPN entry point within AWS. You can use Amazon Route53 with domains you register with Route53, and with domains you have registered with other DNS providers. *Note: Route53 DNS service is required for the remote access VPN solution using the VPN redirector service role.*
 *** You can register a new domain using Route 53.
 *** You can make Route53 the DNS service for an existing domain.
 *** You can move a domain to another registrar and use another DNS service.
 * Create a AWS hosted zone: AWS Hosted Zone: If you registered your domain through AWS, a hosted zone will be automatically created. A hosted zone is a container for records, which include information about how you want to route traffic for a domain (such as vpn.mydomain.com) and all of its subdomains. A hosted zone has the same name as the corresponding domain.
-
-
-
