@@ -193,7 +193,9 @@ Resources:
     Type: Custom::GetCallerArn
     Properties:
       ServiceToken: !Sub ['arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${Prefix}-GetCallerArn', {Prefix: !FindInMap [Config, Prefix, Value]}]
-  ClusterOIDCProvider:
+  # Cisco - ClusterOIDCProvider renamed to ClusterOIDCProviderNew for upgrade compatibility.
+  # Without this, AWS errors out during upgrade with: "Update of resource type is not permitted. The new template modifies resource type of the following resources: [ClusterOIDCProvider]"
+  ClusterOIDCProviderNew:
     Condition: EnableIamOidcProvider
     Type: AWS::IAM::OIDCProvider
     Properties:
