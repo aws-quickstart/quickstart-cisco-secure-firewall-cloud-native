@@ -1,6 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: Nested stack of Cisco Secure Firewall Cloud Native entrypoints to deploy Elasticache into an existing VPC.
+Description: Nested stack of Cisco Secure Firewall Cloud Native entrypoints to deploy Elasticache into an existing VPC (qs-1s3afab6o).
+
+Metadata:
+  cfn-lint: { config: { ignore_checks: [ W9002, W9003, W9004, W9006, EElastiCacheReplicationGroupAtRestEncryptionEnabled ] } }
 
 Parameters:
   Name:
@@ -126,9 +129,8 @@ Resources:
   CNFWElastiCacheReplicationGroup:
     Type: AWS::ElastiCache::ReplicationGroup
     Properties:
-      ReplicationGroupId: !Ref Name
       ReplicationGroupDescription: CNFW ElastiCache Replication Group.
-      NumCacheClusters: 1
+      NumCacheClusters: 2
       Engine: Redis
       EngineVersion: 6.x
       CacheNodeType: !Ref EnforcerCacheNodeType
@@ -137,12 +139,16 @@ Resources:
       AuthToken: !If [ EnforcerCacheTransitEncryptionEnabled,
                        !If [ EnforcerCacheAuthTokenIsBlank, !Ref 'AWS::NoValue', !Ref EnforcerCacheAuthToken ],
                        !Ref 'AWS::NoValue' ]
-      MultiAZEnabled: false
-      AutomaticFailoverEnabled: false
+      MultiAZEnabled: true
+      AutomaticFailoverEnabled: true
+      AtRestEncryptionEnabled: false
       TransitEncryptionEnabled: !If [ EnforcerCacheTransitEncryptionEnabled, true, false ]
       CacheSubnetGroupName: !Ref CNFWElastiCacheSubnetGroup
       SecurityGroupIds:
         - !Ref ElastiCacheSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Ref Name
 
 Outputs:
   PrimaryEndpoint:

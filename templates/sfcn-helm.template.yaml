@@ -1,6 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: A nested stack of Cisco Secure Firewall Cloud Native that installs Secure Firewall Helm chart into an existing cluster.
+Description: A nested stack of Cisco Secure Firewall Cloud Native that installs Secure Firewall Helm chart into an existing cluster (qs-1s3afab72).
+
+Metadata:
+  cfn-lint: { config: { ignore_checks: [ W9002, W9003, W9004, W9006 ] } }
 
 Parameters:
   ClusterID:
@@ -48,10 +51,10 @@ Parameters:
 
   EnforcerConfigurationTier:
     Description: Instance tier to be used by enforcer workers.
-    Default: "vCPU4"
+    Default: "vCPU4-c5"
     Type: String
-    AllowedValues: [ "vCPU4" ]
-    ConstraintDescription: must specify vCPU4
+    AllowedValues: [ "vCPU4-m5", "vCPU4-c5" ]
+    ConstraintDescription: must specify vCPU4-m5 or vCPU4-c5
 
   EnforcerCachePort:
     Type: Number
@@ -81,6 +84,18 @@ Parameters:
     Description: |
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
       Takes effect only if in-transit encryption is enabled.
+
+  EnforcerCacheStorageKey:
+    Type: String
+    NoEcho: true
+    MaxLength: 64
+    Default: ""
+    AllowedPattern: "^([A-F0-9]{64})?$"
+    ConstraintDescription: Must be a string of length 64 consisting of uppercase hexadecimal characters (A-F,0-9).
+    Description: |
+      User provided key to encrypt sensitive data in the cache.
+      Must consist of 64 uppercase hexadecimal characters (A-F,0-9).
+      Required when 'elasticache' cache type is specified.
 
   EnforcerAutoscaling:
     Type: String
@@ -113,10 +128,19 @@ Conditions:
     - !Condition LicenseTokenProvided
     - !Condition VpnRedirectorRolePresent
 
+Mappings:
+  DataplaneTierMap:
+    "vCPU4-m5":
+      dataplaneTier: "vCPU4"
+    "vCPU4-c5":
+      dataplaneTier: "vCPU4"
+
 Resources:
   ChartName:
     Type: Custom::CliQuery
     Properties:
+      # Here and in other cases the Version is added to re-read values from SSM upon the Version change
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartName --query '{Value: Parameters[0].Value || `sfcn-bundle`}'
@@ -125,6 +149,7 @@ Resources:
   ChartRepo:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartRepo --query '{Value: Parameters[0].Value || `https://d2rxbueeojmoz9.cloudfront.net`}'
@@ -133,6 +158,7 @@ Resources:
   ChartRepoUsername:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartRepoUsername --query '{Value: Parameters[0].Value || ``}'
@@ -141,6 +167,7 @@ Resources:
   ChartRepoPassword:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallChartRepoPassword --query '{Value: Parameters[0].Value || ``}' --with-decryption
@@ -149,6 +176,7 @@ Resources:
   ContainerRegistry:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallContainerRegistry --query '{Value: Parameters[0].Value || `709825985650.dkr.ecr.us-east-1.amazonaws.com`}'
@@ -157,6 +185,7 @@ Resources:
   ContainerRegistryUsername:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallContainerRegistryUsername --query '{Value: Parameters[0].Value || ``}'
@@ -165,6 +194,7 @@ Resources:
   ContainerRegistryPassword:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallContainerRegistryPassword --query '{Value: Parameters[0].Value || ``}' --with-decryption
@@ -173,6 +203,7 @@ Resources:
   ContainerRepo:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/firewallContainerRepo --query '{Value: Parameters[0].Value || `cisco/sfcn/prod`}'
@@ -181,6 +212,7 @@ Resources:
   LicensingEnabled:
     Type: Custom::CliQuery
     Properties:
+      Version: !Ref Version
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub |
         ssm get-parameters --names /CSFCN/${ClusterID}/licensingEnabled --query '{Value: Parameters[0].Value || `"true"`}'
@@ -209,12 +241,14 @@ Resources:
         "global.dataPlaneNamespace": !If [ DataplaneNamespaceProvided, !Ref DataplaneNamespace, !Ref SystemNamespace ]
         "tags.controlPlane": !If [ ControlplaneEnabled, "true", "false" ]
         "tags.dataPlane": !If [ DataplaneEnabled, "true", "false" ]
+        "snmpExporter.serviceRoles": !Sub "{${EnforcerServiceRoles}}"
         "dataPlane.serviceRoles": !Sub "{${EnforcerServiceRoles}}"
         "dataPlane.redis.host": !Ref EnforcerCacheHost
         "dataPlane.redis.port": !Ref EnforcerCachePort
+        "dataPlane.redis.storage_key": !Ref EnforcerCacheStorageKey
         "dataPlane.redis.token": !Ref EnforcerCacheAuthToken
         "dataPlane.hpa.enable": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
-        "dataPlane.configurationTier": !Ref EnforcerConfigurationTier
+        "dataPlane.configurationTier": !FindInMap [ DataplaneTierMap, !Ref EnforcerConfigurationTier, dataplaneTier ]
         "dataPlane.enableLicensing": !GetAtt LicensingEnabled.Value
         "scaledown.enable": !If [ EnforcerAutoscalingEnabled, "true", "false" ]
 

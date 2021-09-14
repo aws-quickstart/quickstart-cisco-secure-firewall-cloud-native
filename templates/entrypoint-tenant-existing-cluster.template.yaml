@@ -1,8 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: Deploys a Tenant of Cisco Secure Firewall Cloud Native into an existing EKS cluster.
+Description: Deploys a Tenant of Cisco Secure Firewall Cloud Native into an existing EKS cluster (qs-1s3afab5b).
 
 Metadata:
+  cfn-lint: { config: { ignore_checks: [ W9006 ] } }
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -21,6 +22,7 @@ Metadata:
       - Label:
           default: Basic Configuration - Firewall
         Parameters:
+          - FirewallVersion
           - EnforcerServiceRoles
           - EnforcerAutoscaling
           - SmartLicenseToken
@@ -32,6 +34,7 @@ Metadata:
           - EnforcerCacheNodeType
           - EnforcerCacheTransitEncryption
           - EnforcerCacheAuthToken
+          - EnforcerCacheStorageKey
       - Label:
           default: (Read-only, do not change) AWS Quick Start configuration
         Parameters:
@@ -41,6 +44,8 @@ Metadata:
     ParameterLabels:
       ClusterID:
         default: EKS cluster ID
+      FirewallVersion:
+        default: Product version
       DataplaneNamespace:
         default: Namespace
       SmartLicenseToken:
@@ -55,6 +60,8 @@ Metadata:
         default: Enforcer service roles
       EnforcerCacheAuthToken:
         default: Redis authentication token
+      EnforcerCacheStorageKey:
+        default: Redis key to encrypt sensitive data
       EnforcerCacheType:
         default: Cache type
       EnforcerCacheNodeType:
@@ -63,6 +70,12 @@ Metadata:
         default: In-Transit encryption
       EnforcerAutoscaling:
         default: Enforcer autoscaling
+      QSS3BucketName:
+        default: Quick Start S3 Bucket Name
+      QSS3KeyPrefix:
+        default: Quick Start S3 Key Prefix
+      QSS3BucketRegion:
+        default: Quick Start S3 bucket Region
 
 
 Parameters:
@@ -95,6 +108,13 @@ Parameters:
     Type: String
     Description: EKS cluster name (a root stack name) with SFCN product deployed.
 
+  FirewallVersion:
+    Type: String
+    Default: ""
+    Description: |
+      (Optional) Helm chart version of the product. If not provided – a version of a root stack is used automatically.
+      A version different from a root stack can be provided during an upgrade to another release.
+
   DataplaneNamespace:
     Type: String
     AllowedPattern: ".+"
@@ -120,10 +140,11 @@ Parameters:
 
   EnforcerConfigurationTier:
     Description: Instance tier to be used by enforcer workers.
-    Default: "vCPU4"
+    Default: "vCPU4-c5"
     Type: String
-    AllowedValues: [ "vCPU4" ]
-    ConstraintDescription: must specify vCPU4
+    AllowedValues: [ "vCPU4-m5", "vCPU4-c5" ]
+    ConstraintDescription: must specify vCPU4-m5 or vCPU4-c5
+
 
   EnforcerServiceRoles:
     Type: String
@@ -142,10 +163,22 @@ Parameters:
     MaxLength: 128
     AllowedPattern: "([a-zA-Z0-9!&#$^><-]{16,128})?"
     Default: ""
-    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
+    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters.
     Description: |
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
-      Takes effect only when in-transit encryption is enabled
+      Takes effect only when in-transit encryption is enabled.
+
+  EnforcerCacheStorageKey:
+    Type: String
+    NoEcho: true
+    MaxLength: 64
+    Default: ""
+    AllowedPattern: "^([A-F0-9]{64})?$"
+    ConstraintDescription: Must be a string of length 64 consisting of uppercase hexadecimal characters (A-F,0-9).
+    Description: |
+      User provided key to encrypt sensitive data in the cache.
+      Must consist of 64 uppercase hexadecimal characters (A-F,0-9).
+      Required when 'elasticache' cache type is specified.
 
   EnforcerCacheType:
     Type: String
@@ -173,9 +206,17 @@ Parameters:
     Default: Disabled
     Description: Enable the default Enforcer autoscaling.
 
+Rules:
+  EnforcerElasticacheRule:
+    RuleCondition: !Equals [ !Ref EnforcerCacheType, elasticache ]
+    Assertions:
+      - Assert: !Not [ !Equals [ !Ref EnforcerCacheStorageKey, "" ] ]
+        AssertDescription: Cache storage key must not be empty when cache type is set to "elasticache".
+
 Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
   EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
+  FirewallVersionProvided: !Not [ !Equals [ !Ref FirewallVersion, '' ] ]
 
 Resources:
   EnforcerElasticache:
@@ -210,7 +251,7 @@ Resources:
           S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
       Parameters:
         ClusterID: !Ref ClusterID
-        Version: { Fn::ImportValue: !Sub '${ClusterID}-FirewallVersion' }
+        Version: !If [ FirewallVersionProvided, !Ref FirewallVersion, { Fn::ImportValue: !Sub '${ClusterID}-FirewallVersion' } ]
         Controlplane: Disabled
         Name: !Sub "sfcn-${DataplaneNamespace}"
         SystemNamespace: { Fn::ImportValue: !Sub '${ClusterID}-SystemNamespace' }
@@ -221,5 +262,6 @@ Resources:
         EnforcerServiceRoles: !Ref EnforcerServiceRoles
         EnforcerCacheHost: !If [ EnforcerCacheTypeIsElastiCache, !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint, "" ]
         EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
+        EnforcerCacheStorageKey: !Ref EnforcerCacheStorageKey
         EnforcerAutoscaling: !Ref EnforcerAutoscaling
         EnforcerConfigurationTier: !Ref EnforcerConfigurationTier
