@@ -1,5 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Nested stack of Cisco Secure Firewall Cloud Native Quickstart entrypoints that deployes all CSFCN resources.
+Description: Nested stack of Cisco Secure Firewall Cloud Native Quickstart entrypoints that deployes all CSFCN resources (qs-1s3afab27).
+Metadata:
+  cfn-lint: { config: { ignore_checks: [ W9002, W9003, W9004, W9006 ] } }
 Parameters:
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -27,7 +29,7 @@ Parameters:
 
   VPCID:
     Type: "AWS::EC2::VPC::Id"
-    Description: ID of your existing VPC (e.g., vpc-0343606e)
+    Description: ID of your existing VPC (e.g., vpc-0343606e).
   PublicSubnet1ID:
     Type: "AWS::EC2::Subnet::Id"
     Description: ID of the public DMZ subnet 1 (CNFW default 1), located in Availability Zone 1.
@@ -41,26 +43,26 @@ Parameters:
     Type: "AWS::EC2::Subnet::Id"
     Description: ID of the private subnet 2, located in Availability Zone 2. Must have "kubernetes.io/role/internal-elb" tag attached.
   PublicSubnetRouteTableID:
-    Description: ID of VPC public subnet route table (e.g., rtb-0b9ce78da592f11e0)
+    Description: ID of VPC public subnet route table (e.g., rtb-0b9ce78da592f11e0).
     Type: String
   CNFWOutsideSubnet1CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28.
     Description: CIDR block for the CNFW outside subnet 1, located in Availability Zone 1.
     Type: String
   CNFWInsideSubnet1CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28.
     Description: CIDR block for the CNFW inside subnet 1, located in Availability Zone 1.
     Type: String
   CNFWOutsideSubnet2CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28.
     Description: CIDR block for the CNFW outside subnet 2, located in Availability Zone 2.
     Type: String
   CNFWInsideSubnet2CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28.
     Description: CIDR block for the CNFW inside subnet 2, located in Availability Zone 2.
     Type: String
 
@@ -76,8 +78,7 @@ Parameters:
     Description: The desired Kubernetes version for your cluster.
 
   KeyPairName:
-    Description: Name of an existing key pair, which allows you
-      to securely connect to your instance after it launches.
+    Description: Name of an existing key pair, which allows you to securely connect to your instance after it launches.
     Type: AWS::EC2::KeyPair::KeyName
 
   EKSAdminUserArn:
@@ -95,23 +96,23 @@ Parameters:
     Type: String
     Default: ""
     AllowedPattern: ^$|^\s*(api|audit|authenticator|controllerManager|scheduler)\s*(,\s*(api|audit|authenticator|controllerManager|scheduler)\s*)*$
-    ConstraintDescription: Comma separated list of allowed values - api, audit, authenticator, controllerManager and scheduler
+    ConstraintDescription: Comma separated list of allowed values - api, audit, authenticator, controllerManager and scheduler.
     Description: |
       Cluster control plane logging options (api, audit, authenticator, controllerManager and scheduler); comma separated.
 
   ControllerConfigurationTier:
-    Description: Instance tier to be used by controller workers
-    Default: "vCPU4"
+    Description: Instance tier to be used by controller workers.
+    Default: "vCPU4-c5"
     Type: String
-    AllowedValues: [ "vCPU4" ]
-    ConstraintDescription: must specify vCPU4
+    AllowedValues: [ "vCPU4-m5", "vCPU4-c5" ]
+    ConstraintDescription: must specify vCPU4-m5 or vCPU4-c5
 
   EnforcerConfigurationTier:
-    Description: Instance tier to be used by enforcer workers
-    Default: "vCPU4"
+    Description: Instance tier to be used by enforcer workers.
+    Default: "vCPU4-c5"
     Type: String
-    AllowedValues: [ "vCPU4" ]
-    ConstraintDescription: must specify vCPU4
+    AllowedValues: [ "vCPU4-m5", "vCPU4-c5" ]
+    ConstraintDescription: must specify vCPU4-m5 or vCPU4-c5
 
   ControlNodeGroupMaxSize:
     Type: Number
@@ -128,6 +129,12 @@ Parameters:
     AllowedValues: [ local, efs ]
     Default: local
     Description: The type of a storage used to keep logs and deployments files.
+
+  LoadBalancerController:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: Enable or Disable load balancer controller.
 
   EnforcerNodeGroupMaxSize:
     Type: Number
@@ -155,13 +162,13 @@ Parameters:
     AllowedValues:
       - none
       - elasticache
-    Description: Type of External Cache to use for CNFW
+    Description: Type of External Cache to use for CNFW.
 
   EnforcerCacheNodeType:
     Type: String
     Default: "cache.m5.large"
     AllowedValues: [ cache.m5.xlarge, cache.m5.large ]
-    Description: EC2 instance type to use as Cache node, check region availaibility before selection
+    Description: EC2 instance type to use as Cache node, check region availaibility before selection.
 
   EnforcerCacheAuthToken:
     Type: String
@@ -169,46 +176,47 @@ Parameters:
     MaxLength: 128
     Default: ""
     AllowedPattern: "([a-zA-Z0-9!&#$^><-]{16,128})?"
-    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
+    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters.
     Description: |
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
-      Takes effect only if in-transit encryption is enabled
+      Takes effect only if in-transit encryption is enabled.
+
+  EnforcerCacheStorageKey:
+    Type: String
+    NoEcho: true
+    MaxLength: 64
+    Default: ""
+    AllowedPattern: "^([A-F0-9]{64})?$"
+    ConstraintDescription: Must be a string of length 64 consisting of uppercase hexadecimal characters (A-F,0-9).
+    Description: |
+      User provided key to encrypt sensitive data in the cache.
+      Must consist of 64 uppercase hexadecimal characters (A-F,0-9).
+      Required when 'elasticache' cache type is specified.
 
   EnforcerCacheTransitEncryption:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Enabled
-    Description: Cannot be changed after creation, update requires replacement
+    Description: Cannot be changed after creation, update requires replacement.
 
   EnforcerCachePort:
     Type: Number
     Default: 6379
     MinValue: 1
     MaxValue: 65535
-    Description: Port number to use for communicating with Redis server
+    Description: Port number to use for communicating with Redis server.
 
   SecureFirewallDataplane:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Enabled
-    Description: Secure Firewall data-plane installation
-
-  DevhubUsername:
-    Type: String
-    AllowedPattern: ".+"
-    Description: Username of Cisco Devhub account
-
-  DevhubApiKey:
-    Type: String
-    NoEcho: true
-    AllowedPattern: ".+"
-    Description: API key obtained from Cisco Devhub account
+    Description: This is enabled by default for a full deployment with control plane and data plane components. To deploy control plane components only (for multi-tenancy), disable this setting.
 
   FirewallVersion:
     Type: String
-    Default: v0.1.0-185
+    Default: v1.0.0
     AllowedPattern: ".+"
-    Description: Helm chart version of the product
+    Description: Helm chart version of the product.
 
   SystemNamespace:
     Type: String
@@ -231,40 +239,36 @@ Parameters:
       Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
       and upto 15 characters long.
     Description: |
-      Service roles of ASA separated by comma, no spaces allowed. If choosing the multiple service role option, ensure that at
-      least as many enforcer worker nodes is set as the desired number for faster deployment
+      The service role of the data plane node. Leave the setting as "default" if you selected 1 data plane node. Each additional service role requires a corresponding data plane node.
 
   EnforcerAutoscaling:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Disabled
-    Description: Enable scaling of ASA with default metrics
+    Description: Enable the default Enforcer autoscaling.
 
 Mappings:
-  WorkerAMIMap:
-    us-east-1:
-      "118": ami-04e0aace2faaea0c0
-      "119": ami-06f995c5e133ad46c
-    us-east-2:
-      "118": ami-0883f55ce0673c383
-      "119": ami-00238099ab28c3007
   ConfigurationTierMap:
-    "vCPU4":
+    "vCPU4-m5":
       instanceType: m5.xlarge
       hugePagesSize: "128"
-
+    "vCPU4-c5":
+      instanceType: c5.2xlarge
+      hugePagesSize: "128"
 Rules:
   EnforcerElasticacheRule:
     RuleCondition: !Equals [ !Ref EnforcerCacheType, elasticache ]
     Assertions:
       - Assert: !Equals [ !Ref SecureFirewallDataplane, Enabled ]
-        AssertDescription: Cache type can be set to "elasticache" only if firewall data-plane is "Enabled"
+        AssertDescription: Cache type can be set to "elasticache" only if firewall data plane is "Enabled".
+      - Assert: !Not [ !Equals [ !Ref EnforcerCacheStorageKey, "" ] ]
+        AssertDescription: Cache storage key must not be empty when cache type is set to "elasticache".
 
 Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
   EnableEFS: !Equals [ !Ref StorageType, "efs" ]
+  EnableLB: !Equals [ !Ref LoadBalancerController, "Enabled" ]
   EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
-  HasAdditionalEKSAdminRole: !Not [ !Equals [ !Ref AdditionalEKSAdminRoleArn, "" ] ]
 
 Resources:
 
@@ -295,9 +299,29 @@ Resources:
       AwsCliCommand: !Sub "ec2 describe-vpcs --vpc-id ${VPCID} --query 'Vpcs[0].{CidrBlock: CidrBlock}'"
       IdField: 'CidrBlock'
 
+  UbuntuAMI:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub "ec2 describe-images --filters 'Name=name,Values=ubuntu-eks/k8s_${KubernetesVersion}/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20210423.1' --query '{Value: Images[*].[ImageId][0][0]}'"
+      IdField: 'Value'
+
   # Inside/Outside subnets are created for the first two Availability Zones of the current region.
   # Each subnet uses a /20 netmask (4096 IPv4 addresses).
   # Creating subnets for all AZs dynamically is not supported by vanilla CloudFormation templates.
+  #
+  # If you are wondering why `kubernetes.io/role/elb` and similar tags are assigned for the subnets, refer to:
+  # https://aws.amazon.com/ru/premiumsupport/knowledge-center/eks-vpc-subnet-discovery/
+
+  InsideSubnetsRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPCID
+      Tags:
+        - Key: Name
+          Value: Inside Subnets
+        - Key: Network
+          Value: Private
 
   OutsideSubnetAZ1:
     Type: AWS::EC2::Subnet
@@ -325,21 +349,20 @@ Resources:
     Properties:
       VpcId: !Ref VPCID
       CidrBlock: !Ref CNFWInsideSubnet1CIDR
-      MapPublicIpOnLaunch: true
       AvailabilityZone: !Select [ 0, !GetAZs "" ]
       Tags:
         - Key: Name
           Value: !Sub [ "${pref}_inside_${az}", { pref: !Ref EKSClusterName, az: !Select [ 0, !GetAZs "" ] } ]
         - Key: !Sub "kubernetes.io/cluster/${EKSClusterName}"
           Value: "shared"
-        - Key: kubernetes.io/role/elb
+        - Key: kubernetes.io/role/internal-elb
           Value: "1"
 
   InsideSubnetAZ1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref InsideSubnetAZ1
-      RouteTableId: !Ref PublicSubnetRouteTableID
+      RouteTableId: !Ref InsideSubnetsRouteTable
 
   OutsideSubnetAZ2:
     Type: AWS::EC2::Subnet
@@ -367,21 +390,20 @@ Resources:
     Properties:
       VpcId: !Ref VPCID
       CidrBlock: !Ref CNFWInsideSubnet2CIDR
-      MapPublicIpOnLaunch: true
       AvailabilityZone: !Select [ 1, !GetAZs "" ]
       Tags:
         - Key: Name
           Value: !Sub [ "${pref}_inside_${az}", { pref: !Ref EKSClusterName, az: !Select [ 1, !GetAZs "" ] } ]
         - Key: !Sub "kubernetes.io/cluster/${EKSClusterName}"
           Value: "shared"
-        - Key: kubernetes.io/role/elb
+        - Key: kubernetes.io/role/internal-elb
           Value: "1"
 
   InsideSubnetAZ2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref InsideSubnetAZ2
-      RouteTableId: !Ref PublicSubnetRouteTableID
+      RouteTableId: !Ref InsideSubnetsRouteTable
 
   # Security Groups
 
@@ -418,7 +440,7 @@ Resources:
   ControlPlaneSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Description: Allow SG members to access k8s api
+      Description: Allow SG members to access k8s api.
       GroupId: !Ref ControlPlaneSecurityGroup
       SourceSecurityGroupId: !Ref ControlPlaneSecurityGroup
       IpProtocol: tcp
@@ -482,7 +504,7 @@ Resources:
         - Key: Name
           Value: !Sub "${EKSClusterName}-workers-0"
       SecurityGroupIngress:
-        - Description: "Allow connections from first CNFW interface"
+        - Description: "Allow connections from first CNFW interface."
           IpProtocol: "-1"
           FromPort: 0
           ToPort: 65535
@@ -571,9 +593,9 @@ Resources:
             Action:
               - "sts:AssumeRole"
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-        - "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEKS_CNI_Policy"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
       Policies:
         # Allow nodes to signal CF resources from user-data
         - PolicyName: cfn-signal
@@ -583,7 +605,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - cloudformation:SignalResource
-                Resource: "*"
+                Resource: !Sub "arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*"
         # Allow route53ingress controller to manage route53 records
         - PolicyName: !Sub "${EKSClusterName}-workers-route53-policy"
           PolicyDocument:
@@ -593,22 +615,36 @@ Resources:
                 Action:
                   - "route53:ChangeResourceRecordSets"
                   - "route53:ListResourceRecordSets"
-                Resource: "*"
+                  - "route53:ListHostedZones"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:route53:::hostedzone/*"
 
-        # Allow worker to associate EIP
-        - PolicyName: !Sub "${EKSClusterName}-workers-eip-policy"
+        # Allow workers to describe EIPs, interfaces and regions
+        - PolicyName: !Sub "${EKSClusterName}-workers-describe-eip-nic-regions-policy"
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
                   - "ec2:DescribeAddresses"
-                  - "ec2:AssociateAddress"
-                  - "ec2:AllocateAddress"
                   - "ec2:DescribeNetworkInterfaceAttribute"
                   - "ec2:DescribeNetworkInterfaces"
                   - "ec2:DescribeRegions"
-                Resource: "*"
+                Resource:
+                  - "*"
+
+        # Allow workers to associate EIP
+        - PolicyName: !Sub "${EKSClusterName}-workers-eip-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ec2:AssociateAddress"
+                  - "ec2:AllocateAddress"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:elastic-ip/*"
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:network-interface/*"
 
         # Allow worker nodes to manage additional ENIs
         - PolicyName: !Sub "${EKSClusterName}-workers-eni-policy"
@@ -622,7 +658,10 @@ Resources:
                   - "ec2:AttachNetworkInterface"
                   - "ec2:CreateNetworkInterface"
                   - "ec2:ModifyNetworkInterfaceAttribute"
-                Resource: "*"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:elastic-ip/*"
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:network-interface/*"
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:subnet/*"
 
         # Allow worker nodes to perform CA API calls
         - PolicyName: !Sub "${EKSClusterName}-workers-autoscaler-policy"
@@ -638,7 +677,9 @@ Resources:
                   - "autoscaling:SetDesiredCapacity"
                   - "autoscaling:TerminateInstanceInAutoScalingGroup"
                   - "ec2:DescribeLaunchTemplateVersions"
-                Resource: "*"
+                Resource:
+                  - "*"
+                  - !Sub "arn:${AWS::Partition}:autoscaling:${AWS::Region}:${AWS::AccountId}:autoScalingGroup:*:autoScalingGroupName/*"
 
         # Allow worker nodes to update S3 buckets created for the cluster
         - PolicyName: !Sub "${EKSClusterName}-workers-s3-policy"
@@ -654,7 +695,9 @@ Resources:
                   - "s3:DeleteObject"
                   - "s3:ListBucket"
                   - "s3:GetBucketLocation"
-                Resource: "*"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::*/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::*"
 
         # Allow worker nodes to update Route Tables for ipv4subnetpool integration
         - PolicyName: !Sub "${EKSClusterName}-workers-route-table-policy"
@@ -667,10 +710,10 @@ Resources:
                   - "ec2:CreateRoute"
                   - "ec2:ReplaceRoute"
                   - "ec2:DeleteRoute"
-                Resource: "*"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:route-table/*"
 
   OIDCProviderArn:
-    Condition: EnableEFS
     DependsOn: EKSControlPlane
     Type: Custom::CliQuery
     Properties:
@@ -681,7 +724,6 @@ Resources:
       IdField: Arn
 
   OIDCProviderURL:
-    Condition: EnableEFS
     Type: Custom::CliQuery
     Properties:
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
@@ -719,18 +761,22 @@ Resources:
                 Action:
                   - "elasticfilesystem:DescribeAccessPoints"
                   - "elasticfilesystem:DescribeFileSystems"
-                Resource: "*"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:elasticfilesystem:${AWS::Region}:${AWS::AccountId}:access-point/*"
+                  - !Sub "arn:${AWS::Partition}:elasticfilesystem:${AWS::Region}:${AWS::AccountId}:file-system/*"
               - Effect: Allow
                 Action:
                   - "elasticfilesystem:CreateAccessPoint"
-                Resource: "*"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:elasticfilesystem:${AWS::Region}:${AWS::AccountId}:file-system/*"
                 Condition:
                   StringLike:
                     "aws:RequestTag/efs.csi.aws.com/cluster": "true"
               - Effect: Allow
                 Action:
                   - "elasticfilesystem:DeleteAccessPoint"
-                Resource: "*"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:elasticfilesystem:${AWS::Region}:${AWS::AccountId}:access-point/*"
                 Condition:
                   StringEquals:
                     "aws:ResourceTag/efs.csi.aws.com/cluster": "true"
@@ -743,7 +789,7 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-controlplane.template.yaml'
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/amazon-eks-controlplane.template.yaml'
         - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
           S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
       Parameters:
@@ -757,106 +803,37 @@ Resources:
             - !Ref PrivateSubnet1ID
             - !Ref PrivateSubnet2ID
         RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/eks-quickstart-ControlPlane"
+        CustomNodeRole: !Ref EC2WorkersRole
         FunctionRoleArn: !GetAtt IamStack.Outputs.KubernetesAdminRoleArn
+        AdditionalEKSAdminUserArn: !Ref EKSAdminUserArn
+        AdditionalEKSAdminRoleArn: !Ref AdditionalEKSAdminRoleArn
         EKSPublicAccessEndpoint: "Enabled"
         EKSPrivateAccessEndpoint: "Disabled"
         EKSEncryptSecrets: "Disabled"
         EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
 
-  # Fix for the issue when on updating EKSControlPlane it drops the NodeGroup role entry in "aws-auth" configmap.
-  # The contents of the configmap is re-applied explicitly to overcome the issue.
-  # The issue is opened on "quickstart-amazon-eks" repo: https://github.com/aws-quickstart/quickstart-amazon-eks/issues/299
+  EKSLoadBalancerController:
+    Condition: EnableLB
+    Type: AWS::CloudFormation::Stack
+    DependsOn: EKSControlPlane
+    Properties:
+      TemplateURL:
+        !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/amazon-eks-load-balancer-controller.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+      Parameters:
+        EksClusterName: !Ref EKSClusterName
+        OIDCIssuerURLWithoutProtocol: !Ref OIDCProviderURL
+
+  # TODO: remove it altogether in v1.0.1, it was kept for backward compatibility with existing stacks
   AwsAuthConfigMap:
     Type: "Custom::KubeManifest"
     Properties:
       ServiceToken: !GetAtt ApplyKubernetesManifestFunction.Arn
       ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
-      Manifest: !Sub
-        - |-
-          kind: ConfigMap
-          apiVersion: v1
-          metadata:
-            name: aws-auth
-            namespace: kube-system
-          data:
-            mapRoles: >-
-              [
-                {
-                  "groups": [
-                    "aws-auth-admin"
-                  ],
-                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-eks-cluster"
-                },
-                {
-                  "groups": [
-                    "aws-auth-admin"
-                  ],
-                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/CloudFormation-Kubernetes-VPC"
-                },
-                {
-                  "groups": [
-                    "system:bootstrappers",
-                    "system:nodes",
-                    "eks:kube-proxy-windows"
-                  ],
-                  "rolearn": "${EC2WorkersRole.Arn}",
-                  "username": "system:node:{{EC2PrivateDNSName}}"
-                },
-                {
-                  "groups": [
-                    "system:masters"
-                  ],
-                  "rolearn": "${IamStack.Outputs.KubernetesAdminRoleArn}",
-                  "username": "${IamStack.Outputs.KubernetesAdminRoleArn}"
-                },
-                {
-                  "groups": [
-                    "system:masters"
-                  ],
-                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-helm",
-                  "username": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-helm"
-                },
-                {
-                  "groups": [
-                    "system:masters"
-                  ],
-                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-get",
-                  "username": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-get"
-                },
-                {
-                  "groups": [
-                    "system:masters"
-                  ],
-                  "rolearn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-resource",
-                  "username": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/awsqs-kubernetes-resource"
-                },
-                {
-                  "groups": [
-                    "system:masters"
-                  ],
-                  "rolearn": "${EKSAdminUserArn}",
-                  "username": "${EKSAdminUserArn}"
-                } ${AdditionalEKSAdminRoleArnEntry}
-              ]
-            mapUsers: >-
-              [{"userarn":"${EKSAdminUserArn}","username":"${EKSAdminUserArn}","groups":["system:masters"]}]
-        - AdditionalEKSAdminRoleArnEntry: !If
-            - HasAdditionalEKSAdminRole
-            - !Sub ', {"groups": ["system:masters"], "rolearn": "${AdditionalEKSAdminRoleArn}", "username": "${AdditionalEKSAdminRoleArn}"}'
-            - ""
-      # pass all the EKSControlPlane parameters to force update
-      _EKSClusterName: !Ref EKSClusterName
-      _KubernetesVersion: !Ref KubernetesVersion
-      _SecurityGroupIds: !Ref ControlPlaneSecurityGroup
-      _SubnetIds: !Join
-        - ","
-        - - !Ref PublicSubnet1ID
-          - !Ref PublicSubnet2ID
-          - !Ref PrivateSubnet1ID
-          - !Ref PrivateSubnet2ID
-      _RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/eks-quickstart-ControlPlane"
-      _FunctionRoleArn: !GetAtt IamStack.Outputs.KubernetesAdminRoleArn
-      _EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
+      # No-op
+      Manifest: ""
 
   # EFS
 
@@ -898,11 +875,11 @@ Resources:
     Properties:
       Path: /
       Roles:
-      - !Ref EC2WorkersRole
+        - !Ref EC2WorkersRole
 
   CPWorkersGroupUnmanaged:
     Type: "AWS::AutoScaling::AutoScalingGroup"
-    DependsOn: [ CalicoCNI, AwsAuthConfigMap ]
+    DependsOn: [ CalicoCNI ]
     Properties:
       DesiredCapacity: !Ref ControlNodeGroupDesiredSize
       MaxSize: !Ref ControlNodeGroupMaxSize
@@ -932,10 +909,12 @@ Resources:
     Properties:
       LaunchTemplateName: !Sub "${EKSClusterName}-cpworkers"
       LaunchTemplateData:
+        MetadataOptions:
+          HttpPutResponseHopLimit: 2
         IamInstanceProfile:
           Arn: !GetAtt NodeInstanceProfile.Arn
         KeyName: !Ref KeyPairName
-        ImageId: !FindInMap [ WorkerAMIMap, !Ref AWS::Region, "118" ]
+        ImageId: !GetAtt UbuntuAMI.Value
         InstanceType: !FindInMap [ ConfigurationTierMap, !Ref ControllerConfigurationTier, instanceType ]
         NetworkInterfaces:
           - DeviceIndex: 0
@@ -957,6 +936,16 @@ Resources:
           "Fn::Sub": |
             Content-Type: multipart/mixed; boundary="MIMEBOUNDARY"
             MIME-Version: 1.0
+
+            --MIMEBOUNDARY
+            Content-Type: text/cloud-config; charset="us-ascii"
+            MIME-Version: 1.0
+            Content-Transfer-Encoding: 7bit
+            Content-Disposition: attachment; filename="cloud-config.txt"
+
+            #cloud-config
+            cloud_final_modules:
+            - [scripts-user, always]
 
             --MIMEBOUNDARY
             Content-Disposition: attachment; filename="03-configure-instance.sh"
@@ -1063,6 +1052,12 @@ Resources:
             # override default docker ulimits according to STO's recommendation
             sudo bash -c "cat > /etc/docker/daemon.json" <<EOF
             {
+                "log-driver": "json-file",
+                "log-opts": {
+                    "max-size": "20m",
+                    "max-file": "3",
+                    "compress": "true"
+                },
                 "default-ulimits": {
                     "nofile": {
                         "Hard": 1024,
@@ -1116,7 +1111,7 @@ Resources:
 
   EPWorkersGroupUnmanaged:
     Type: "AWS::AutoScaling::AutoScalingGroup"
-    DependsOn: [ CalicoCNI, AwsAuthConfigMap ]
+    DependsOn: [ CalicoCNI ]
     Properties:
       DesiredCapacity: !Ref EnforcerNodeGroupDesiredSize
       MaxSize: !Ref EnforcerNodeGroupMaxSize
@@ -1146,10 +1141,12 @@ Resources:
     Properties:
       LaunchTemplateName: !Sub "${EKSClusterName}-epworkers"
       LaunchTemplateData:
+        MetadataOptions:
+          HttpPutResponseHopLimit: 2
         IamInstanceProfile:
           Arn: !GetAtt NodeInstanceProfile.Arn
         KeyName: !Ref KeyPairName
-        ImageId: !FindInMap [ WorkerAMIMap, !Ref AWS::Region, "118" ]
+        ImageId: !GetAtt UbuntuAMI.Value
         InstanceType: !FindInMap [ ConfigurationTierMap, !Ref EnforcerConfigurationTier, instanceType ]
         NetworkInterfaces:
           - DeviceIndex: 0
@@ -1169,7 +1166,7 @@ Resources:
                 Value: owned
               - Key: k8s.io/cluster-autoscaler/node-template/resources/hugepages-2Mi
                 Value: 64Mi
-              - Key: !Sub kubernetes.io/cluster/${EKSControlPlane.Outputs.EKSName}        
+              - Key: !Sub kubernetes.io/cluster/${EKSControlPlane.Outputs.EKSName}
                 Value: owned
         UserData: !Base64
           "Fn::Sub":
@@ -1427,15 +1424,21 @@ Resources:
               # override default docker ulimits according to STO's recommendation
               sudo bash -c "cat > /etc/docker/daemon.json" <<EOF
               {
+                  "log-driver": "json-file",
+                  "log-opts": {
+                      "max-size": "20m",
+                      "max-file": "3",
+                      "compress": "true"
+                  },
                   "default-ulimits": {
                       "nofile": {
-                          "Hard": 1024,
-                          "Soft": 1024,
+                          "Hard": 8192,
+                          "Soft": 8192,
                           "Name": "nofile"
                       },
                       "nproc": {
-                          "Hard": 4096,
-                          "Soft": 4096,
+                          "Hard": 65536,
+                          "Soft": 65536,
                           "Name": "nproc"
                       }
                   }
@@ -1721,6 +1724,9 @@ Resources:
                   manifest_text = http_get(event['ResourceProperties']["Url"]) \
                     if event['ResourceProperties'].get("Url") \
                     else event['ResourceProperties']["Manifest"]
+                  if not manifest_text:
+                      print("Manifest text is empty, exiting...")
+                      return
                   with open(manifest_file, 'w') as f:
                       f.write(manifest_text)
                   create_kubeconfig(event['ResourceProperties']['ClusterName'])
@@ -1750,6 +1756,7 @@ Resources:
 
   EFSDriver:
     Condition: EnableEFS
+    DependsOn: [ MountTargetAZ1, MountTargetAZ2 ]
     Type: "AWSQS::Kubernetes::Helm"
     Properties:
       ClusterID: !GetAtt EKSControlPlane.Outputs.EKSName
@@ -1768,7 +1775,7 @@ Resources:
     DependsOn: EFSDriver
     Type: "AWSQS::Kubernetes::Resource"
     Properties:
-      Namespace: ""
+      Namespace: !Ref SystemNamespace
       ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
       Manifest: !Sub |
         kind: StorageClass
@@ -1797,7 +1804,10 @@ Resources:
     Properties:
       ServiceToken: !GetAtt ApplyKubernetesManifestFunction.Arn
       ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
-      Url: https://docs.projectcalico.org/manifests/calico-vxlan.yaml
+      Url: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}assets/calico-vxlan-3.19.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
 
   CalicoCNIRouteRefreshEnv:
     Type: "Custom::Kubectl"
@@ -1805,7 +1815,7 @@ Resources:
     Properties:
       ServiceToken: !GetAtt KubectlFunction.Arn
       ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
-      # In order for ASA to manipulate the ip routing rule table, we have to disable route refresh interval.
+      # In order for CNFW to manipulate the ip routing rule table, we have to disable route refresh interval.
       Command: "set env daemonset/calico-node -n kube-system FELIX_ROUTEREFRESHINTERVAL='0'"
 
   MetricsServer:
@@ -1916,7 +1926,14 @@ Resources:
         {"pathPrefix": "/opt/cni/bin"}, {"pathPrefix": "/etc/cni/net.d"},
         {"pathPrefix": "/var/lib/cni/networks"}, {"pathPrefix": "/var/run/nodeagent"},
         {"pathPrefix": "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"},
-        {"pathPrefix": "/mnt/coredump_repo"}, {"pathPrefix": "/home/ubuntu/fluentdout"}]}}'
+        {"pathPrefix": "/mnt/coredump_repo"}, {"pathPrefix": "/home/ubuntu/fluentdout"},
+        {"pathPrefix": "/var/lib/kubelet"},
+        {"pathPrefix": "/var/run/efs"},
+        {"pathPrefix": "/var/amazon/efs"},
+        {"pathPrefix": "/etc/amazon/efs"}
+        ],
+        "requiredDropCapabilities": ["NET_RAW"],
+        "allowedCapabilities": ["SYS_RESOURCE", "SYS_ADMIN", "NET_ADMIN", "DAC_OVERRIDE", "FOWNER"]}}'
 
   EnforcerElasticache:
     Type: AWS::CloudFormation::Stack
@@ -1928,7 +1945,7 @@ Resources:
         - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
           S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
       Parameters:
-        Name: !GetAtt EKSControlPlane.Outputs.EKSName
+        Name: !Ref EKSClusterName
         VPCID: !Ref VPCID
         PublicSubnet1ID: !Ref PublicSubnet1ID
         PublicSubnet2ID: !Ref PublicSubnet2ID
@@ -1943,11 +1960,13 @@ Resources:
 
   SecureFirewall:
     Type: AWS::CloudFormation::Stack
-    DependsOn:
-      - ClusterAutoscaler
-      - CertManager
-      - PrometheusAdapter
-      - CleanupLambdas
+    Metadata:
+      DependsOn:
+        - !If [ EnableEFS, !Ref EFSStorageClass, !Ref "AWS::NoValue" ]
+        - !Ref ClusterAutoscaler
+        - !Ref CertManager
+        - !Ref PrometheusAdapter
+        - !Ref CleanupLambdas
     Properties:
       TemplateURL:
         !Sub
@@ -1958,8 +1977,6 @@ Resources:
         ClusterID: !GetAtt EKSControlPlane.Outputs.EKSName
         Version: !Ref FirewallVersion
         Name: "sfcn"
-        DevhubUsername: !Ref DevhubUsername
-        DevhubApiKey: !Ref DevhubApiKey
         SystemNamespace: !Ref SystemNamespace
         StorageType: !Ref StorageType
         Dataplane: !Ref SecureFirewallDataplane
@@ -1969,6 +1986,7 @@ Resources:
         EnforcerCacheHost: !If [ EnforcerCacheTypeIsElastiCache, !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint, "" ]
         EnforcerCachePort: !Ref EnforcerCachePort
         EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
+        EnforcerCacheStorageKey: !Ref EnforcerCacheStorageKey
         EnforcerAutoscaling: !Ref EnforcerAutoscaling
         EnforcerConfigurationTier: !Ref EnforcerConfigurationTier
 
@@ -1984,13 +2002,11 @@ Resources:
 
 
 Outputs:
-  EksArn:
-    Value: !GetAtt EKSControlPlane.Outputs.EksArn
   CAData:
     Value: !GetAtt EKSControlPlane.Outputs.CAData
-  EKSEndpoint:
+  ClusterEndpoint:
     Value: !GetAtt EKSControlPlane.Outputs.EKSEndpoint
-  EKSName:
+  ClusterName:
     Value: !GetAtt EKSControlPlane.Outputs.EKSName
   FirewallVersion:
     Value: !Ref FirewallVersion
@@ -2020,6 +2036,8 @@ Outputs:
   PublicSubnet2ID:
     Value: !Ref PublicSubnet2ID
     Export: { Name: !Sub '${EKSClusterName}-PublicSubnet2ID' }
+  InsideSubnetsRouteTableID:
+    Value: !Ref InsideSubnetsRouteTable
   WorkersSecurityGroup0ID:
     Value: !Ref WorkersSecurityGroup0
     Export: { Name: !Sub '${EKSClusterName}-WorkersSecurityGroup0ID' }

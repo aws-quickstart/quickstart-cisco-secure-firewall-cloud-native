@@ -1,49 +1,69 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: Deploys Cisco Secure Firewall Cloud Native into a new EKS cluster in a new VPC.
+Description: Deploys Cisco Secure Firewall Cloud Native into a new EKS cluster in a new VPC (qs-1s3afab4t).
 
 Metadata:
+  cfn-lint: { config: { ignore_checks: [ W9006 ] } }
   QuickStartDocumentation:
     EntrypointName: "Launch into new VPC"
     Order: 1
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Cluster Configuration
+          default: Required Configuration
         Parameters:
-          - KubernetesVersion
           - KeyPairName
-          - EKSClusterLoggingTypes
-          - StorageType
           - EKSAdminUserArn
-          - AdditionalEKSAdminRoleArn
       - Label:
-          default: (Optional) License configuration
+          default: Basic Configuration - Global
         Parameters:
-          - SmartLicenseToken
-          - MaxLicenseCount
+          - StorageType
+          - LoadBalancerController
       - Label:
-          default: Control-plane Configuration
+          default: Basic Configuration - Control Plane
         Parameters:
-          - ControllerConfigurationTier
           - ControlNodeGroupDesiredSize
           - ControlNodeGroupMaxSize
       - Label:
-          default: Data-plane Configuration
+          default: Basic Configuration - Data Plane
         Parameters:
-          - EnforcerConfigurationTier
           - EnforcerNodeGroupDesiredSize
           - EnforcerNodeGroupMaxSize
           - EIPAttachmentMode
-      - Label:
-          default: (Optional) Cache Configuration
-        Parameters:
           - EnforcerCacheType
+      - Label:
+          default: Basic Configuration - Firewall
+        Parameters:
+          - SecureFirewallDataplane
+          - EnforcerServiceRoles
+          - EnforcerAutoscaling
+          - SmartLicenseToken
+          - MaxLicenseCount
+      - Label:
+          default: Advanced Configuration - Cluster
+        Parameters:
+          - KubernetesVersion
+          - AdditionalEKSAdminRoleArn
+          - EKSClusterLoggingTypes
+      - Label:
+          default: Advanced Configuration - Control Plane
+        Parameters:
+          - ControllerConfigurationTier
+      - Label:
+          default: Advanced Configuration - Data Plane
+        Parameters:
+          - EnforcerConfigurationTier
           - EnforcerCacheNodeType
           - EnforcerCacheAuthToken
+          - EnforcerCacheStorageKey
           - EnforcerCacheTransitEncryption
       - Label:
-          default: (Optional) Network configuration
+          default: Advanced Configuration - Firewall
+        Parameters:
+          - FirewallVersion
+          - SystemNamespace
+      - Label:
+          default: Advanced Configuration - Network
         Parameters:
           - VPCCIDR
           - PublicSubnet1CIDR
@@ -55,21 +75,13 @@ Metadata:
           - CNFWOutsideSubnet2CIDR
           - CNFWInsideSubnet2CIDR
       - Label:
-          default: (Optional) AWS Quick Start configuration
+          default: (Read-only, do not change) AWS Quick Start configuration
         Parameters:
           - QSS3BucketName
           - QSS3KeyPrefix
           - QSS3BucketRegion
-      - Label:
-          default: Firewall Configuration
-        Parameters:
-          - SecureFirewallDataplane
-          - DevhubUsername
-          - DevhubApiKey
-          - FirewallVersion
-          - SystemNamespace
-          - EnforcerServiceRoles
-          - EnforcerAutoscaling
+          - PerAccountSharedResources
+          - PerRegionSharedResources
     ParameterLabels:
       KubernetesVersion:
         default: Kubernetes version
@@ -84,17 +96,19 @@ Metadata:
       ControllerConfigurationTier:
         default: Controller instance tier
       ControlNodeGroupDesiredSize:
-        default: Desired nodes number
+        default: Desired nodes
       ControlNodeGroupMaxSize:
-        default: Maximum nodes number
+        default: Maximum nodes
       StorageType:
         default: Storage type
+      LoadBalancerController:
+          default: Load Balancer Controller toggle
       EnforcerConfigurationTier:
         default: Enforcer instance tier
       EnforcerNodeGroupDesiredSize:
-        default: Desired nodes number
+        default: Desired nodes
       EnforcerNodeGroupMaxSize:
-        default: Maximum nodes number
+        default: Maximum nodes
       EIPAttachmentMode:
         default: Elastic IP attachment mode
       VPCCIDR:
@@ -121,6 +135,8 @@ Metadata:
         default: Cache node type
       EnforcerCacheAuthToken:
         default: Redis authentication token
+      EnforcerCacheStorageKey:
+        default: Redis key to encrypt sensitive data
       EnforcerCacheTransitEncryption:
         default: In-Transit encryption
       QSS3BucketRegion:
@@ -134,11 +150,7 @@ Metadata:
       MaxLicenseCount:
         default: Maximum licenses count
       SecureFirewallDataplane:
-        default: Secure Firewall data-plane installation
-      DevhubUsername:
-        default: Devhub username
-      DevhubApiKey:
-        default: Devhub API Key
+        default: Enforcer installation
       FirewallVersion:
         default: Product version
       SystemNamespace:
@@ -146,7 +158,11 @@ Metadata:
       EnforcerServiceRoles:
         default: Enforcer service roles
       EnforcerAutoscaling:
-        default: Autoscale enforcer
+        default: Enforcer autoscaling
+      PerAccountSharedResources:
+        default: Per-account shared resources
+      PerRegionSharedResources:
+        default: Per-Region shared resources
 
 Parameters:
   QSS3BucketName:
@@ -261,18 +277,18 @@ Parameters:
       Cluster control plane logging options (api, audit, authenticator, controllerManager and scheduler); comma separated.
 
   ControllerConfigurationTier:
-    Description: Instance tier to be used by controller workers
-    Default: "vCPU4"
+    Description: Instance tier to be used by controller workers.
+    Default: "vCPU4-c5"
     Type: String
-    AllowedValues: [ "vCPU4" ]
-    ConstraintDescription: must specify vCPU4
+    AllowedValues: [ "vCPU4-m5", "vCPU4-c5" ]
+    ConstraintDescription: must specify vCPU4-m5 or vCPU4-c5
 
   EnforcerConfigurationTier:
-    Description: Instance tier to be used by enforcer workers
-    Default: "vCPU4"
+    Description: Instance tier to be used by enforcer workers.
+    Default: "vCPU4-c5"
     Type: String
-    AllowedValues: [ "vCPU4" ]
-    ConstraintDescription: must specify vCPU4
+    AllowedValues: [ "vCPU4-m5", "vCPU4-c5" ]
+    ConstraintDescription: must specify vCPU4-m5 or vCPU4-c5
 
   ControlNodeGroupMaxSize:
     Type: Number
@@ -289,6 +305,12 @@ Parameters:
     AllowedValues: [ local, efs ]
     Default: local
     Description: The type of a storage used to keep logs and deployments files.
+
+  LoadBalancerController:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: Enable or Disable load balancer controller.
 
   EnforcerNodeGroupMaxSize:
     Type: Number
@@ -316,13 +338,13 @@ Parameters:
     AllowedValues:
       - none
       - elasticache
-    Description: Type of External Cache to use for CNFW
+    Description: Type of External Cache to use for CNFW.
 
   EnforcerCacheNodeType:
     Type: String
     Default: "cache.m5.large"
     AllowedValues: [ cache.m5.xlarge, cache.m5.large ]
-    Description: EC2 instance type to use as Cache node, check region availaibility before selection
+    Description: EC2 instance type to use as Cache node, check region availaibility before selection.
 
   EnforcerCacheAuthToken:
     Type: String
@@ -330,52 +352,52 @@ Parameters:
     MaxLength: 128
     Default: ""
     AllowedPattern: "([a-zA-Z0-9!&#$^><-]{16,128})?"
-    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
+    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters.
     Description: |
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
-      Takes effect only when in-transit encryption is enabled
+      Takes effect only when in-transit encryption is enabled.
+
+  EnforcerCacheStorageKey:
+    Type: String
+    NoEcho: true
+    MaxLength: 64
+    Default: ""
+    AllowedPattern: "^([A-F0-9]{64})?$"
+    ConstraintDescription: Must be a string of length 64 consisting of uppercase hexadecimal characters (A-F,0-9).
+    Description: |
+      User provided key to encrypt sensitive data in the cache.
+      Must consist of 64 uppercase hexadecimal characters (A-F,0-9).
+      Required when 'elasticache' cache type is specified.
 
   EnforcerCacheTransitEncryption:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Enabled
-    Description: Cannot be changed after creation, update requires replacement
+    Description: Cannot be changed after creation, update requires replacement.
 
   SmartLicenseToken:
     Type: String
     NoEcho: true
     Default: ""
-    Description: A token from Smart Account that has Secure Firewall (SFW) licenses
+    Description: A token from Smart Account that has Secure Firewall (SFW) licenses.
 
   MaxLicenseCount:
     Type: Number
-    Default: 5
+    Default: 4
     MinValue: 1
-    MaxValue: 999
-    Description: A maximum number of licenses allowed to be used when enforcer autoscaling is enabled
+    Description: A maximum number of licenses allowed to be used by the default Enforcer when it is scaled up.
 
   SecureFirewallDataplane:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Enabled
-    Description: Secure Firewall data-plane installation
-
-  DevhubUsername:
-    Type: String
-    AllowedPattern: ".+"
-    Description: Username of Cisco Devhub account
-
-  DevhubApiKey:
-    Type: String
-    NoEcho: true
-    AllowedPattern: ".+"
-    Description: API key obtained from Cisco Devhub account
+    Description: This is enabled by default for a full deployment with control plane and data plane components. To deploy control plane components only (for multi-tenancy), disable this setting.
 
   FirewallVersion:
     Type: String
-    Default: v0.1.0-185
+    Default: v1.0.0
     AllowedPattern: ".+"
-    Description: Helm chart version of the product
+    Description: Helm chart version of the product.
 
   SystemNamespace:
     Type: String
@@ -392,25 +414,43 @@ Parameters:
       Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
       and upto 15 characters long.
     Description: |
-      Service roles of ASA separated by comma, no spaces allowed. If choosing the multiple service role option, ensure that at
-      least as many enforcer worker nodes is set as the desired number for faster deployment
+      The service role of the data plane node. Leave the setting as "default" if you selected 1 data plane node. Each additional service role requires a corresponding data plane node.
 
   EnforcerAutoscaling:
     Type: String
     AllowedValues: [ Enabled, Disabled ]
     Default: Disabled
-    Description: Enable scaling of ASA with default metrics
+    Description: Enable the default Enforcer autoscaling.
+
+  PerAccountSharedResources:
+    Type: String
+    AllowedValues: ['AutoDetect', 'Yes', 'No']
+    Default: 'AutoDetect'
+    Description: Choose "No" if you already deployed another EKS Quick Start stack in your AWS account.
+
+  PerRegionSharedResources:
+    Type: String
+    AllowedValues: ['AutoDetect', 'Yes', 'No']
+    Default: 'AutoDetect'
+    Description: Choose "No" if you already deployed another EKS Quick Start stack in your Region.
 
 Rules:
   EnforcerElasticacheRule:
     RuleCondition: !Equals [ !Ref EnforcerCacheType, elasticache ]
     Assertions:
       - Assert: !Equals [ !Ref SecureFirewallDataplane, Enabled ]
-        AssertDescription: Cache type can be set to "elasticache" only if firewall data-plane is "Enabled"
+        AssertDescription: Cache type can be set to "elasticache" only if firewall data plane is "Enabled"
+      - Assert: !Not [ !Equals [ !Ref EnforcerCacheStorageKey, "" ] ]
+        AssertDescription: Cache storage key must not be empty when cache type is set to "elasticache".
 
 Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
   EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
+  DetectSharedStacks: !And
+  - !Equals [!Ref PerAccountSharedResources, 'AutoDetect']
+  - !Equals [!Ref PerRegionSharedResources, 'AutoDetect']
+  CreatePerAccountSharedResources: !Equals [!Ref PerAccountSharedResources, 'Yes']
+  CreatePerRegionSharedResources: !Equals [!Ref PerRegionSharedResources, 'Yes']
 
 Resources:
   ClusterName:
@@ -442,6 +482,11 @@ Resources:
 
   SFCNStack:
     Type: AWS::CloudFormation::Stack
+    Metadata:
+      DependsOn: 
+      - !If [ CreatePerAccountSharedResources, !Ref AccountSharedResources, !Ref 'AWS::NoValue']
+      - !If [ CreatePerRegionSharedResources, !Ref RegionalSharedResources, !Ref 'AWS::NoValue']
+      - !If [ DetectSharedStacks, !Ref AutoDetectSharedResources, !Ref 'AWS::NoValue' ]
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/sfcn.template.yaml'
@@ -467,14 +512,15 @@ Resources:
         AdditionalEKSAdminRoleArn: !Ref AdditionalEKSAdminRoleArn
         EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
         StorageType: !Ref StorageType
+        LoadBalancerController: !Ref LoadBalancerController
         # Licensing
         SmartLicenseToken: !Ref SmartLicenseToken
         MaxLicenseCount: !Ref MaxLicenseCount
-        # Control-plane configuration
+        # Control Plane configuration
         ControllerConfigurationTier: !Ref ControllerConfigurationTier
         ControlNodeGroupDesiredSize: !Ref ControlNodeGroupDesiredSize
         ControlNodeGroupMaxSize: !Ref ControlNodeGroupMaxSize
-        # Data-plane configuration
+        # Data Plane configuration
         EnforcerConfigurationTier: !Ref EnforcerConfigurationTier
         EnforcerNodeGroupDesiredSize: !Ref EnforcerNodeGroupDesiredSize
         EnforcerNodeGroupMaxSize: !Ref EnforcerNodeGroupMaxSize
@@ -483,6 +529,7 @@ Resources:
         EnforcerCacheType: !Ref EnforcerCacheType
         EnforcerCacheNodeType: !Ref EnforcerCacheNodeType
         EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
+        EnforcerCacheStorageKey: !Ref EnforcerCacheStorageKey
         EnforcerCacheTransitEncryption: !Ref EnforcerCacheTransitEncryption
         # Quick Start configuration
         QSS3BucketName: !Ref QSS3BucketName
@@ -490,30 +537,75 @@ Resources:
         QSS3BucketRegion: !Ref QSS3BucketRegion
         # Firewall configuration
         SecureFirewallDataplane: !Ref SecureFirewallDataplane
-        DevhubUsername: !Ref DevhubUsername
-        DevhubApiKey: !Ref DevhubApiKey
         FirewallVersion: !Ref FirewallVersion
         SystemNamespace: !Ref SystemNamespace
         EnforcerServiceRoles: !Ref EnforcerServiceRoles
         EnforcerAutoscaling: !Ref EnforcerAutoscaling
 
+  AutoDetectSharedResources:
+    Type: AWS::CloudFormation::Stack
+    Condition: DetectSharedStacks
+    Properties:
+      TemplateURL: !Sub 
+      - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-prerequisites.template.yaml'
+      - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+        S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+      Parameters:
+        Version: "1.0.0"
+        AccountTemplateUri: !Sub 
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-per-account-resources.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+        RegionalTemplateUri: !Sub 
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-per-region-resources.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+
+  AccountSharedResources:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreatePerAccountSharedResources
+    DeletionPolicy: Retain
+    Metadata: { cfn-lint: { config: { ignore_checks: [W3011] } } }
+    Properties:
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-per-account-resources.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+
+  RegionalSharedResources:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreatePerRegionSharedResources
+    DeletionPolicy: Retain
+    Metadata:
+      cfn-lint: { config: { ignore_checks: [W3011, W9901] } }
+      DependsOn: !If [ CreatePerAccountSharedResources, !Ref AccountSharedResources, !Ref 'AWS::NoValue' ]
+    Properties:
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-per-region-resources.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+
 Outputs:
-  EksArn:
-    Value: !GetAtt SFCNStack.Outputs.EksArn
   CAData:
     Value: !GetAtt SFCNStack.Outputs.CAData
-  EKSEndpoint:
-    Value: !GetAtt SFCNStack.Outputs.EKSEndpoint
-  EKSName:
-    Value: !GetAtt SFCNStack.Outputs.EKSName
+  ClusterEndpoint:
+    Value: !GetAtt SFCNStack.Outputs.ClusterEndpoint
+  ClusterName:
+    Value: !GetAtt SFCNStack.Outputs.ClusterName
   CDOToken:
     Value: !GetAtt SFCNStack.Outputs.CDOToken
     Description: Base-64 decoded token for the CDO service account.
+  FirewallVersion:
+    Value: !GetAtt SFCNStack.Outputs.FirewallVersion
+  SystemNamespace:
+    Value: !GetAtt SFCNStack.Outputs.SystemNamespace
   VPCID:
     Value: !GetAtt VPCStack.Outputs.VPCID
     Export: { Name: !Sub '${AWS::StackName}-VPCID' }
   PublicSubnetRouteTable:
     Value: !GetAtt VPCStack.Outputs.PublicSubnetRouteTable
+  InsideSubnetsRouteTable:
+    Value: !GetAtt SFCNStack.Outputs.InsideSubnetsRouteTableID
   ElasticachePrimaryEndpoint:
     Condition: EnforcerCacheTypeIsElastiCache
     Value: !GetAtt SFCNStack.Outputs.ElasticachePrimaryEndpoint
