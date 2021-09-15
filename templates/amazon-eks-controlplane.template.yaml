@@ -238,7 +238,7 @@ Resources:
             try:
               oidc_issuer_url = event['ResourceProperties']['OIDCIssuerURL']
               provider_arn = event["PhysicalResourceId"]
-              if event['RequestType'] == 'Update' || event['RequestType'] == 'Delete':
+              if event['RequestType'] == 'Update' or event['RequestType'] == 'Delete':
                 if provider_arn is None:
                   data["Reason"] = "Provider not present"
                 else:
