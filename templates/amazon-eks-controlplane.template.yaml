@@ -235,19 +235,14 @@ Resources:
           iam = boto3.client("iam")
           def lambda_handler(event, context):
             data = {}
-            try:
-              oidc_issuer_url = event['ResourceProperties']['OIDCIssuerURL']
-              provider_arn = event["PhysicalResourceId"]
-              if event['RequestType'] == 'Update' or event['RequestType'] == 'Delete':
-                if provider_arn is None:
-                  data["Reason"] = "Provider not present"
-                else:
-                  iam.delete_open_id_connect_provider(OpenIDConnectProviderArn=provider_arn)
-                  data["Reason"] = "Provider with ARN " + provider_arn + " deleted"
-              cfnresponse.send(event, context, cfnresponse.SUCCESS, data, provider_arn or context.log_stream_name)
-            except Exception as e:
-              data["Reason"] = "Cannot delete Provider" + str(e)
-              cfnresponse.send(event, context, cfnresponse.FAILED, data, "")
+            if event['RequestType'] != 'Create':
+              try:
+                iam.delete_open_id_connect_provider(OpenIDConnectProviderArn=event["PhysicalResourceId"])
+                data["Reason"] = "Provider with ARN " + event["PhysicalResourceId"] + " deleted"
+              except Exception as e:
+                data["Reason"] = "Error suppressed: " + str(e)
+            id = None if event['RequestType'] == 'Delete' else context.log_stream_name
+            cfnresponse.send(event, context, cfnresponse.SUCCESS, data, id)
   ClusterOIDCLambdaExecutionRole:
     Condition: EnableIamOidcProvider
     Type: AWS::IAM::Role
