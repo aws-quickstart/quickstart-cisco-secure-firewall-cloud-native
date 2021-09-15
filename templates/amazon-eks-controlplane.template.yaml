@@ -238,13 +238,13 @@ Resources:
             try:
               oidc_issuer_url = event['ResourceProperties']['OIDCIssuerURL']
               provider_arn = event["PhysicalResourceId"]
-              if provider_arn is None:
-                data["Reason"] = "Provider not present"
-                cfnresponse.send(event, context, cfnresponse.SUCCESS, data, provider_arn)
-              else:
-                resp = iam.delete_open_id_connect_provider(OpenIDConnectProviderArn=provider_arn)
-                data["Reason"] = "Provider with ARN " + provider_arn + " deleted"
-                cfnresponse.send(event, context, cfnresponse.SUCCESS, data, provider_arn)
+              if event['RequestType'] == 'Update' || event['RequestType'] == 'Delete':
+                if provider_arn is None:
+                  data["Reason"] = "Provider not present"
+                else:
+                  iam.delete_open_id_connect_provider(OpenIDConnectProviderArn=provider_arn)
+                  data["Reason"] = "Provider with ARN " + provider_arn + " deleted"
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, data, provider_arn or context.log_stream_name)
             except Exception as e:
               data["Reason"] = "Cannot delete Provider" + str(e)
               cfnresponse.send(event, context, cfnresponse.FAILED, data, "")
@@ -270,7 +270,13 @@ Resources:
               - Effect: Allow
                 Action:
                   - iam:DeleteOpenIDConnectProvider
-                Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/*
+                Resource: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:*:*:*"
 
 Outputs:
   EksArn:
