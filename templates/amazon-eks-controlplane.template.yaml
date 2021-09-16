@@ -215,9 +215,10 @@ Resources:
     Condition: EnableIamOidcProvider
     Type: Custom::ClusterOIDCProvider
     Properties:
-      ServiceToken: !GetAtt DeleteClusterOIDCProviderFunction.Arn
+      ServiceToken: !GetAtt ClusterOIDCProviderFunction.Arn
       OIDCIssuerURL: !GetAtt EKS.OIDCIssuerURL
-  DeleteClusterOIDCProviderFunction:
+      ChangeTrigger: 1
+  ClusterOIDCProviderFunction:
     Condition: EnableIamOidcProvider
     Type: AWS::Lambda::Function
     Properties:
