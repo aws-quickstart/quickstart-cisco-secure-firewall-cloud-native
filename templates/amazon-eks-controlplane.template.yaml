@@ -7,7 +7,7 @@ Description: "Deploys the EKS control plane (qs-1p7nknofn)"
 #Transform: [QuickStartParameterResolver]
 Metadata:
   QSLint:
-    Exclusions: [W9002, W9003, W9004, W9006]
+    Exclusions: [ W9002, W9003, W9004, W9006 ]
   #ConfigSetName: !Ref ConfigSetName
 Parameters:
   # Cisco - custom node role support
@@ -40,18 +40,18 @@ Parameters:
     Default: 0.0.0.0/0
   EKSPublicAccessEndpoint:
     Type: String
-    AllowedValues: [Enabled, Disabled]
+    AllowedValues: [ Enabled, Disabled ]
     Default: Disabled
   EKSPrivateAccessEndpoint:
     Type: String
-    AllowedValues: [Enabled, Disabled]
+    AllowedValues: [ Enabled, Disabled ]
     Default: Enabled
   EKSClusterLoggingTypes:
     Type: List<String>
     Default: ""
   EKSEncryptSecrets:
     Type: String
-    AllowedValues: [Enabled, Disabled]
+    AllowedValues: [ Enabled, Disabled ]
     Default: Enabled
   EKSEncryptSecretsKmsKeyArn:
     Type: String
@@ -79,7 +79,7 @@ Conditions:
     - !Equals [ !Ref EKSEncryptSecrets, Enabled ]
   EnableEncryption: !Equals [ !Ref EKSEncryptSecrets, Enabled ]
   LoggingEnabled: !Not [ !Equals [ !Select [ 0, !Ref EKSClusterLoggingTypes ], "" ] ]
-  EnableIamOidcProvider: !Equals [!Ref 'IamOidcProvider', 'Enabled']
+  EnableIamOidcProvider: !Equals [ !Ref 'IamOidcProvider', 'Enabled' ]
 Mappings:
   Config:
     Prefix: { Value: 'eks-quickstart' }
@@ -187,37 +187,18 @@ Resources:
   CleanupLoadBalancers:
     Type: Custom::CleanupLoadBalancers
     Properties:
-      ServiceToken: !Sub ['arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${Prefix}-CleanupLoadBalancers', {Prefix: !FindInMap [Config, Prefix, Value]}]
+      ServiceToken: !Sub [ 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${Prefix}-CleanupLoadBalancers', { Prefix: !FindInMap [ Config, Prefix, Value ] } ]
       ClusterName: !Ref EKSClusterName
   CallerArn:
     Type: Custom::GetCallerArn
     Properties:
-      ServiceToken: !Sub ['arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${Prefix}-GetCallerArn', {Prefix: !FindInMap [Config, Prefix, Value]}]
-
-  # Cisco - ClusterOIDCProvider renamed to ClusterOIDCProviderNew for upgrade compatibility.
-  # Without this, AWS errors out during upgrade with: "Update of resource type is not permitted. The new template modifies resource type of the following resources: [ClusterOIDCProvider]"
-  # Also, the original ClusterOIDCProvider is left just for the deletion purposes (because only one instance can exist).
-  # Lines 214-273 can be removed in SFCN v1.1+ releases.
-  ClusterOIDCProviderNew:
-    Condition: EnableIamOidcProvider
-    Metadata:
-      DependsOn:
-        - !If [ EnableIamOidcProvider, !Ref ClusterOIDCProvider, !Ref "AWS::NoValue" ]
-    Type: AWS::IAM::OIDCProvider
-    Properties:
-      ClientIdList:
-        - sts.amazonaws.com
-      ThumbprintList:
-        - 9e99a48a9960b14926bb7f3b02e22da2b0ab7280
-      Url: !GetAtt EKS.OIDCIssuerURL
-
+      ServiceToken: !Sub [ 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${Prefix}-GetCallerArn', { Prefix: !FindInMap [ Config, Prefix, Value ] } ]
   ClusterOIDCProvider:
     Condition: EnableIamOidcProvider
     Type: Custom::ClusterOIDCProvider
     Properties:
       ServiceToken: !GetAtt ClusterOIDCProviderFunction.Arn
       OIDCIssuerURL: !GetAtt EKS.OIDCIssuerURL
-      ChangeTrigger: 1
   ClusterOIDCProviderFunction:
     Condition: EnableIamOidcProvider
     Type: AWS::Lambda::Function
@@ -236,14 +217,30 @@ Resources:
           iam = boto3.client("iam")
           def lambda_handler(event, context):
             data = {}
-            if event['RequestType'] != 'Create':
-              try:
-                iam.delete_open_id_connect_provider(OpenIDConnectProviderArn=event["PhysicalResourceId"])
-                data["Reason"] = "Provider with ARN " + event["PhysicalResourceId"] + " deleted"
-              except Exception as e:
-                data["Reason"] = "Error suppressed: " + str(e)
-            id = None if event['RequestType'] == 'Delete' else context.log_stream_name
-            cfnresponse.send(event, context, cfnresponse.SUCCESS, data, id)
+            try:
+              oidc_issuer_url = event['ResourceProperties']['OIDCIssuerURL']
+              if event['RequestType'] == 'Create':
+                # This is the ca thumbprint of AWS's issuer
+                issuer_thumbprint = '9e99a48a9960b14926bb7f3b02e22da2b0ab7280'
+                resp = iam.create_open_id_connect_provider(Url=oidc_issuer_url,ClientIDList=['sts.amazonaws.com'],ThumbprintList=[issuer_thumbprint])
+                provider_arn = resp['OpenIDConnectProviderArn']
+                data["Reason"] = "Provider with ARN " + provider_arn + " created"
+                cfnresponse.send(event, context, cfnresponse.SUCCESS, data, provider_arn)
+              elif event['RequestType'] == 'Delete':
+                provider_arn = event["PhysicalResourceId"]
+                if provider_arn is None:
+                  data["Reason"] = "Provider not present"
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, data, provider_arn)
+                else:
+                  resp = iam.delete_open_id_connect_provider(OpenIDConnectProviderArn=provider_arn)
+                  data["Reason"] = "Provider with ARN " + provider_arn + " deleted"
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, data, provider_arn)
+              else:
+                data["Reason"] = "Unknown operation: " + event['RequestType']
+                cfnresponse.send(event, context, cfnresponse.FAILED, data, "")
+            except Exception as e:
+              data["Reason"] = "Cannot " + event['RequestType'] + " Provider" + str(e)
+              cfnresponse.send(event, context, cfnresponse.FAILED, data, "")
   ClusterOIDCLambdaExecutionRole:
     Condition: EnableIamOidcProvider
     Type: AWS::IAM::Role
@@ -265,6 +262,11 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
+                  - eks:DescribeCluster
+                Resource: !Sub "arn:${AWS::Partition}:eks:${AWS::Region}:${AWS::AccountId}:cluster/${EKS}"
+              - Effect: Allow
+                Action:
+                  - iam:CreateOpenIDConnectProvider
                   - iam:DeleteOpenIDConnectProvider
                 Resource: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/*"
               - Effect: Allow
@@ -273,7 +275,6 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: !Sub "arn:${AWS::Partition}:logs:*:*:*"
-
 Outputs:
   EksArn:
     Value: !GetAtt EKS.Arn
