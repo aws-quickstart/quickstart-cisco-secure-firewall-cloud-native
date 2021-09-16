@@ -6,6 +6,11 @@ Metadata:
   QuickStartDocumentation:
     EntrypointName: "Add tenant to an existing installation"
     Order: 3
+  cfn-lint:
+    config:
+      ignore_checks: [ W9006 ]
+      ignore_reasons:
+        W9006: "Suppressed 'false-alarm' spelling errors for technical terms."
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -194,7 +199,7 @@ Parameters:
     Type: String
     Default: "cache.m5.large"
     AllowedValues: [ cache.m5.xlarge, cache.m5.large ]
-    Description: EC2 instance type to use as Cache node, check region availaibility before selection.
+    Description: EC2 instance type to use as Cache node, check region availability before selection.
 
   EnforcerCacheTransitEncryption:
     Type: String

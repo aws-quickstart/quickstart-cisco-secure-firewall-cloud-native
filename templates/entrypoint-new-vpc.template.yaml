@@ -6,6 +6,11 @@ Metadata:
   QuickStartDocumentation:
     EntrypointName: "Install in an existing VPC"
     Order: 1
+  cfn-lint:
+    config:
+      ignore_checks: [ W9006 ]
+      ignore_reasons:
+        W9006: "Suppressed 'false-alarm' spelling errors for technical terms."
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -192,7 +197,7 @@ Parameters:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
     Default: 10.37.0.0/16
-    Description: CIDR block for the VPC
+    Description: CIDR block for the VPC.
     Type: String
   PublicSubnet1CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
@@ -394,7 +399,7 @@ Parameters:
 
   FirewallVersion:
     Type: String
-    Default: v1.0.0
+    Default: v1.1.0
     AllowedPattern: ".+"
     Description: Helm chart version of the product.
 

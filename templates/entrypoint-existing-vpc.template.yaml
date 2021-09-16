@@ -6,6 +6,11 @@ Metadata:
   QuickStartDocumentation:
     EntrypointName: "Install in a new VPC"
     Order: 2
+  cfn-lint:
+    config:
+      ignore_checks: [ W9006 ]
+      ignore_reasons:
+        W9006: "Suppressed 'false-alarm' spelling errors for technical terms."
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -380,7 +385,7 @@ Parameters:
 
   FirewallVersion:
     Type: String
-    Default: v1.0.0
+    Default: v1.1.0
     AllowedPattern: ".+"
     Description: Helm chart version of the product.
 
