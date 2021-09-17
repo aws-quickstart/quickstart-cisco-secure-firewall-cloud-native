@@ -102,17 +102,17 @@ Parameters:
 
   ControllerConfigurationTier:
     Description: Instance tier to be used by controller workers.
-    Default: "vCPU4-c5"
+    Default: "vCPU4-c5.2xlarge"
     Type: String
-    AllowedValues: [ "vCPU4-m5", "vCPU4-c5" ]
-    ConstraintDescription: must specify vCPU4-m5 or vCPU4-c5
+    AllowedValues: [ "vCPU4-m5.xlarge", "vCPU4-c5.2xlarge" ]
+    ConstraintDescription: must specify vCPU4-m5.xlarge or vCPU4-c5.2xlarge
 
   EnforcerConfigurationTier:
     Description: Instance tier to be used by enforcer workers.
-    Default: "vCPU4-c5"
+    Default: "vCPU4-c5.2xlarge"
     Type: String
-    AllowedValues: [ "vCPU4-m5", "vCPU4-c5" ]
-    ConstraintDescription: must specify vCPU4-m5 or vCPU4-c5
+    AllowedValues: [ "vCPU4-m5.xlarge", "vCPU4-c5.2xlarge" ]
+    ConstraintDescription: must specify vCPU4-m5.xlarge or vCPU4-c5.2xlarge
 
   ControlNodeGroupMaxSize:
     Type: Number
@@ -189,7 +189,7 @@ Parameters:
     AllowedPattern: "^([A-F0-9]{64})?$"
     ConstraintDescription: Must be a string of length 64 consisting of uppercase hexadecimal characters (A-F,0-9).
     Description: |
-      User provided key to encrypt sensitive data in the cache.
+      User provided key to encrypt sensitive data.
       Must consist of 64 uppercase hexadecimal characters (A-F,0-9).
       Required when 'elasticache' cache type is specified.
 
@@ -249,10 +249,10 @@ Parameters:
 
 Mappings:
   ConfigurationTierMap:
-    "vCPU4-m5":
+    "vCPU4-m5.xlarge":
       instanceType: m5.xlarge
       hugePagesSize: "128"
-    "vCPU4-c5":
+    "vCPU4-c5.2xlarge":
       instanceType: c5.2xlarge
       hugePagesSize: "128"
 Rules:

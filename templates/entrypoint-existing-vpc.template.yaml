@@ -48,6 +48,7 @@ Metadata:
           - EnforcerNodeGroupMaxSize
           - EIPAttachmentMode
           - EnforcerCacheType
+          - EnforcerCacheStorageKey
       - Label:
           default: Basic Configuration - Firewall
         Parameters:
@@ -72,7 +73,6 @@ Metadata:
           - EnforcerConfigurationTier
           - EnforcerCacheNodeType
           - EnforcerCacheAuthToken
-          - EnforcerCacheStorageKey
           - EnforcerCacheTransitEncryption
       - Label:
           default: Advanced Configuration - Firewall
@@ -93,9 +93,9 @@ Metadata:
       KeyPairName:
         default: SSH key name
       EKSAdminUserArn:
-        default: EKS admin user
+        default: EKS admin user ARN
       AdditionalEKSAdminRoleArn:
-        default: Additional EKS admin role
+        default: Additional EKS admin role ARN
       EKSClusterLoggingTypes:
         default: Cluster logging types
       ControllerConfigurationTier:
@@ -143,7 +143,7 @@ Metadata:
       EnforcerCacheAuthToken:
         default: Redis authentication token
       EnforcerCacheStorageKey:
-        default: Redis key to encrypt sensitive data
+        default: CNFW key to encrypt sensitive data
       EnforcerCacheTransitEncryption:
         default: In-Transit encryption
       QSS3BucketRegion:
@@ -268,17 +268,17 @@ Parameters:
 
   ControllerConfigurationTier:
     Description: Instance tier to be used by controller workers.
-    Default: "vCPU4-c5"
+    Default: "vCPU4-c5.2xlarge"
     Type: String
-    AllowedValues: [ "vCPU4-m5", "vCPU4-c5" ]
-    ConstraintDescription: must specify vCPU4-m5 or vCPU4-c5
+    AllowedValues: [ "vCPU4-m5.xlarge", "vCPU4-c5.2xlarge" ]
+    ConstraintDescription: must specify vCPU4-m5.xlarge or vCPU4-c5.2xlarge
 
   EnforcerConfigurationTier:
     Description: Instance tier to be used by enforcer workers.
-    Default: "vCPU4-c5"
+    Default: "vCPU4-c5.2xlarge"
     Type: String
-    AllowedValues: [ "vCPU4-m5", "vCPU4-c5" ]
-    ConstraintDescription: must specify vCPU4-m5 or vCPU4-c5
+    AllowedValues: [ "vCPU4-m5.xlarge", "vCPU4-c5.2xlarge" ]
+    ConstraintDescription: must specify vCPU4-m5.xlarge or vCPU4-c5.2xlarge
 
   ControlNodeGroupMaxSize:
     Type: Number
@@ -355,7 +355,7 @@ Parameters:
     AllowedPattern: "^([A-F0-9]{64})?$"
     ConstraintDescription: Must be a string of length 64 consisting of uppercase hexadecimal characters (A-F,0-9).
     Description: |
-      User provided key to encrypt sensitive data in the cache.
+      User provided key to encrypt sensitive data.
       Must consist of 64 uppercase hexadecimal characters (A-F,0-9).
       Required when 'elasticache' cache type is specified.
 
