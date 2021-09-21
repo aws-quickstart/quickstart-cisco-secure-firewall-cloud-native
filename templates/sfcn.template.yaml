@@ -605,7 +605,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - cloudformation:SignalResource
-                Resource: !Sub "arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*"
+                Resource: !Sub "arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}*/*"
         # Allow route53ingress controller to manage route53 records
         - PolicyName: !Sub "${EKSClusterName}-workers-route53-policy"
           PolicyDocument:
@@ -877,32 +877,25 @@ Resources:
       Roles:
         - !Ref EC2WorkersRole
 
-  CPWorkersGroupUnmanaged:
-    Type: "AWS::AutoScaling::AutoScalingGroup"
+  CPWorkersStack:
+    Type: "AWS::CloudFormation::Stack"
     DependsOn: [ CalicoCNI ]
     Properties:
-      DesiredCapacity: !Ref ControlNodeGroupDesiredSize
-      MaxSize: !Ref ControlNodeGroupMaxSize
-      MinSize: "1"
-      LaunchTemplate:
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks-nodegroup/templates/amazon-eks-nodegroup.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+      Parameters:
+        Subnet1ID: !Ref PublicSubnet1ID
+        Subnet2ID: !Ref PublicSubnet2ID
+        NodeInstanceType: !FindInMap [ ConfigurationTierMap, !Ref ControllerConfigurationTier, instanceType ]
+        NumberOfNodes: !Ref ControlNodeGroupDesiredSize
+        MaxNumberOfNodes: !Ref ControlNodeGroupMaxSize
+        NodeGroupName: "cpworkers"
+        EKSClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
+        NodeGroupType: "Unmanaged"
         LaunchTemplateId: !Ref CPLaunchTemplate
-        Version: !GetAtt CPLaunchTemplate.LatestVersionNumber
-      Tags:
-        - Key: Name
-          PropagateAtLaunch: true
-          Value: !Sub ${EKSControlPlane.Outputs.EKSName}-cpworkers
-        - Key: !Sub kubernetes.io/cluster/${EKSControlPlane.Outputs.EKSName}
-          PropagateAtLaunch: true
-          Value: owned
-        - Key: k8s.io/cluster-autoscaler/enabled
-          Value: 'true'
-          PropagateAtLaunch: true
-        - Key: !Sub 'k8s.io/cluster-autoscaler/${EKSControlPlane.Outputs.EKSName}'
-          Value: ''
-          PropagateAtLaunch: true
-      VPCZoneIdentifier:
-        - !Ref PublicSubnet1ID
-        - !Ref PublicSubnet2ID
+        LaunchTemplateVersion: !GetAtt CPLaunchTemplate.LatestVersionNumber
 
   CPLaunchTemplate:
     Type: "AWS::EC2::LaunchTemplate"
@@ -928,10 +921,6 @@ Resources:
             Tags:
               - Key: Name
                 Value: !Sub "${EKSClusterName}-cpworker"
-              - Key: k8s.io/cluster-autoscaler/enabled
-                Value: "true"
-              - Key: !Sub "k8s.io/cluster-autoscaler/${EKSClusterName}"
-                Value: owned
         UserData: !Base64
           "Fn::Sub": |
             Content-Type: multipart/mixed; boundary="MIMEBOUNDARY"
@@ -1084,6 +1073,7 @@ Resources:
             #!/bin/bash
             set -o xtrace
 
+            sudo apt-get update -yq
             sudo apt install amazon-ecr-credential-helper
             sudo mkdir -p /root/.docker
             sudo bash -c "cat > /root/.docker/config.json" <<EOF
@@ -1103,38 +1093,39 @@ Resources:
             #!/bin/bash
             set -o xtrace
 
+            function signal() {
+              local tagName="aws:cloudformation:stack-name"
+              local instanceId="`wget -qO- http://instance-data/latest/meta-data/instance-id`"
+              local region="`wget -qO- http://instance-data/latest/meta-data/placement/availability-zone | sed -e 's:\([0-9][0-9]*\)[a-z]*\$:\\1:'`"
+              local stackName="`aws ec2 describe-tags --filters "Name=resource-id,Values=$instanceId" "Name=key,Values=$tagName" --region $region --query="Tags[0].Value" --output=text`"
+              /opt/aws/bin/cfn-signal --exit-code $1 --stack $stackName --resource UnmanagedASG --region ${AWS::Region}
+            }
             /etc/eks/bootstrap.sh ${EKSControlPlane.Outputs.EKSName} \
                      --kubelet-extra-args '--node-labels=sfcn.cisco.com/nodetype=configuration' \
                      --b64-cluster-ca ${EKSControlPlane.Outputs.CAData} \
                      --apiserver-endpoint ${EKSControlPlane.Outputs.EKSEndpoint} \
                      --use-max-pods true
+            signal $?
 
-  EPWorkersGroupUnmanaged:
-    Type: "AWS::AutoScaling::AutoScalingGroup"
+  EPWorkersStack:
+    Type: "AWS::CloudFormation::Stack"
     DependsOn: [ CalicoCNI ]
     Properties:
-      DesiredCapacity: !Ref EnforcerNodeGroupDesiredSize
-      MaxSize: !Ref EnforcerNodeGroupMaxSize
-      MinSize: "1"
-      LaunchTemplate:
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks-nodegroup/templates/amazon-eks-nodegroup.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+      Parameters:
+        Subnet1ID: !Ref PublicSubnet1ID
+        Subnet2ID: !Ref PublicSubnet2ID
+        NodeInstanceType: !FindInMap [ ConfigurationTierMap, !Ref EnforcerConfigurationTier, instanceType ]
+        NumberOfNodes: !Ref EnforcerNodeGroupDesiredSize
+        MaxNumberOfNodes: !Ref EnforcerNodeGroupMaxSize
+        NodeGroupName: "epworkers"
+        EKSClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
+        NodeGroupType: "Unmanaged"
         LaunchTemplateId: !Ref EPLaunchTemplate
-        Version: !GetAtt EPLaunchTemplate.LatestVersionNumber
-      Tags:
-        - Key: Name
-          PropagateAtLaunch: true
-          Value: !Sub ${EKSControlPlane.Outputs.EKSName}-epworkers
-        - Key: !Sub kubernetes.io/cluster/${EKSControlPlane.Outputs.EKSName}
-          PropagateAtLaunch: true
-          Value: owned
-        - Key: k8s.io/cluster-autoscaler/enabled
-          Value: 'true'
-          PropagateAtLaunch: true
-        - Key: !Sub 'k8s.io/cluster-autoscaler/${EKSControlPlane.Outputs.EKSName}'
-          Value: ''
-          PropagateAtLaunch: true
-      VPCZoneIdentifier:
-        - !Ref PublicSubnet1ID
-        - !Ref PublicSubnet2ID
+        LaunchTemplateVersion: !GetAtt EPLaunchTemplate.LatestVersionNumber
 
   EPLaunchTemplate:
     Type: "AWS::EC2::LaunchTemplate"
@@ -1567,11 +1558,19 @@ Resources:
               #!/bin/bash
               set -o xtrace
 
+              function signal() {
+                local tagName="aws:cloudformation:stack-name"
+                local instanceId="`wget -qO- http://instance-data/latest/meta-data/instance-id`"
+                local region="`wget -qO- http://instance-data/latest/meta-data/placement/availability-zone | sed -e 's:\([0-9][0-9]*\)[a-z]*\$:\\1:'`"
+                local stackName="`aws ec2 describe-tags --filters "Name=resource-id,Values=$instanceId" "Name=key,Values=$tagName" --region $region --query="Tags[0].Value" --output=text`"
+                /opt/aws/bin/cfn-signal --exit-code $1 --stack $stackName --resource UnmanagedASG --region ${AWS::Region}
+              }
               /etc/eks/bootstrap.sh ${EKSControlPlane.Outputs.EKSName} \
                        --b64-cluster-ca ${EKSControlPlane.Outputs.CAData} \
                        --apiserver-endpoint ${EKSControlPlane.Outputs.EKSEndpoint} \
                        --use-max-pods true \
                        --kubelet-extra-args '--register-with-taints=cisco-nodetype=enforcement:NoSchedule --node-labels=sfcn.cisco.com/nodetype=enforcement'
+              signal $?
 
             - HugePagesSize: !FindInMap [ ConfigurationTierMap, !Ref EnforcerConfigurationTier, hugePagesSize ]
 
@@ -1837,7 +1836,7 @@ Resources:
 
   ClusterAutoscaler:
     Type: "AWSQS::Kubernetes::Helm"
-    DependsOn: [ EPWorkersGroupUnmanaged, CPWorkersGroupUnmanaged ]
+    DependsOn: [ EPWorkersStack, CPWorkersStack ]
     Properties:
       ClusterID: !GetAtt EKSControlPlane.Outputs.EKSName
       Name: "autoscaler"
