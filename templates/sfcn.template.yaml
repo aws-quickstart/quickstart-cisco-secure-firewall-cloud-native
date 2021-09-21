@@ -681,24 +681,6 @@ Resources:
                   - "*"
                   - !Sub "arn:${AWS::Partition}:autoscaling:${AWS::Region}:${AWS::AccountId}:autoScalingGroup:*:autoScalingGroupName/*"
 
-        # Allow worker nodes to update S3 buckets created for the cluster
-        - PolicyName: !Sub "${EKSClusterName}-workers-s3-policy"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "s3:PutObject"
-                  - "s3:PutObjectAcl"
-                  - "s3:GetObject"
-                  - "s3:GetObjectAcl"
-                  - "s3:DeleteObject"
-                  - "s3:ListBucket"
-                  - "s3:GetBucketLocation"
-                Resource:
-                  - !Sub "arn:${AWS::Partition}:s3:::*/*"
-                  - !Sub "arn:${AWS::Partition}:s3:::*"
-
         # Allow worker nodes to update Route Tables for ipv4subnetpool integration
         - PolicyName: !Sub "${EKSClusterName}-workers-route-table-policy"
           PolicyDocument:
