@@ -809,11 +809,15 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/amazon-eks-load-balancer-controller.template.yaml'
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-load-balancer-controller.template.yaml'
         - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
           S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
       Parameters:
         EksClusterName: !Ref EKSClusterName
+        ControllerCPULimit: "100m"
+        ControllerMemoryLimit: "80Mi"
+        ControllerReplicaCount: 1
+        ControllerHostNetwork: Enabled
         OIDCIssuerURLWithoutProtocol: !Join [ '', !Split [ 'https://', !GetAtt EKSControlPlane.Outputs.OIDCIssuerURL ] ]
 
   # EFS
