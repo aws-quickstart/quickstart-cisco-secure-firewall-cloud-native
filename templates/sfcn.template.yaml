@@ -695,45 +695,30 @@ Resources:
                 Resource:
                   - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:route-table/*"
 
-  OIDCProviderArn:
-    DependsOn: EKSControlPlane
-    Type: Custom::CliQuery
-    Properties:
-      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
-      AwsCliCommand: !Sub
-        - 'iam list-open-id-connect-providers --query "OpenIDConnectProviderList[?contains(Arn,''${EKSEndpointID}'')] | [0]"'
-        - EKSEndpointID: !Select [ 1, !Split [ "https://" , !Select [ 0, !Split [ "." , !Sub '${EKSControlPlane.Outputs.EKSEndpoint}' ] ] ] ]
-      IdField: Arn
-
-  OIDCProviderURL:
-    Type: Custom::CliQuery
-    Properties:
-      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
-      AwsCliCommand: !Sub 'iam get-open-id-connect-provider --open-id-connect-provider-arn ${OIDCProviderArn}'
-      IdField: Url
-
   EFSDriverRole:
     Condition: EnableEFS
     Type: "AWS::IAM::Role"
     Properties:
-      AssumeRolePolicyDocument: !Sub |
-        {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Federated": "${OIDCProviderArn}"
-              },
-              "Action": "sts:AssumeRoleWithWebIdentity",
-              "Condition": {
-                "StringEquals": {
-                  "${OIDCProviderURL}:sub": "system:serviceaccount:kube-system:efs-csi-controller-sa"
+      AssumeRolePolicyDocument: !Sub
+        - |
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "Federated": "arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/${OIDCIssuerURLWithoutProtocol}"
+                },
+                "Action": "sts:AssumeRoleWithWebIdentity",
+                "Condition": {
+                  "StringEquals": {
+                    "${OIDCIssuerURLWithoutProtocol}:sub": "system:serviceaccount:kube-system:efs-csi-controller-sa"
+                  }
                 }
               }
-            }
-          ]
-        }
+            ]
+          }
+        - OIDCIssuerURLWithoutProtocol: !Join [ '', !Split [ 'https://', !GetAtt EKSControlPlane.Outputs.OIDCIssuerURL ] ]
       Policies:
         - PolicyName: !Sub "${EKSClusterName}-efs-csi-driver-policy"
           PolicyDocument:
@@ -797,7 +782,6 @@ Resources:
   EKSLoadBalancerController:
     Condition: EnableLB
     Type: AWS::CloudFormation::Stack
-    DependsOn: EKSControlPlane
     Properties:
       TemplateURL:
         !Sub
@@ -806,16 +790,7 @@ Resources:
           S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
       Parameters:
         EksClusterName: !Ref EKSClusterName
-        OIDCIssuerURLWithoutProtocol: !Ref OIDCProviderURL
-
-  # TODO: remove it altogether in v1.0.1, it was kept for backward compatibility with existing stacks
-  AwsAuthConfigMap:
-    Type: "Custom::KubeManifest"
-    Properties:
-      ServiceToken: !GetAtt ApplyKubernetesManifestFunction.Arn
-      ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
-      # No-op
-      Manifest: ""
+        OIDCIssuerURLWithoutProtocol: !Join [ '', !Split [ 'https://', !GetAtt EKSControlPlane.Outputs.OIDCIssuerURL ] ]
 
   # EFS
 
@@ -1872,6 +1847,10 @@ Resources:
         "webhook.resources.limits.memory": "50Mi"
         "webhook.resources.requests.cpu": "25m"
         "webhook.resources.requests.memory": "30Mi"
+        # Strategy has to be Recreate, otherwise, by the moment SecureFirewall chart starts updating - cert-manager is
+        # still not ready, as it waits for a new CP node.
+        "strategy.type": "Recreate"
+        "webhook.strategy.type": "Recreate"
 
   PrometheusAdapter:
     Type: "AWSQS::Kubernetes::Helm"
