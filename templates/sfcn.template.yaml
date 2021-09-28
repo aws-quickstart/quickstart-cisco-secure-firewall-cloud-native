@@ -697,6 +697,7 @@ Resources:
 
   EFSDriverRole:
     Condition: EnableEFS
+    DependsOn: ClusterOIDCProvider
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument: !Sub
@@ -756,7 +757,7 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/amazon-eks-controlplane.template.yaml'
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-controlplane.template.yaml'
         - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
           S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
       Parameters:
@@ -778,6 +779,29 @@ Resources:
         EKSPrivateAccessEndpoint: "Disabled"
         EKSEncryptSecrets: "Disabled"
         EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
+        IamOidcProvider: "Disabled"
+
+  # Remove DeleteOldClusterOIDCProviderIfExists function after v1.1+. It was added for an upgrade compatibility with
+  # a current amazon eks quickstart.
+  DeleteOldClusterOIDCProviderIfExists:
+    Type: Custom::CliQuery
+    Properties:
+      ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
+      AwsCliCommand: !Sub
+      - |
+        iam delete-open-id-connect-provider --open-id-connect-provider-arn arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/${OIDCIssuerURLWithoutProtocol} &> /dev/null || /tmp/bin/aws iam list-open-id-connect-providers --query '{Value: ``}'
+      - OIDCIssuerURLWithoutProtocol: !Join [ '', !Split [ 'https://', !GetAtt EKSControlPlane.Outputs.OIDCIssuerURL ] ]
+      IdField: 'Value'
+
+  ClusterOIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    DependsOn: DeleteOldClusterOIDCProviderIfExists
+    Properties:
+      ClientIdList:
+        - sts.amazonaws.com
+      ThumbprintList:
+        - 9e99a48a9960b14926bb7f3b02e22da2b0ab7280
+      Url: !GetAtt EKSControlPlane.Outputs.OIDCIssuerURL
 
   EKSLoadBalancerController:
     Condition: EnableLB
