@@ -93,8 +93,8 @@ Parameters:
     AllowedPattern: "^([A-F0-9]{64})?$"
     ConstraintDescription: Must be a string of length 64 consisting of uppercase hexadecimal characters (A-F,0-9).
     Description: |
-      User provided key to encrypt sensitive data.
-      Must consist of 64 uppercase hexadecimal characters (A-F,0-9).
+      User-provided AES-256 key that is 64 hexadecimal characters (A-F,0-9) used to encrypt sensitive cache data before it leaves CNFW.
+      This can be generated with the command "openssl enc -aes-256-cbc -k password -P -md sha256" or any other AES key generation methods.
       Required when 'elasticache' cache type is specified.
 
   EnforcerAutoscaling:
