@@ -781,17 +781,70 @@ Resources:
         EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
         IamOidcProvider: "Disabled"
 
-  # Remove DeleteOldClusterOIDCProviderIfExists function after v1.1+. It was added for an upgrade compatibility with
-  # a current amazon eks quickstart.
-  DeleteOldClusterOIDCProviderIfExists:
+  # Remove OIDCProviderResource, DeleteOldClusterOIDCProviderIfExists, ClusterOIDCProviderRemover and ClusterOIDCRemoverRole
+  # functions after v1.1+. They were added for an upgrade compatibility with a current amazon eks quickstart.
+  OIDCProviderResource:
     Type: Custom::CliQuery
     Properties:
       ServiceToken: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader'
       AwsCliCommand: !Sub
-      - |
-        iam delete-open-id-connect-provider --open-id-connect-provider-arn arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/${OIDCIssuerURLWithoutProtocol} &> /dev/null || /tmp/bin/aws iam list-open-id-connect-providers --query '{Value: ``}'
-      - OIDCIssuerURLWithoutProtocol: !Join [ '', !Split [ 'https://', !GetAtt EKSControlPlane.Outputs.OIDCIssuerURL ] ]
-      IdField: 'Value'
+        - |
+          iam list-open-id-connect-providers --query "{Arn: OpenIDConnectProviderList[?contains(Arn,'${OIDCIssuer}')] | [0].Arn || ''}"
+        - OIDCIssuer: !Join [ '', !Split [ 'https://', !GetAtt EKSControlPlane.Outputs.OIDCIssuerURL ] ]
+      IdField: Arn
+
+  DeleteOldClusterOIDCProviderIfExists:
+    Type: Custom::ClusterOIDCProviderRemover
+    Properties:
+      ServiceToken: !GetAtt ClusterOIDCProviderRemover.Arn
+      ProviderArn: !GetAtt OIDCProviderResource.Arn
+
+  ClusterOIDCProviderRemover:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.7
+      Handler: index.lambda_handler
+      MemorySize: 128
+      Role: !GetAtt ClusterOIDCRemoverRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          def lambda_handler(event, context):
+            data = {}
+            try:
+              provider_arn = event['ResourceProperties']["ProviderArn"]
+              if event['RequestType'] == 'Create':
+                if provider_arn:
+                  resp = boto3.client("iam").delete_open_id_connect_provider(OpenIDConnectProviderArn=provider_arn)
+                data["Reason"] = f"Provider with ARN {provider_arn} deleted" if provider_arn else "Provider not present"
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, data, provider_arn)
+            except Exception as e:
+              data["Reason"] = str(e)
+              cfnresponse.send(event, context, cfnresponse.FAILED, data, "")
+
+  ClusterOIDCRemoverRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: [ lambda.amazonaws.com ] }
+            Action: [ sts:AssumeRole ]
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [ iam:DeleteOpenIDConnectProvider ]
+                Resource: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/*"
+              - Effect: Allow
+                Action: [ logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents ]
+                Resource: !Sub "arn:${AWS::Partition}:logs:*:*:*"
 
   ClusterOIDCProvider:
     Type: AWS::IAM::OIDCProvider
