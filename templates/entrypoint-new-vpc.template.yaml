@@ -4,7 +4,7 @@ Description: Deploys Cisco Secure Firewall Cloud Native into a new EKS cluster i
 
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: "Install in an existing VPC"
+    EntrypointName: "Install in a new VPC"
     Order: 1
   cfn-lint:
     config:
