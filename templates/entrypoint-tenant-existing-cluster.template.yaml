@@ -1,8 +1,16 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: Deploys a Tenant of Cisco Secure Firewall Cloud Native into an existing EKS cluster.
+Description: Deploys a Tenant of Cisco Secure Firewall Cloud Native into an existing EKS cluster (qs-1s3afab5b).
 
 Metadata:
+  QuickStartDocumentation:
+    EntrypointName: "Add tenant to an existing installation"
+    Order: 3
+  cfn-lint:
+    config:
+      ignore_checks: [ W9006 ]
+      ignore_reasons:
+        W9006: "Suppressed 'false-alarm' spelling errors for technical terms."
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -18,9 +26,11 @@ Metadata:
           default: Basic Configuration - Data Plane
         Parameters:
           - EnforcerCacheType
+          - EnforcerCacheStorageKey
       - Label:
           default: Basic Configuration - Firewall
         Parameters:
+          - FirewallVersion
           - EnforcerServiceRoles
           - EnforcerAutoscaling
           - SmartLicenseToken
@@ -41,6 +51,8 @@ Metadata:
     ParameterLabels:
       ClusterID:
         default: EKS cluster ID
+      FirewallVersion:
+        default: Product version
       DataplaneNamespace:
         default: Namespace
       SmartLicenseToken:
@@ -55,6 +67,8 @@ Metadata:
         default: Enforcer service roles
       EnforcerCacheAuthToken:
         default: Redis authentication token
+      EnforcerCacheStorageKey:
+        default: CNFW key to encrypt sensitive data
       EnforcerCacheType:
         default: Cache type
       EnforcerCacheNodeType:
@@ -63,6 +77,12 @@ Metadata:
         default: In-Transit encryption
       EnforcerAutoscaling:
         default: Enforcer autoscaling
+      QSS3BucketName:
+        default: Quick Start S3 Bucket Name
+      QSS3KeyPrefix:
+        default: Quick Start S3 Key Prefix
+      QSS3BucketRegion:
+        default: Quick Start S3 bucket Region
 
 
 Parameters:
@@ -95,6 +115,13 @@ Parameters:
     Type: String
     Description: EKS cluster name (a root stack name) with SFCN product deployed.
 
+  FirewallVersion:
+    Type: String
+    Default: ""
+    Description: |
+      (Optional) Helm chart version of the product. If not provided – a version of a root stack is used automatically.
+      A version different from a root stack can be provided during an upgrade to another release.
+
   DataplaneNamespace:
     Type: String
     AllowedPattern: ".+"
@@ -120,10 +147,11 @@ Parameters:
 
   EnforcerConfigurationTier:
     Description: Instance tier to be used by enforcer workers.
-    Default: "vCPU4"
+    Default: "vCPU4-c5.2xlarge"
     Type: String
-    AllowedValues: [ "vCPU4" ]
-    ConstraintDescription: must specify vCPU4
+    AllowedValues: [ "vCPU4-m5.xlarge", "vCPU4-c5.2xlarge" ]
+    ConstraintDescription: must specify vCPU4-m5.xlarge or vCPU4-c5.2xlarge
+
 
   EnforcerServiceRoles:
     Type: String
@@ -142,10 +170,22 @@ Parameters:
     MaxLength: 128
     AllowedPattern: "([a-zA-Z0-9!&#$^><-]{16,128})?"
     Default: ""
-    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters
+    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters.
     Description: |
       Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
-      Takes effect only when in-transit encryption is enabled
+      Takes effect only when in-transit encryption is enabled.
+
+  EnforcerCacheStorageKey:
+    Type: String
+    NoEcho: true
+    MaxLength: 64
+    Default: ""
+    AllowedPattern: "^([A-F0-9]{64})?$"
+    ConstraintDescription: Must be a string of length 64 consisting of uppercase hexadecimal characters (A-F,0-9).
+    Description: |
+      User-provided AES-256 key that is 64 hexadecimal characters (A-F,0-9) used to encrypt sensitive cache data before it leaves CNFW.
+      This can be generated with the command "openssl enc -aes-256-cbc -k password -P -md sha256" or any other AES key generation methods.
+      Required when 'elasticache' cache type is specified.
 
   EnforcerCacheType:
     Type: String
@@ -159,7 +199,7 @@ Parameters:
     Type: String
     Default: "cache.m5.large"
     AllowedValues: [ cache.m5.xlarge, cache.m5.large ]
-    Description: EC2 instance type to use as Cache node, check region availaibility before selection.
+    Description: EC2 instance type to use as Cache node, check region availability before selection.
 
   EnforcerCacheTransitEncryption:
     Type: String
@@ -173,9 +213,17 @@ Parameters:
     Default: Disabled
     Description: Enable the default Enforcer autoscaling.
 
+Rules:
+  EnforcerElasticacheRule:
+    RuleCondition: !Equals [ !Ref EnforcerCacheType, elasticache ]
+    Assertions:
+      - Assert: !Not [ !Equals [ !Ref EnforcerCacheStorageKey, "" ] ]
+        AssertDescription: Cache storage key must not be empty when cache type is set to "elasticache".
+
 Conditions:
   UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
   EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
+  FirewallVersionProvided: !Not [ !Equals [ !Ref FirewallVersion, '' ] ]
 
 Resources:
   EnforcerElasticache:
@@ -210,7 +258,7 @@ Resources:
           S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
       Parameters:
         ClusterID: !Ref ClusterID
-        Version: { Fn::ImportValue: !Sub '${ClusterID}-FirewallVersion' }
+        Version: !If [ FirewallVersionProvided, !Ref FirewallVersion, { Fn::ImportValue: !Sub '${ClusterID}-FirewallVersion' } ]
         Controlplane: Disabled
         Name: !Sub "sfcn-${DataplaneNamespace}"
         SystemNamespace: { Fn::ImportValue: !Sub '${ClusterID}-SystemNamespace' }
@@ -221,5 +269,6 @@ Resources:
         EnforcerServiceRoles: !Ref EnforcerServiceRoles
         EnforcerCacheHost: !If [ EnforcerCacheTypeIsElastiCache, !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint, "" ]
         EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
+        EnforcerCacheStorageKey: !Ref EnforcerCacheStorageKey
         EnforcerAutoscaling: !Ref EnforcerAutoscaling
         EnforcerConfigurationTier: !Ref EnforcerConfigurationTier

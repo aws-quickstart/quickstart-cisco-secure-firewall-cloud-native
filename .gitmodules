@@ -6,6 +6,10 @@
 	path = submodules/quickstart-amazon-eks
 	url = git@github.com:aws-quickstart/quickstart-amazon-eks.git
 	branch = main
+[submodule "submodules/quickstart-amazon-eks-nodegroup"]
+	path = submodules/quickstart-amazon-eks-nodegroup
+	url = git@github.com:aws-quickstart/quickstart-amazon-eks-nodegroup.git
+	branch = main
 [submodule "docs/boilerplate"]
 	path = docs/boilerplate
 	url = https://github.com/aws-quickstart/quickstart-documentation-base-common.git
