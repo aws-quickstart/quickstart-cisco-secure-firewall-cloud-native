@@ -9,13 +9,11 @@ project:
 
     # To override parameters, create ./.taskcat_overrides.yml file and place your values there. Example:
     # KeyPairName: mykeypair
-    # EKSAdminUserArn: arn:aws:iam::1234567891011:user/my-cli
     # ...
 
     QSS3BucketName: $[taskcat_autobucket]
     QSS3BucketRegion: $[taskcat_current_region]
     KeyPairName: $[taskcat_getkeypair] # Sets "cikey" by default. Override with your own value
-    EKSAdminUserArn: "" # Override with your own value
 tests:
   sfcnbase:
     template: templates/entrypoint-new-vpc.template.yaml
