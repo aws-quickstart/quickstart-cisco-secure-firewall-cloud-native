@@ -6,7 +6,7 @@ End-to-end Ciso Secure Firewall Cloud Native workflow:
 
 [#SFCN End-to-End Workflow]
 .End-to-End Workflow for {partner-product-short-name} on AWS
-image::../images/prepare-aws-account.png[SFCN End-to-End Workflow]
+image::../images/prepare-aws-account.jpg[SFCN End-to-End Workflow]
 
 ** *Step 1 - Create IAM users and EKS admin*
 * Create the user in the AWS Management Console, the AWS CLI, Tools for Windows PowerShell, or by using an AWS API operation. If you create the user in the AWS Management Console, then most of the steps are handled automatically via a wizard, based on your choices. If you create the users programmatically, then you must perform each of those steps individually.
@@ -145,8 +145,7 @@ SFCNFullAccess IAM Policy
 * You can also create a new managed policy by choosing Create policy. If you do, return to this browser tab or window when the new policy is done. Choose Refresh; and then select the check box for the new policy to attach it to your user. For more information, see Creating IAM policies.
 * Choose Next: Review to see the list of policies that are to be attached to the user. Then choose Add
 
-** *Step 4 - Create SFCN cluster prerequisite stack* 
-* Run Cisco Secure Firewall Cloud Native https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https://sfcn-quickstart.s3.amazonaws.com/quickstart-cisco-secure-firewall-cloud-native/templates/entrypoint-new-vpc.template.yaml&param_QSS3BucketName=sfcn-quickstart&param_FirewallVersion=v1.0.0[prerequisites stack^].
+** *Step 4 - Create Cisco Secure Firewall Cluster Stack (refer to deployment options)* 
 
 ==== Prepare your {partner-company-name} account
 
