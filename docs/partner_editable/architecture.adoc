@@ -14,14 +14,14 @@ As shown in <<architecture1>>, the Quick Start sets up the following:
 
 * One VPC per Cisco Secure Firewall Cloud Native (SFCN).
 ** The VPC spans two Availability Zones configured with public and private subnets, according to AWS best practices.
-** The SFCN cluster uses Amazon EKS to build resiliency and provide multi-az architecture.
+** The Cisco Secure Firewall Cloud Native cluster uses Amazon EKS to build resiliency and provide multi-az architecture.
 * Amazon Route53 provides VPN load balancing and CNFW health monitoring
 * In the public subnets:
-** The SFCN Control Point (CP) is responsible for configuration, licensing, and route management.
-** The SFCN Enforcement Point (EP) is responsible for handling traffic.
-** The SFCN architecture uses two autoscale groups (one for the control point and other one for the enforcement point).
-** One EFS per cluster for SFCN CP and EP (optional).
-** ElastiCache for Redis and SFCN are optional components for intelligent VPN load balancing.
+** The Cisco Secure Firewall Cloud Native Control Point (CP) is responsible for configuration, licensing, and route management.
+** The Cisco Secure Firewall Cloud Native Enforcement Point (EP) is responsible for handling traffic.
+** The Cisco Secure Firewall Cloud Native architecture uses two autoscale groups (one for the control point and other one for the enforcement point).
+** One EFS per cluster for Cisco Secure Firewall Cloud Native CP and EP (optional).
+** ElastiCache for Redis and SFCN redirector are optional components for intelligent VPN load balancing.
 ** Managed network address translation (NAT) gateways to allow outbound internet access for resources in the private subnets.
 
 // Add bullet points for any additional components that are included in the deployment. Make sure that the additional components are also represented in the architecture diagram. End each bullet with a period.

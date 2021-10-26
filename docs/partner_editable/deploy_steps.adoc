@@ -44,5 +44,15 @@ Each deployment takes about {deployment_time} to complete.
 . On the *Create stack* page, keep the default setting for the template URL, and then choose *Next*.
 . On the *Specify stack details* page, change the stack name if needed. Review the parameters for the template. Provide values for the parameters that require input. For all other parameters, review the default settings and customize them as necessary. For details on each parameter, see the link:#_parameter_reference[Parameter reference] section of this guide. When you finish reviewing and customizing the parameters, choose *Next*.
 
+Post SFCN cluster deployment use the steps mentioned here to modify/configure https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-advanced.html#Cisco_Concept.dita_ebd1a5e4-186c-43ec-a71e-7570f7579235[Horizontal Pod Scaling^]
 
+The Quick Start provides separate templates for these options. It also lets you configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and {partner-product-short-name} settings, as discussed later in this guide.
+
+Once Cisco Secure Fireweall Cloud is build using this quickstart, SFCN can be used for the following usecases: 
+
+* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-route53.html[Scalable Remote Access VPN with Route53 Integration^]
+* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/m_ra-vpn-with-session-reconnect.html[Scalable Remote Access VPN with Session Reconnect^]
+* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-advanced.html#Cisco_Concept.dita_c425d95d-3609-45c5-9f43-1cddc1c32db9[Enable Multi-tenancy^]
+* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-l2l.html[Backhaul Design for LAN-to-LAN VPN^]
+* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-inside-vpc.html[Backhaul Design for Inside VPC^]
 
