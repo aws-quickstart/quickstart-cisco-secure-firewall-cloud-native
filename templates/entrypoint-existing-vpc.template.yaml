@@ -4,7 +4,7 @@ Description: Deploys Cisco Secure Firewall Cloud Native into a new EKS cluster o
 
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: "Install in a new VPC"
+    EntrypointName: "Install in an existing VPC"
     Order: 2
   cfn-lint:
     config:
@@ -17,7 +17,6 @@ Metadata:
           default: Required Configuration
         Parameters:
           - KeyPairName
-          - EKSAdminUserArn
       - Label:
           default: Required Configuration - Network
         Parameters:
@@ -61,6 +60,7 @@ Metadata:
           default: Advanced Configuration - Cluster
         Parameters:
           - KubernetesVersion
+          - AdditionalEKSAdminUserArn
           - AdditionalEKSAdminRoleArn
           - EKSClusterLoggingTypes
       - Label:
@@ -92,10 +92,10 @@ Metadata:
         default: Kubernetes version
       KeyPairName:
         default: SSH key name
-      EKSAdminUserArn:
-        default: EKS admin user ARN
+      AdditionalEKSAdminUserArn:
+        default: Additional EKS admin ARN (IAM user)
       AdditionalEKSAdminRoleArn:
-        default: Additional EKS admin role ARN
+        default: Additional EKS admin ARN (IAM role)
       EKSClusterLoggingTypes:
         default: Cluster logging types
       ControllerConfigurationTier:
@@ -246,17 +246,15 @@ Parameters:
     Description: Name of an existing key pair, which allows you to securely connect to your instance after it launches.
     Type: AWS::EC2::KeyPair::KeyName
 
-  EKSAdminUserArn:
+  AdditionalEKSAdminUserArn:
     Type: String
-    Description: Resource name of the IAM user added to the aws-auth ConfigMap of the EKS cluster.
-    # Make the param required so that the admin IAM user is assigned
-    AllowedPattern: ^arn:aws:iam::\d{12}:user/.+
+    Default: ""
+    Description: "(Optional) IAM user Amazon Resource Name (ARN) to be granted administrative access to the EKS cluster."
 
   AdditionalEKSAdminRoleArn:
     Type: String
     Default: ""
-    Description: Resource name of additional IAM role added to the aws-auth ConfigMap of the EKS cluster.
-    AllowedPattern: (^arn:aws:iam::\d{12}:role/.+)|(^.{0}$)
+    Description: "(Optional) IAM role Amazon Resource Name (ARN) to be granted administrative access to the EKS cluster."
 
   EKSClusterLoggingTypes:
     Type: String
@@ -471,7 +469,7 @@ Resources:
         EKSClusterName: !Ref AWS::StackName
         KubernetesVersion: !Ref KubernetesVersion
         KeyPairName: !Ref KeyPairName
-        EKSAdminUserArn: !Ref EKSAdminUserArn
+        AdditionalEKSAdminUserArn: !Ref AdditionalEKSAdminUserArn
         AdditionalEKSAdminRoleArn: !Ref AdditionalEKSAdminRoleArn
         EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
         StorageType: !Ref StorageType
