@@ -1,6 +1,5 @@
-This Quick Start supports the following Regions:
+This Quick Start does not have explicit limitations regarding region support.
 
-* us-east-1, US East (N. Virginia)
-* us-east-2, US East (Ohio)
+For details about regions, see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html[Regions and Availability Zones^].
 
 // Full list: https://docs.aws.amazon.com/general/latest/gr/rande.html

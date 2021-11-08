@@ -2,12 +2,27 @@
 
 ==== Prepare your AWS account and users
 
-Follow AWS Identity and Access Management (IAM) best practices to create a new IAM user for each person that requires administrator access. Create credentials for each user, depending on the type of access the user requires:
+End-to-end Ciso Secure Firewall Cloud Native workflow: 
 
-* **Programmatic access**: The IAM user might need to make API calls, use the AWS CLI, or use the Tools for Windows PowerShell. In that case, create an access key (access key ID and a secret access key) for that user. 
-* **AWS Management Console access**: If the user needs to access the AWS Management Console, create a password for the user. Disabling console access for a user prevents them from signing in the to the AWS Management Console using their user name and password. It does not change their permissions or prevent them from accessing the console using an assumed role.
+[#SFCN End-to-End Workflow]
+.End-to-End Workflow for {partner-product-short-name} on AWS
+image::../images/prepare-aws-account.png[SFCN End-to-End Workflow]
 
-As a best practice, create only the credentials that the user needs. For example, for a user who requires access only through the AWS Management Console, do not create access keys. Users who require programmatic access enabled to perform all the deployment activities must create and use the following IAM policy (SFCNFullAccess) to deploy Cisco Secure Firewall Cloud Native: 
+Perform steps 1 -3 if you prefer to use a custom policy to deploy the CloudFormation stack instead of the AdminstratorAccess managed policy mentioned in the "IAM Permissions" section of this guide. 
+
+** *Step 1 - Create IAM user*
+* Create the user in the AWS Management Console, the AWS CLI, Tools for Windows PowerShell, or by using an AWS API operation. If you create the user in the AWS Management Console, then most of the steps are handled automatically via a wizard, based on your choices. If you create the users programmatically, then you must perform each of those steps individually.
+* Create credentials for the user, depending on the type of access the user requires:
+*** **Programmatic access**: The IAM user might need to make API calls, use the AWS CLI, or use the Tools for Windows PowerShell. In that case, create an access key (access key ID and a secret access key) for that user. 
+*** **AWS Management Console access**: If the user needs to access the AWS Management Console, create a password for the user. Disabling console access for a user prevents them from signing in the to the AWS Management Console using their user name and password. It does not change their permissions or prevent them from accessing the console using an assumed role.
+ 
+** *Step 2 - Create IAM Access Policy* Users who require programmatic access enabled to perform all the deployment activities must create and use the IAM policy (SFCNFullAccess) to deploy Cisco Secure Firewall Cloud Native.
+
+* Sign in to the AWS Management Console and open the IAM console.
+* In the navigation pane on the left, choose Policies.
+* Choose Create Policy.
+* Choose the JSON tab.
+* Type or paste the following JSON policy document. 
 [source,SFCNFullAccess IAM Policy,options="nowrap"]
 SFCNFullAccess IAM Policy 
   { 
@@ -116,23 +131,38 @@ SFCNFullAccess IAM Policy
           } 
       ] 
   } 
+* Resolve any security warnings, errors, or general warnings generated during policy validation, and then choose Review policy.
+* When you are finished, choose Next: Tags.
+* On the Review policy page:
+*** Name ― Type the name for this policy: SFCNFullAccess.
+*** Description ― Optionally, enter a description for the policy that you are creating.
+* Review the policy Summary to see the permissions that are granted by your policy. Then choose Create policy to save your work.
 
-* Run Cisco Secure Firewall Cloud Native AWS Quick Start https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https://sfcn-quickstart.s3.amazonaws.com/quickstart-cisco-secure-firewall-cloud-native/templates/entrypoint-new-vpc.template.yaml&param_QSS3BucketName=sfcn-quickstart&param_FirewallVersion=v1.0.0[prerequisites stack^].
+** *Step 3 - Attach IAM access policy to the IAM user* IAM users must explicitly be given permissions to administer credentials or IAM resources.
+* Sign in to the AWS Management Console and open the IAM console.
+* Choose Users in the navigation pane, choose the name of the user whose permissions you want to modify, and then choose the Permissions tab.
+* Choose Add permissions, and then choose Attach existing policies directly to user.
+* Select the SFCNFullAccess managed policy that you created for the SFCN administrator user:
+*** Use the Search feature to filter the policies by name.
+* You can also create a new managed policy by choosing Create policy. If you do, return to this browser tab or window when the new policy is done. Choose Refresh; and then select the check box for the new policy to attach it to your user. For more information, see Creating IAM policies.
+* Choose Next: Review to see the list of policies that are to be attached to the user. Then choose Add.
+
+** *Step 4 - Create Cisco Secure Firewall Cluster Stack (refer to deployment options)*
+
 
 ==== Prepare your {partner-company-name} account
 
 * Obtain Cisco Secure Firewall Cloud Native license from your Cisco accounts team and add it to your Cisco smart account.
-* If the license is not available, SFCN architecture with a single enforcement point will still work with 100 Kbps max throughput. 
-* The https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-licensing.html[Licensing chapter^] provides complete information about licensing the product.
+* If the license is unavailable, Cisco SFCN can run with a single enforcement point at 100 Kbps throughput. 
+* The https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-licensing.html[Cisco Secure Firewall Cloud Native Licensing chapter^] provides complete information about licensing the product.
 
 ==== Prepare for the deployment
 
-* Create At least one Amazon EC2 key pair.
-* For RAVPN use-case create the following resources: 
-    ** A registered domain (example: mydomain.com)
-    ** Created a hosted zone
-    ** Download and upload Cisco AnyConnect VPN package(s) (Windows, Linux, Mac, Andriod and iOS)
-    ** Create AnyConnect client profile(s).
-
-* Note: See the Use Cases in the https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-route53.html[Secure Firewall Cloud Native Getting Started Guide^] for complete information about RAVPN configuration.
-    
+* Create At least one Amazon EC2 key pair: Ensure that at least one Amazon EC2 key pair exists in your AWS account in the Region where you plan to deploy the Secure Firewall Cloud Native RA-VPN solution. Make note of the key pair name. You need it to create a secret to allow the cluster to pull down files from your S3 bucket. See https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-aws.html#Cisco_Task.dita_7f6b3cc2-4435-493c-8100-c5f31923612f[Create a key pair^] for more information.
+* Download the AnyConnect package files from https://software.cisco.com/download/home/286281283/type/282364313/release/[Cisco Software Download portal^] (The recommended AnyConnect version is 4.8 or higher)
+*** anyconnect-linux64-4.9.05042-webdeploy-k9.pkg
+*** anyconnect-win-4.9.05042-webdeploy-k9.pkg
+*** anyconnect-macos-4.9.05042-webdeploy-k9.pkg
+* Create AnyConnect client profile(s).
+* Create a S3 bucket and upload Cisco Anyconnect image(s) and Anyconnect profile(s) to S3: Make the files available for uploading to the cluster. This can be done by either serving them over HTTP/HTTPS or syncing them to an S3 bucket. This example shows the S3 bucket used to provision the cluster.
+*** aws s3 cp . s3://$BUCKET --recursive --exclude "*" --include "anyconnect-*"
