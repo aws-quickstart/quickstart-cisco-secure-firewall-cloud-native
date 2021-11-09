@@ -4,11 +4,8 @@
 
 End-to-end Ciso Secure Firewall Cloud Native workflow: 
 
-[#SFCN End-to-End Workflow]
-.End-to-End Workflow for {partner-product-short-name} on AWS
-image::../images/prepare-aws-account.png[SFCN End-to-End Workflow]
 
-Perform steps 1 -3 if you prefer to use a custom policy to deploy the CloudFormation stack instead of the AdminstratorAccess managed policy mentioned in the "IAM Permissions" section of this guide. 
+Perform steps 1 -3 if you prefer to use a custom IAM policy to deploy the CloudFormation stack instead of the AdminstratorAccess managed policy mentioned in the link:#_iam_permissions[IAM Permissions] section of this guide.
 
 ** *Step 1 - Create IAM user*
 * Create the user in the AWS Management Console, the AWS CLI, Tools for Windows PowerShell, or by using an AWS API operation. If you create the user in the AWS Management Console, then most of the steps are handled automatically via a wizard, based on your choices. If you create the users programmatically, then you must perform each of those steps individually.
