@@ -4,6 +4,7 @@ project:
     - us-east-1
     - us-east-2
   s3_regional_buckets: true
+  s3_object_acl: public-read
   shorten_stack_name: true
   package_lambda: true
   lambda_source_path: functions/source
