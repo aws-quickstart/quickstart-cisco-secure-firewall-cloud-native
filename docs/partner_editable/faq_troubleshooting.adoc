@@ -78,7 +78,6 @@ Alternatively, it is possible to login to the logging server:
 
 `kubectl exec -n $NS -it $POD -c logging-server -- /bin/sh`
 
-```
 [source,$ cd /var/log/logs,options="nowrap"]
 $ cd /var/log/logs
 $ ls
@@ -86,12 +85,11 @@ $ ls
 $ grep asac messages-kv.log
   Mar 30 21:30:27 ip-192-168-118-112 [2021/03/30 21:30:27] [ info] inotify_fs_add(): inode=1536390 watch_fd=62 name=/var/log/containers/sfcn-cli-validation-<truncated>.log
   Mar 30 21:33:10 ip-192-168-118-112 [2021/03/30 21:33:10] [ info] inotify_fs_add(): inode=1536539 watch_fd=64 name=/var/log/containers/sfcn-cli-validation-<truncated>.log
-  ```
+  
 
 Logs stored on the logging server are routinely rotated and cleaned up. If you need to preserve logs, save the files before the house-cleaning jobs run.
 
 Unified container logs are formatted as follows:
-
 ```
 <year-month-day> <time> <node name> <pod namespace> <pod name> <container name> -- <log message> -- <extra JSON-formatted log metadata>
 
@@ -99,8 +97,9 @@ For example, an entry from a configuration pod may look like this:
 [source,2021-03-18 21:28:00 ,options="nowrap"]
 2021-03-18 21:28:00 ip-1-1-1-1.ec2.internal sfcn-system sfcn-configurer-1111111111-22222 manager --
 2021-03-18T21:28:00.806Z INFO controllers.SNMPExporter Reconciliation started {"namespace": "sfcn-system"} -- {"_SDATA":{"k8s":{
-The unified logs are also stored and periodically rotated on the node where the logging-server is running at /home/ubuntu/var-log/.
 ```
+
+The unified logs are also stored and periodically rotated on the node where the logging-server is running at /home/ubuntu/var-log/.
 
 Standard output and standard error logs for individual containers can also be viewed using the kubectl log command:
 
