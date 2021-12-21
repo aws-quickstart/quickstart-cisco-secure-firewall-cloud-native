@@ -31,9 +31,11 @@ You might be required to run the enable command before being able to execute any
 
 *A.* Install ec2instanceconnect (pip install ec2instanceconnectcli), and add the following to your shell profile:
 
-[source,*EKS mssh*,options="nowrap"]
+`[source,*EKS mssh*,options="nowrap"]`
 
 EKS mssh
+```
+
 function sshn() {
   PS3="Select a node to ssh: "
   select node in $(kubectl get nodes | grep -v NAME | awk '{print $1}')
@@ -46,8 +48,8 @@ function sshn() {
     done
     return $?
 }
-
-Execute sshn, and select the node you wish to SSH to when prompted.
+```
+Execute `sshn`, and select the node you wish to SSH to when prompted.
 
 *Q.* I want to check the deployment status.
 
