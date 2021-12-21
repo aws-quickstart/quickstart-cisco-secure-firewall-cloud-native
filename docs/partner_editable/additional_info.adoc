@@ -13,11 +13,11 @@
     export NS=sfcn-system
     aws eks --region us-east-1 update-kubeconfig --name answami-sfcn
 
-. Check pods using *kubectl get pods -n $NS*
+. Check pods using `kubectl get pods -n $NS`
 
-. Check nodes using *kubectl get nodes -n $NS*
+. Check nodes using `kubectl get nodes -n $NS`
 
-. Check CNFW configuration using *kubectl get asacommand -A --field-selector spec.command="show run"*
+. Check CNFW configuration using `kubectl get asacommand -A --field-selector spec.command="show run"`
 
 . You can capture different metrics for the SFCN based on service roles. See https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-metrics.html[Metrics Configuration^] in the Cisco Secure Firewall Cloud Native Getting Started Guide for more information.
 
@@ -98,4 +98,4 @@ spec:
     ip address dhcp
     no shutdown
 
-*kubectl apply -f interfaces.yaml -n $NS*
+`kubectl apply -f interfaces.yaml -n $NS`
