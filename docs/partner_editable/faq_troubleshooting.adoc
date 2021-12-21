@@ -67,10 +67,11 @@ In the event the deployed status shows the configuration has been deployed to on
 
 *A.* By default, the system forwards the combined logs for all SFCN-related containers running in the cluster to a central logging service. Use the following kubectl command to view the logs:
 
-```[source,$ POD=$(grep -m 1 logging-server,options="nowrap"]
+```
+[source,$ POD=$(grep -m 1 logging-server,options="nowrap"]
 POD=$(grep -m 1 logging-server <<< "`kubectl get pods -n $NS --no-headers=true -o custom-columns=':metadata.name'`")
-kubectl logs -n $NS pod/$POD -c logging-server```
-
+kubectl logs -n $NS pod/$POD -c logging-server
+```
 Optionally, the parameter `-f` can be added to continuously tail the log. Note that $NS represents the namespace of the pod.
 
 Alternatively, it is possible to login to the logging server:
