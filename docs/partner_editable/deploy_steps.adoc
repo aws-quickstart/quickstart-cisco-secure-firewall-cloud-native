@@ -43,36 +43,3 @@ Each deployment takes about {deployment_time} to complete.
 . Check the AWS Region that’s displayed in the upper-right corner of the navigation bar, and change it if necessary. This Region is where you build the network infrastructure. The template is launched in the {default_deployment_region} Region by default. For other choices, see link:#_supported_regions[Supported Regions] earlier in this guide.
 . On the *Create stack* page, keep the default setting for the template URL, and then choose *Next*.
 . On the *Specify stack details* page, change the stack name if needed. Review the parameters for the template. Provide values for the parameters that require input. For all other parameters, review the default settings and customize them as necessary. For details on each parameter, see the link:#_parameter_reference[Parameter reference] section of this guide. When you finish reviewing and customizing the parameters, choose *Next*.
-
-=== What to do Next
-
-==== Scaling
-
-Secure Firewall Cloud Native utilizes the https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/[Horizontal Pod Autoscaler (HPA)^] and https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler[Cluster Autoscaler^] in concert to bring CNFW instances up and down based on the needs of your network. After you deploy the SFCN cluster, use the steps mentioned here to modify/configure https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-advanced.html#Cisco_Concept.dita_ebd1a5e4-186c-43ec-a71e-7570f7579235[Horizontal Pod Scaling^]
-
-The Quick Start provides separate fields for these options. It also lets you configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and {partner-product-short-name} settings, as discussed later in this guide.
-
-==== Explore Other Configuration Options
-
-In addition to scaling, you can find information about these other configuration options:
-
-* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-basic.html[Basic Configuration^] includes information about namespace, service roles, networking, and access lists.
-* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-advanced.html[Advanced Configuration^] includes information about multiple tenants.
-* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-licensing.html[Licensing^] provides guidelines about how to license the Secure Firewall Cloud Native. 
-
-The Secure Firewall Cloud Native Getting Started Guide is updated often with expanded configuration topics, including SAML and Redis datastore.
-
-==== Explore Use Case Examples and Scenarios
-
-Once the Cisco Secure Fireweall Cloud Native is built using this quickstart, SFCN can be used for the following use cases: 
-
-* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-route53.html[Scalable Remote Access VPN with Route53 Integration^]
-* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/m_ra-vpn-with-session-reconnect.html[Scalable Remote Access VPN with Session Reconnect^]
-* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-advanced.html#Cisco_Concept.dita_c425d95d-3609-45c5-9f43-1cddc1c32db9[Enable Multi-tenancy^]
-* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-l2l.html[Backhaul Design for Site-to-Site VPN^]
-* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-inside-vpc.html[Backhaul Design for Inside VPC^]
-
-==== Explore the Secure Firewall Cloud Native GitHub
-
-Before you implement a Kubernetes deployment strategy, you’ll need to understand the pieces of a Kubernetes deployment and how they all function together.
-You can review samples and example scripts available at the https://github.com/CiscoDevNet/sfcn[Cisco Secure Firewall Cloud Native GitHub repository^].
