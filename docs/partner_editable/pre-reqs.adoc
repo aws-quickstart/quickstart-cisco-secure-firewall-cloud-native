@@ -20,4 +20,4 @@ If you prefer to use a custom IAM policy to deploy the CloudFormation stack inst
 * Create AnyConnect client profile(s).
 * Create a S3 bucket and upload Cisco Anyconnect image(s) and Anyconnect profile(s) to S3: Make the files available for uploading to the cluster. This can be done by either serving them over HTTP/HTTPS or syncing them to an S3 bucket. This example shows the S3 bucket used to provision the cluster.
 
-`aws s3 cp . s3://$BUCKET --recursive --exclude "*" --include "anyconnect-*"`
+   `aws s3 cp . s3://$BUCKET --recursive --exclude "*" --include "anyconnect-*"`
