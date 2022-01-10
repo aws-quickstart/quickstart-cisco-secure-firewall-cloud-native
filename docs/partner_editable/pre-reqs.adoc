@@ -6,7 +6,7 @@ If you prefer to use a custom IAM policy to deploy the CloudFormation stack inst
 
 === Prepare your {partner-company-name} account
 
-* Obtain Cisco Secure Firewall Cloud Native license from your Cisco accounts team and add it to your Cisco smart account.
+* Obtain Cisco Secure Firewall Cloud Native license from your Cisco accounts team and add it to your https://www.cisco.com/c/en/us/buy/licensing.html[Cisco smart account^].
 * If the license is unavailable, Cisco SFCN can run with a single enforcement point at 100 Kbps throughput. 
 * The https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-licensing.html[Cisco Secure Firewall Cloud Native Licensing chapter^] provides complete information about licensing the product.
 
