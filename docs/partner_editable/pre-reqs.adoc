@@ -1,13 +1,23 @@
 // If no preperation is required, remove all content from here
 
-==== Prepare your AWS account
+=== Prepare your AWS account
 
-_Describe any setup required in the AWS account prior to template launch_
+If you prefer to use a custom IAM policy to deploy the CloudFormation stack instead of the AdminstratorAccess managed policy mentioned in the link:#_iam_permissions[IAM Permissions] section of this guide, see link:#_custom_iam_policy_for_cloudformation_users[Custom IAM policy for CloudFormation users].
 
-==== Prepare your {partner-company-name} account
+=== Prepare your {partner-company-name} account
 
-_Describe any setup required in the partner portal/account prior to template launch_
+* Obtain Cisco Secure Firewall Cloud Native license from your Cisco accounts team and add it to your https://www.cisco.com/c/en/us/buy/licensing.html[Cisco smart account^].
+* If the license is unavailable, Cisco SFCN can run with a single enforcement point at 100 Kbps throughput. 
+* The https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-licensing.html[Cisco Secure Firewall Cloud Native Licensing chapter^] provides complete information about licensing the product.
 
-==== Prepare for the deployment
+=== Prepare for the deployment
 
-_Describe any preparation required to complete the product build, such as obtaining licenses or placing files in S3_
+* Create At least one Amazon EC2 key pair: Ensure that at least one Amazon EC2 key pair exists in your AWS account in the Region where you plan to deploy the Secure Firewall Cloud Native RA-VPN solution. Make note of the key pair name. You need it to create a secret to allow the cluster to pull down files from your S3 bucket. See https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-aws.html#Cisco_Task.dita_7f6b3cc2-4435-493c-8100-c5f31923612f[Create a key pair^] for more information.
+* Download the AnyConnect package files from https://software.cisco.com/download/home/286281283/type/282364313/release/[Cisco Software Download portal^] (The recommended AnyConnect version is 4.8 or higher)
+*** anyconnect-linux64-4.9.05042-webdeploy-k9.pkg
+*** anyconnect-win-4.9.05042-webdeploy-k9.pkg
+*** anyconnect-macos-4.9.05042-webdeploy-k9.pkg
+* Create AnyConnect client profile(s).
+* Create a S3 bucket and upload Cisco Anyconnect image(s) and Anyconnect profile(s) to S3: Make the files available for uploading to the cluster. This can be done by either serving them over HTTP/HTTPS or syncing them to an S3 bucket. This example shows the S3 bucket used to provision the cluster.
+
+   aws s3 cp . s3://$BUCKET --recursive --exclude "*" --include "anyconnect-*"

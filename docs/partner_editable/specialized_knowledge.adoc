@@ -3,4 +3,15 @@
 // Include links if helpful. 
 // You don't need to list AWS services or point to general info about AWS; the boilerplate already covers this.
 
-This Quick Start also assumes familiarity with <knowledge expectations specific to this Quick Start>.
+This Quick Start also assumes familiarity with basic concepts in networking, VPN, Kubernetes, containers, kubectl, yaml, Cisco ASA, Cisco Defense Orchestrator, and AWS components and services.
+
+Refer to the following links to learn more about the product:
+
+* http://cs.co/SFCN[Cisco Secure Firewall Cloud Native page^] 
+* http://cs.co/SFCN-at-a-glance[Cisco Secure Firewall Cloud Native At-a-Glance^]
+* http://cs.co/SFCN-blog[Scalable Security with Cisco Secure Firewall Cloud Native (blog)^] 
+* http://cs.co/SFCN-business-blog[A new way of Firewalling with Cisco Secure Firewall Cloud Native (blog)^]
+* https://aws.amazon.com/marketplace/pp/prodview-mpk3c2gkda3w4[Cisco Secure Firewall Cloud Native Marketplace Listing^]
+* http://cs.co/SFCN-data-sheet[Cisco Secure Firewall Cloud Native datasheet^]
+* http://cs.co/SFCN-YT[Cisco Secure Firewall Cloud Native playlist^]
+* http://cs.co/Cisco-AnyConnect[Cisco AnyConnect Secure Mobility Client^]
