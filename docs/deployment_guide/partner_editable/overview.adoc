@@ -2,7 +2,7 @@ This Quick Start reference deployment guide provides architectural consideration
 
 This guide helps IT architects, network administrators, and DevOps/SecOps professionals implement a scalable Cisco Remote Access Virtual Private Network (RA-VPN) on the AWS cloud. It also provides links for viewing and launching AWS CloudFormation templates that automate the deployment.
 
-This Quick Start deploys {partner-product-name} on the AWS Cloud. If you are unfamiliar with AWS Quick Starts we recommend that you read the https://aws-ia.github.io/content/qs_info.html[AWS Quick Start General Content Guide].
+This Quick Start deploys {partner-product-name} on the AWS Cloud. If you are unfamiliar with AWS Quick Starts, refer to https://aws-ia.github.io/content/qs_info.html[AWS Quick Start General Content Guide].
 
 // This deployment guide covers the steps necessary to deploy the Quick Start. For more advanced information on the product, troubleshooting, or additional functionality, see the https://{quickstart-github-org}.github.io/{quickstart-project-name}/operational/index.html[Operational guide].
 

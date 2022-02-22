@@ -8,7 +8,7 @@ AWS Cloud.
 
 [#architecture1]
 .Quick Start architecture for {partner-product-short-name} on AWS
-image::../images/architecture_diagram.png[Architecture]
+image::../docs/deployment_guide/images/cisco-secure-firewall-cloud-native-architecture-diagram.png[Architecture]
 
 As shown in <<architecture1>>, the Quick Start sets up the following:
 
@@ -32,12 +32,13 @@ best practices, to provide you with your own virtual network on AWS.*
 * In the public subnets:
 ** Managed network address translation (NAT) gateways to allow outbound
 internet access for resources in the private subnets.*
-** The SFCN Control Point (CP) is responsible for configuration, licensing, and route management.
-** The SFCN Enforcement Point (EP) is responsible for handling traffic.
+** SFCN Control Point for configuration, licensing, and route management.
+** SFCN Enforcement Point (EP) for handling traffic.
 ** The SFCN architecture uses two autoscale groups (one for the control point and other one for the enforcement point).
 ** One EFS per cluster for SFCN CP and EP (optional).
-** ElastiCache for Redis and SFCN are optional components for intelligent VPN load balancing.
+** (Optional) Amazon ElastiCache for a Redis database with VPN session information used by SFCN Redirector for smart load balancing and recovery.
 
+* Amazon Route 53 for VPN load balancing and Cloud Native Firewall (CNFW) service.
 * Cisco Secure Firewall Cloud Native deployed into an Amazon Elastic Kubernetes Service (Amazon EKS) cluster.
 * Amazon EKS for industry-standard Kubernetes orchestration of Cisco Secure Firewall Cloud Native containers.
 
