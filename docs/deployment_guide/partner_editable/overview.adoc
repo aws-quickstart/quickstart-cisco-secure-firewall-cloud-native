@@ -1,0 +1,38 @@
+This Quick Start reference deployment guide provides architectural considerations and configuration steps for deploying a Cisco Secure Firewall Cloud Native on the AWS Cloud. It uses Amazon Elastic Kubernetes Service (Amazon EKS) and AWS Route 53 to build a scalable edge-containerized firewall cluster that scales based on VPN session load. The guide addresses common scalability and resiliency requirements for secured access to applications hosted in AWS infrastructure. 
+
+This guide helps IT architects, network administrators, and DevOps/SecOps professionals implement a scalable Cisco Remote Access Virtual Private Network (RA-VPN) on the AWS cloud. It also provides links for viewing and launching AWS CloudFormation templates that automate the deployment.
+
+This Quick Start deploys {partner-product-name} on the AWS Cloud. If you are unfamiliar with AWS Quick Starts we recommend that you read the https://aws-ia.github.io/content/qs_info.html[AWS Quick Start General Content Guide].
+
+// This deployment guide covers the steps necessary to deploy the Quick Start. For more advanced information on the product, troubleshooting, or additional functionality, see the https://{quickstart-github-org}.github.io/{quickstart-project-name}/operational/index.html[Operational guide].
+
+// For information on using this Quick Start for migrations, see the https://{quickstart-github-org}.github.io/{quickstart-project-name}/migration/index.html[Migration guide].
+
+Cisco has built a scalable Remote Access VPN solution natively on Amazon EKS subscribed through AWS marketplace and deployed via an AWS Quickstart. It gives you the flexibility to provision, run, and scale containerized security services. Cisco Secure Firewall Cloud Native brings together the benefits of Kubernetes and Cisco’s industry-leading security technologies, providing a resilient architecture for infrastructure security at scale.
+
+** *Key Capabilities of Cisco Secure Firewall Cloud Native*
+
+* Modular and scalable architecture
+* Native Kubernetes deployment via CRD and Helm chart and management via Kubectl and Cisco Defense Orchestrator
+* Custom metrics and Horizonal Pod autoscaling support
+* Data externalization for stateless services via a high-performance Amazon ElastiCache for Redis™ database
+* Multi-AZ, multi-region, and multi-tenant support 
+
+** *Key components of Cisco Secure Firewall Cloud Native platform*
+
+* *Control Point (CP):* The Control Point is responsible for config validation, compilation and distribution, licensing, route management. CP pods accept configuration from REST APIs, Kubectl+YAML, or Cisco Defense Orchestrator.
+* *Enforcement Point (EP):* CNFW EP pods are responsible for L3/L4 and VPN traffic handling and VPN termination.
+* *Redirector:* Redirector pod is responsible for intelligent load balancing remote access VPN traffic. When the redirector receives a request, it contacts Redis DB and provides Fully Qualified Domain Name (FQDN) of the enforcement pods handling the least number of VPN sessions.
+* *ElastiCache for Redis DB:* The Redis database has information on VPN sessions. The redirector uses this information to enable smart load balancing and recovery.
+* *Cisco Defense Orchestrator:* Cisco Defense Orchestrator is cisco’s cloud-based firewall management platform for management and monitoring.
+* *Amazon EKS cluster:* Cisco Secure Firewall runs on Amazon EKS cluster and uses K8s constructs like Horizontal Pod Autoscaler, auto-healing, and custom metric operator, etc. 
+* *Amazon EFS:* CP and EP are deployed on Amazon EFS
+* *Amazon Lambda:* This architecture uses Amazon Lambda functions for orchestration and automation.
+
+Once Cisco Secure Fireweall Cloud is build using this quickstart, SFCN can be used for the following usecases: 
+
+* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-route53.html[Scalable Remote Access VPN with Route53 Integration^]
+* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/m_ra-vpn-with-session-reconnect.html[Scalable Remote Access VPN with Session Reconnect^]
+* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-advanced.html#Cisco_Concept.dita_c425d95d-3609-45c5-9f43-1cddc1c32db9[Enable Multi-tenancy^]
+* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-l2l.html[Backhaul Design for Site-to-Site VPN^]
+* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-inside-vpc.html[Backhaul Design for Inside VPC^]
