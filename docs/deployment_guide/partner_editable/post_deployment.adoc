@@ -8,22 +8,29 @@
 == Test the deployment
 // If steps are required to test the deployment, add them here. If not, remove the heading
 
-. Once Cisco Secure Firewall Cloud Native stack is deployed, run the following commands to check the SFCN cluster:
+. After the Quick Start is deployed, run the following commands to check the SFCN cluster.
 
     export NS=<namespace>
     aws eks --region <region> update-kubeconfig --name <sfcn-cluster-name>
++
+For example:
 
-  Example:
     export NS=sfcn-system
     aws eks --region us-east-1 update-kubeconfig --name answami-sfcn
 
-. Check pods using `kubectl get pods -n $NS`
+. Check pods. 
 
-. Check nodes using `kubectl get nodes -n $NS`
+    kubectl get pods -n $NS
 
-. Check CNFW configuration using `kubectl get asacommand -A --field-selector spec.command="show run"`
+. Check nodes.
 
-. You can capture different metrics for the SFCN based on service roles. See https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-metrics.html[Metrics Configuration^] in the Cisco Secure Firewall Cloud Native Getting Started Guide for more information.
+    kubectl get nodes -n $NS
+
+. Check CNFW configuration.
+
+    kubectl get asacommand -A --field-selector spec.command="show run"
+
+. You can capture different metrics for the SFCN based on service roles. For more information, refer to https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-metrics.html[Metrics Configuration^].
 
 == Configure CNFW firewalls
 // If post-deployment steps are required, add them here. If not, remove the heading

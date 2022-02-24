@@ -1,14 +1,10 @@
-This Quick Start reference deployment guide provides architectural considerations and configuration steps for deploying a Cisco Secure Firewall Cloud Native on the AWS Cloud. It uses Amazon Elastic Kubernetes Service (Amazon EKS) and AWS Route 53 to build a scalable edge-containerized firewall cluster that scales based on VPN session load. The guide addresses common scalability and resiliency requirements for secured access to applications hosted in AWS infrastructure. 
-
-This guide helps IT architects, network administrators, and DevOps/SecOps professionals implement a scalable Cisco Remote Access Virtual Private Network (RA-VPN) on the AWS cloud. It also provides links for viewing and launching AWS CloudFormation templates that automate the deployment.
-
-This Quick Start deploys {partner-product-name} on the AWS Cloud. If you are unfamiliar with AWS Quick Starts, refer to https://aws-ia.github.io/content/qs_info.html[AWS Quick Start General Content Guide].
+This Quick Start deploys {partner-product-name} (SFCN) on the AWS Cloud. 
 
 // This deployment guide covers the steps necessary to deploy the Quick Start. For more advanced information on the product, troubleshooting, or additional functionality, see the https://{quickstart-github-org}.github.io/{quickstart-project-name}/operational/index.html[Operational guide].
 
 // For information on using this Quick Start for migrations, see the https://{quickstart-github-org}.github.io/{quickstart-project-name}/migration/index.html[Migration guide].
 
-Once Cisco Secure Fireweall Cloud is build using this quickstart, SFCN can be used for the following usecases: 
+== Use cases 
 
 * https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-route53.html[Scalable Remote Access VPN with Route53 Integration^]
 * https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/m_ra-vpn-with-session-reconnect.html[Scalable Remote Access VPN with Session Reconnect^]
