@@ -13,11 +13,11 @@ Obtain a Cisco SFCN license from your Cisco accounts team and add it to your htt
 === Prepare for the deployment
 
 * Create At least one Amazon EC2 key pair: Ensure that at least one Amazon EC2 key pair exists in your AWS account in the Region where you plan to deploy the Secure Firewall Cloud Native RA-VPN solution. Make note of the key pair name. You need it to create a secret to allow the cluster to pull down files from your Amazon Simple Storage Service (Amazon S3) bucket. For more information, refer to https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-aws.html#Cisco_Task.dita_7f6b3cc2-4435-493c-8100-c5f31923612f[Create a Key Pair^].
-* Download AnyConnect Secure Mobility Client v4.x from the https://software.cisco.com/download/home/286281283/type/282364313/release/[Cisco Software Download portal^]. Version 4.8 or higher is recommended.
-*** anyconnect-linux64-4.9.05042-webdeploy-k9.pkg
-*** anyconnect-win-4.9.05042-webdeploy-k9.pkg
-*** anyconnect-macos-4.9.05042-webdeploy-k9.pkg
+* Download AnyConnect Secure Mobility Client v4.x for your operating system from the https://software.cisco.com/download/home/286281283/type/282364313/release/[Cisco Software Download portal^]. Version 4.8 or higher is recommended.
+*** `anyconnect-linux64-4.10.04071-webdeploy-k9.pkg`
+*** `anyconnect-win-4.10.04071-webdeploy-k9.pkg`
+*** `anyconnect-macos-4.10.04071-webdeploy-k9.pkg`
 * Create one or more AnyConnect client profiles.
-* Create a S3 bucket and upload your Cisco AnyConnect images and AnyConnect profiles to it. Ensure that the files are available for uploading to the cluster. This can be done by either serving them over HTTP/HTTPS or syncing them to an S3 bucket. The following example shows the S3 bucket used to provision the cluster.
+* Create a S3 bucket and upload your Cisco AnyConnect images and AnyConnect profiles to it. Ensure that the files are available for uploading to the cluster. This can be done by serving them over HTTP/HTTPS or syncing them to an S3 bucket. The following example shows the S3 bucket used to provision the cluster.
 
    aws s3 cp . s3://$BUCKET --recursive --exclude "*" --include "anyconnect-*"

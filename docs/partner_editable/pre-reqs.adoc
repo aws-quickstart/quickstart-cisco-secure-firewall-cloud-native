@@ -2,7 +2,7 @@
 
 === Prepare your AWS account
 
-If you prefer to use a custom IAM policy to deploy the CloudFormation stack instead of the AdminstratorAccess managed policy mentioned in the link:#_iam_permissions[IAM Permissions] section of this guide, see link:#_custom_iam_policy_for_cloudformation_users[Custom IAM policy for CloudFormation users].
+If you prefer to use a custom IAM policy to deploy the CloudFormation stack instead of the AdminstratorAccess managed policy, see link:#_custom_iam_policy_for_cloudformation_users[Custom IAM policy for CloudFormation users].
 
 === Prepare your {partner-company-name} account
 
