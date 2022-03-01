@@ -4,11 +4,11 @@
 
 === Prepare your AWS account
 
-To use a custom IAM policy to deploy the CloudFormation stack instead of the `AdminstratorAccess` managed policy, refer to link:#_custom_iam_policy_for_cloudformation_users[Custom IAM policy for CloudFormation users] later in this guide.
+To use a custom IAM policy to deploy the CloudFormation stack instead of the `AdminstratorAccess` managed policy, refer to https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-aws.html#Cisco_Concept.dita_df4f9142-f50e-4858-9224-d6e5c0c70163[AWS Identity and Access Management (IAM)^].
 
 === Prepare your {partner-company-name} account
 
-Obtain a Cisco SFCN license from your Cisco accounts team and add it to your https://www.cisco.com/c/en/us/buy/licensing.html[Cisco smart account^]. You can deploy this Quick Start without a Cisco SFNC license with a single enforcement point at 100 Kbps throughput. For more information, refer to https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-licensing.html[Licensing^].
+Obtain a Cisco Secure Firewall Cloud Native license from your Cisco accounts team and add it to your https://www.cisco.com/c/en/us/buy/licensing.html[Cisco smart account^]. You can deploy this Quick Start without a Cisco Secure Firewall Cloud Native license with a single enforcement point at 100 Kbps throughput. For more information, refer to https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-licensing.html[Licensing^].
 
 === Prepare for the deployment
 

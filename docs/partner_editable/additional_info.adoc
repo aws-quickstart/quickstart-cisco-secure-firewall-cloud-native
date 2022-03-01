@@ -133,7 +133,7 @@ You can review samples and example scripts available at the https://github.com/C
 
 === Custom IAM Policy for CloudFormation Users
 
-Perform steps 1 -3 if you prefer to use a custom IAM policy to deploy the CloudFormation stack instead of the AdminstratorAccess managed policy mentioned in the link:#_iam_permissions[IAM Permissions] section of this guide.
+Perform steps 1 -3 if you prefer to use a custom IAM policy to deploy the CloudFormation stack instead of the `AdminstratorAccess` managed policy.
 
 ** *Step 1 - Create IAM user*
 * Create the user in the AWS Management Console, the AWS CLI, Tools for Windows PowerShell, or by using an AWS API operation. If you create the user in the AWS Management Console, then most of the steps are handled automatically via a wizard, based on your choices. If you create the users programmatically, then you must perform each of those steps individually.
@@ -272,4 +272,4 @@ SFCNFullAccess IAM Policy
 * You can also create a new managed policy by choosing Create policy. If you do, return to this browser tab or window when the new policy is done. Choose Refresh; and then select the check box for the new policy to attach it to your user. For more information, see Creating IAM policies.
 * Choose Next: Review to see the list of policies that are to be attached to the user. Then choose Add.
 
-** *Step 4 - Create Cisco Secure Firewall Cluster Stack*; refer to link:#_deployment_options[Deployment options] for a desciption of the options available and link:#_launch_the_quick_start[Launch the Quick Start] for deployment steps.
+** *Step 4 - Create Cisco Secure Firewall Cluster Stack*; refer to link:#_deployment_options[Deployment options] for a description of the options available and link:#_launch_the_quick_start[Launch the Quick Start] for deployment steps.

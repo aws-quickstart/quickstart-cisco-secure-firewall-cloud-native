@@ -1,4 +1,6 @@
-This Quick Start deploys {partner-product-name} (SFCN) on the AWS Cloud. For more information about SFCN, refer to https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-intro.html[The Cisco Secure Firewall Cloud Native Getting Started Guide^].
+This Quick Start deploys {partner-product-name} (SFCN) on the AWS Cloud. 
+
+If you are unfamiliar with AWS Quick Starts we recommend that you read the http://general-content-file[AWS Quick Start General Content Guide^].
 
 // This deployment guide covers the steps necessary to deploy the Quick Start. For more advanced information on the product, troubleshooting, or additional functionality, see the https://{quickstart-github-org}.github.io/{quickstart-project-name}/operational/index.html[Operational guide].
 

@@ -8,7 +8,7 @@
 == Test the deployment
 // If steps are required to test the deployment, add them here. If not, remove the heading
 
-. After the Quick Start is deployed, run the following commands to check the SFCN cluster.
+. After the Quick Start is deployed, run the following commands to check the {partner-product-short-name} cluster.
 
     export NS=<namespace>
     aws eks --region <region> update-kubeconfig --name <sfcn-cluster-name>
@@ -35,7 +35,7 @@ For example:
 == Configure CNFW firewalls
 // If post-deployment steps are required, add them here. If not, remove the heading
 
-Once the Cisco Secure Firewall Cloud Native cluster, nodes, and pods are running, configure CNFW firewalls.
+Once the {partner-product-short-name} cluster, nodes, and pods are running, configure CNFW firewalls.
  
 . Clone the https://github.com/CiscoDevNet/sfcn.git[Cisco Secure Firewall Github Repository^]
 . Modify the YAML files in the `sfcn/samples/` repository folder to suit your configuration. 
@@ -49,242 +49,22 @@ Once the Cisco Secure Firewall Cloud Native cluster, nodes, and pods are running
 
 == Best practices for using {partner-product-short-name} on AWS
 // Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating data, backups, ensuring high performance, high availability, etc. Link to software documentation for detailed information.
+Refer to the https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-intro.html[Cisco Secure Firewall Cloud Native Getting Started Guide^].
 
-See the following guidelines and best practices for the Secure Firewall Cloud Native.
 
-=== Deployment Guidelines
+== Resources
 
-* Deploy Cisco Secure Firewall Cloud Native with a minimum of two enforcement points.
-* For resiliency, Cisco recommends using RAVPN with SFCN redirector and elasticache for Redis.
-* Cisco recommends using EFS storage. 
+For {partner-product-name} best practices, refer to the https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-intro.html[Cisco Secure Firewall Cloud Native Getting Started Guide^].
+ 
+=== Secure Firewall Cloud Native configuration options
 
-=== Service Roles
+* For namespace, service roles, networking, and access lists, refer to https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-basic.html[Basic Configuration^].
+* For multiple tenants, refer to https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-advanced.html[Advanced Configuration^].
 
-Service Roles are used to define and separate duties between enforcement points in the cluster. The mandatory `sfcn.cisco.com/service-role` label is used to match and apply configurations to their respective pods. When you have two service roles deployed (for example, `default` and `vpnredirector`) then configurations are only be applied to the enforcer pods with the same label.
-
-This allows you to apply elements such as ACLs and routes to your default enforcer while limiting the `vpnredirector` configuration to only to what is needed for its role in the cluster. The use of service roles in segmenting workloads in the Secure Firewall Cloud Native is further explained in the https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg.html[Secure Firewall Getting Started Guide^].
-
-=== Full and Delta Deployments
-
-When modifying ASAConfigurations, the control plane will make a best-effort attempt to conduct a delta deployment. This means that only the CLI lines that were modified within the spec are operated upon in order to minimize disruption.
-
-If a delta deployment fails, by default a full deployment will be attempted afterward. This involves the full desired set of ASAConfigurations being reapplied onto the enforcement points.
-
-NOTE: Full deployments may lead to traffic disruption and/or dropped VPN sessions. When testing or experimenting with configuration changes, we recommend that you apply them outside of peak traffic hours.
-
-=== Scaling
-
-Secure Firewall Cloud Native utilizes the https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/[Horizontal Pod Autoscaler (HPA)^] and https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler[Cluster Autoscaler^] in concert to bring CNFW instances up and down based on the needs of your network. After you deploy the SFCN cluster, refer to https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-advanced.html#Cisco_Concept.dita_ebd1a5e4-186c-43ec-a71e-7570f7579235[Autoscale^] to modify or configure Horizontal Pod Scaling.
-
-The Quick Start provides separate fields for these options. It also lets you configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and {partner-product-short-name} settings, as discussed later in this guide.
-
-=== Explore Other Configuration Options
-
-In addition to scaling, refer to the following for other configuration options:
-
-* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-basic.html[Basic Configuration^] includes information about namespace, service roles, networking, and access lists.
-* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-advanced.html[Advanced Configuration^] includes information about multiple tenants.
-* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-licensing.html[Licensing^] provides guidelines about how to license the Secure Firewall Cloud Native. 
-
-The Secure Firewall Cloud Native Getting Started Guide is updated often with expanded configuration topics, including SAML and Redis datastore.
-
-=== Use Case Examples and Scenarios
-
-Once the Cisco Secure Fireweall Cloud Native is built using this quickstart, SFCN can be used for the following use cases: 
+=== Secure Firewall Cloud Native use cases
 
 * https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-route53.html[Scalable Remote Access VPN with Route53 Integration^]
 * https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/m_ra-vpn-with-session-reconnect.html[Scalable Remote Access VPN with Session Reconnect^]
 * https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-advanced.html#Cisco_Concept.dita_c425d95d-3609-45c5-9f43-1cddc1c32db9[Enable Multi-tenancy^]
 * https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-l2l.html[Backhaul Design for Site-to-Site VPN^]
 * https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-inside-vpc.html[Backhaul Design for Inside VPC^]
-
-== Other useful information
-//Provide any other information of interest to users, especially focusing on areas where AWS or cloud usage differs from on-premises usage.
-
-=== Cisco CLI Usage Guidelines
-
-Cisco CNGW (containerized firewall) uses Cisco ASA configuration. You can use ASA CLI in the YAML file.
-
-NOTE: The use of shorthand ASA CLI syntax is not supported in this release. In other words, using int instead of interface or net instead of network will cause delta deployments to fail. We recommend you use full syntax when working on production clusters.
-
-*Example:*
-
-----
-apiVersion: cnfw.cisco.com/v1
-kind: ASAConfiguration
-metadata:
-  name: interface-example
-  labels:
-    sfcn.cisco.com/service-role: default
-spec:
-  order: 1
-  description: "DHCP interfaces taking the AWS-assigned IPs"
-  cliLines: |
-
-    interface Management0/0
-    nameif management
-    ip address dhcp
-    no shutdown
-
-    interface TenGigabitEthernet0/0
-    nameif outside
-    ip address dhcp
-    security-level 100
-    no shutdown
-
-    interface TenGigabitEthernet0/1
-    nameif inside
-    ip address dhcp
-    no shutdown
-
-kubectl apply -f interfaces.yaml -n $NS
-----
-
-Before you implement a Kubernetes deployment strategy, you’ll need to understand the pieces of a Kubernetes deployment and how they function together.
-You can review samples and example scripts available at the https://github.com/CiscoDevNet/sfcn[Cisco Secure Firewall Cloud Native GitHub repository^].
-
-=== Custom IAM Policy for CloudFormation Users
-
-Follow the instructions in this section to use a custom IAM policy to deploy the CloudFormation stack instead of the `AdminstratorAccess` managed policy.
-
-==== *Step 1 - Create IAM user*
-. Create the IAM user in the AWS Management Console, the AWS CLI, Tools for Windows PowerShell, or by using an AWS API operation. If you create the user in the AWS Management Console, then most of the steps are handled automatically via a wizard, based on your choices. If you create the users programmatically, then you must perform each of those steps individually.
-. Create credentials for the user, depending on the type of access the user requires.
-** **Programmatic access**: The IAM user might need to make API calls, use the AWS CLI, or use the Tools for Windows PowerShell. In that case, create an access key (access key ID and a secret access key) for that user. 
-** **AWS Management Console access**: If the user needs to access the AWS Management Console, create a password for the user. Disabling console access for a user prevents them from signing in the to the AWS Management Console using their user name and password. It does not change their permissions or prevent them from accessing the console using an assumed role.
-
-==== *Step 2 - Create IAM Access Policy* 
-Users who require programmatic access enabled to perform all Cisco Secure Firewall Cloud Native deployment activities must create and use the IAM policy `SFCNFullAccess`.
-
-. Sign in to the AWS Management Console and open the IAM console.
-. In the navigation pane on the left, choose *Policies*.
-. Choose *Create Policy*.
-. Choose the *JSON* tab.
-. Enter or paste the following JSON policy document. 
-[source,SFCNFullAccess IAM Policy,options="nowrap"]
-SFCNFullAccess IAM Policy 
-  { 
-      "Version": "2012-10-17", 
-      "Statement": [ 
-          { 
-              "Action": [ 
-                  "ec2:*", 
-                  "elasticfilesystem:*", 
-                  "elasticache:*", 
-                  "kms:DescribeKey", 
-                  "kms:ListAliases", 
-                  "s3:*", 
-                  "iam:*", 
-                  "elasticloadbalancing:*", 
-                  "cloudwatch:*", 
-                  "autoscaling:*", 
-                  "eks:*", 
-                  "ec2-instance-connect:SendSSHPublicKey", 
-                  "lambda:*", 
-                  "states:DescribeStateMachine", 
-                  "states:ListStateMachines", 
-                  "tag:GetResources", 
-                  "xray:GetTraceSummaries", 
-                  "xray:BatchGetTraces", 
-                  "ds:CreateComputer", 
-                  "ds:DescribeDirectories", 
-                  "logs:*", 
-                  "ssm:*", 
-                  "ec2messages:*", 
-                  "cloudformation:*", 
-                  "ssmmessages:CreateControlChannel", 
-                  "ssmmessages:CreateDataChannel", 
-                  "ssmmessages:OpenControlChannel", 
-                  "ssmmessages:OpenDataChannel" 
-              ], 
-              "Effect": "Allow", 
-              "Resource": "*" 
-          }, 
-          { 
-              "Action": "iam:CreateServiceLinkedRole", 
-              "Effect": "Allow", 
-              "Resource": "*", 
-              "Condition": { 
-                  "StringLike": { 
-                      "iam:AWSServiceName": [ 
-                          "elasticfilesystem.amazonaws.com" 
-                      ] 
-                  } 
-              } 
-          }, 
-          { 
-              "Action": "iam:CreateServiceLinkedRole", 
-              "Effect": "Allow", 
-              "Resource": "arn:aws:iam::*:role/aws-service-role/elasticache.amazonaws.com/AWSServiceRoleForElastiCache", 
-              "Condition": { 
-                  "StringLike": { 
-                      "iam:AWSServiceName": "elasticache.amazonaws.com" 
-                  } 
-              } 
-          }, 
-          { 
-              "Effect": "Allow", 
-              "Action": "iam:CreateServiceLinkedRole", 
-              "Resource": "*", 
-              "Condition": { 
-                  "StringEquals": { 
-                      "iam:AWSServiceName": [ 
-                          "autoscaling.amazonaws.com", 
-                          "ec2scheduled.amazonaws.com", 
-                          "elasticloadbalancing.amazonaws.com", 
-                          "spot.amazonaws.com", 
-                          "spotfleet.amazonaws.com", 
-                          "transitgateway.amazonaws.com" 
-                      ] 
-                  } 
-              } 
-          }, 
-          { 
-              "Effect": "Allow", 
-              "Action": "iam:PassRole", 
-              "Resource": "*", 
-              "Condition": { 
-                  "StringEquals": { 
-                      "iam:PassedToService": "lambda.amazonaws.com" 
-                  } 
-              } 
-          }, 
-          { 
-              "Effect": "Allow", 
-              "Action": "iam:CreateServiceLinkedRole", 
-              "Resource": "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*", 
-              "Condition": { 
-                  "StringLike": { 
-                      "iam:AWSServiceName": "ssm.amazonaws.com" 
-                  } 
-              } 
-          }, 
-          { 
-              "Effect": "Allow", 
-              "Action": [ 
-                  "iam:DeleteServiceLinkedRole", 
-                  "iam:GetServiceLinkedRoleDeletionStatus" 
-              ], +
-              "Resource": "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*" 
-          } 
-      ] 
-  } 
-
-[step=6]
-. Resolve any security warnings, errors, or general warnings generated during policy validation, and then choose Review policy.
-. When you are finished, choose Next: Tags.
-. On the Review policy page:
-*** Name ― Type the name for this policy: SFCNFullAccess.
-*** Description ― Optionally, enter a description for the policy that you are creating.
-* Review the policy Summary to see the permissions that are granted by your policy. Then choose Create policy to save your work.
-
-** *Step 3 - Attach IAM access policy to the IAM user* IAM users must explicitly be given permissions to administer credentials or IAM resources.
-* Sign in to the AWS Management Console and open the IAM console.
-* Choose Users in the navigation pane, choose the name of the user whose permissions you want to modify, and then choose the Permissions tab.
-* Choose Add permissions, and then choose Attach existing policies directly to user.
-* Select the SFCNFullAccess managed policy that you created for the SFCN administrator user:
-*** Use the Search feature to filter the policies by name.
-* You can also create a new managed policy by choosing Create policy. If you do, return to this browser tab or window when the new policy is done. Choose Refresh; and then select the check box for the new policy to attach it to your user. For more information, see Creating IAM policies.
-* Choose Next: Review to see the list of policies that are to be attached to the user. Then choose Add.
-
-** *Step 4 - Create Cisco Secure Firewall Cluster Stack*; refer to link:#_deployment_options[Deployment options] for a desciption of the options available and link:#_launch_the_quick_start[Launch the Quick Start] for deployment steps.
