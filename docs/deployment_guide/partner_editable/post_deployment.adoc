@@ -52,6 +52,3 @@ Once the {partner-product-short-name} cluster, nodes, and pods are running, conf
 Refer to the https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-intro.html[Cisco Secure Firewall Cloud Native Getting Started Guide^].
 
 
-== Resources
-
-For {partner-product-name} best practices, configuation options, and use cases, refer to the https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-intro.html[Cisco Secure Firewall Cloud Native Getting Started Guide^].

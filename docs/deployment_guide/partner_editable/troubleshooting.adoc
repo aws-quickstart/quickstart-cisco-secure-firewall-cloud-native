@@ -29,5 +29,7 @@ Refer to the following resources for help with these subjects:
 
 After you successfully deploy a Quick Start, confirm that your resources and services are updated and configured — including any required patches — to meet your security and other needs. For more information, see the https://aws.amazon.com/compliance/shared-responsibility-model/[Shared Responsibility Model^].
 
+== Resources
 
+For {partner-product-name} best practices, configuration options, and use cases, refer to the https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-intro.html[Cisco Secure Firewall Cloud Native Getting Started Guide^].
 
