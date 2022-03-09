@@ -1,0 +1,12 @@
+:quickstart-project-name: quickstart-cisco-secure-firewall-cloud-native
+:quickstart-github-org: aws-quickstart
+:partner-product-name: Cisco Secure Firewall Cloud Native
+:partner-product-short-name: SFCN
+:partner-company-name: Cisco Systems Inc.
+:doc-month: March
+:doc-year: 2022
+//:partner-contributors: John Smith, {partner-company-name}
+//:other-contributors: Akua Mansa, Trek10
+//:aws-contributors: Janine Singh, AWS IoT Partner team
+//:aws-ia-contributors: Toni Jones, AWS Integration & Automation team
+// :private_repo:

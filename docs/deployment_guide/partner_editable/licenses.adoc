@@ -1,4 +1,4 @@
-// Include details about any licenses and how to sign up. Provide links as appropriate. If no licenses are required, clarify that. The following paragraphs provide examples of details you can provide. Remove italics, and rephrase as appropriate.
+// Include details about any licenses and how to sign up. Provide links as appropriate.
 
 The Secure Firewall Cloud Native uses https://software.cisco.com/#module/SmartLicensing[Cisco Smart Software Licensing^], which lets you purchase and manage a pool of licenses centrally. When you register the deployment, the License Authority issues an ID certificate for communication between the cluster and the License Authority. It also assigns the cluster to the appropriate virtual account.
 
@@ -10,3 +10,5 @@ For more details, go to the https://www.cisco.com/c/en/us/td/docs/security/secur
 
 // Or, if the deployment uses an AMI, update this paragraph. If it doesn’t, remove the paragraph.
 The Quick Start also requires a subscription to the containers for {partner-product-short-name}, which is available from https://aws.amazon.com/marketplace/pp/prodview-mpk3c2gkda3w4. Additional pricing, terms, and conditions may apply. 
+
+There is no cost to use this Quick Start, but you will be billed for any AWS services or resources that this Quick Start deploys. For more information, refer to the https://fwd.aws/rA69w?[AWS Quick Start General Information Guide^].

@@ -1,0 +1,14 @@
+:quickstart-project-name: quickstart-cisco-secure-firewall-cloud-native
+:quickstart-github-org: aws-quickstart
+:partner-product-name: Cisco Secure Firewall Cloud Native
+:partner-product-short-name: SFCN
+:partner-company-name: Cisco Systems Inc.
+:doc-month: March
+:doc-year: 2022
+:partner-contributors: Anubhav Swami, David Sounthiraraj, and Ray Gordon, {partner-company-name}
+// :other-contributors: Akua Mansa, Trek10
+:aws-contributors: Muffadal Quettawala, AWS Global ISV
+:aws-ia-contributors: Shivansh Singh, AWS Integration & Automation team
+:deployment_time: 50 minutes
+:default_deployment_region: us-east-1
+// :private_repo:

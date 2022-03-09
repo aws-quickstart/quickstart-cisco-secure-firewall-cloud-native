@@ -1,0 +1,41 @@
+// Include any postdeployment steps here, such as steps necessary to test that the deployment was successful. If there are no postdeployment steps, leave this file empty.
+
+== Postdeployment steps
+
+=== Test the deployment
+// If steps are required to test the deployment, add them here. If not, remove the heading
+
+. Once Cisco Secure Firewall Cloud Native stack is deployed, run the following commands to check the SFCN cluster:
+
+    export NS=<namespace>
+    aws eks --region <region> update-kubeconfig --name <sfcn-cluster-name>
+
+  Example:
+    export NS=sfcn-system
+    aws eks --region us-east-1 update-kubeconfig --name answami-sfcn
+
+. Check pods using `kubectl get pods -n $NS`
+
+. Check nodes using `kubectl get nodes -n $NS`
+
+. Check CNFW configuration using `kubectl get asacommand -A --field-selector spec.command="show run"`
+
+. You can capture different metrics for the SFCN based on service roles. See https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-metrics.html[Metrics Configuration^] in the Cisco Secure Firewall Cloud Native Getting Started Guide for more information.
+
+=== Configure CFNW firewalls
+
+Once the Cisco Secure Firewall Cloud Native cluster is up i.e., nodes and pods are up, access the GitHub samples to configure CNFW firewalls:
+ 
+. Navigate to the Cisco Secure Firewall Github Repository: https://github.com/CiscoDevNet/sfcn
+. Clone this https://github.com/CiscoDevNet/sfcn.git
+. Go to sfcn/samples/
+. Check the basic folder for interface, network, access-list, and routes sample YAML files 
+. Go to sfcn/samples/ra-vpn/redirector-lb/ for RAVPN sample YAML files 
+. Go to sfcn/samples/ra-vpn/s2s-backhaul/ for DC backhaul sample YAML files 
+. Modify YAML files to suit your configuration and apply using kubectl apply -f <filename>.yaml
+
+Vist https://www.cisco.com/c/en/us/products/security/secure-firewall-cloud-native/index.html[Cisco Secure Firewall Cloud Native^] for the most current information and resources about the product.
+
+== Additional info
+
+For additional operational guidance, see the https://aws-quickstart.github.io/quickstart-cisco-secure-firewall-cloud-native/operational/index.html[Operational Guide].
