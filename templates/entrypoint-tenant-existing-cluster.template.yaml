@@ -1,0 +1,274 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Deploys a Tenant of Cisco Secure Firewall Cloud Native into an existing EKS cluster (qs-1s3afab5b).
+
+Metadata:
+  QuickStartDocumentation:
+    EntrypointName: "Add tenant to an existing installation"
+    Order: 3
+  cfn-lint:
+    config:
+      ignore_checks: [ W9006 ]
+      ignore_reasons:
+        W9006: "Suppressed 'false-alarm' spelling errors for technical terms."
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Required Configuration
+        Parameters:
+          - ClusterID
+          - DataplaneNamespace
+      - Label:
+          default: Basic Configuration - Global
+        Parameters:
+          - StorageType
+      - Label:
+          default: Basic Configuration - Data Plane
+        Parameters:
+          - EnforcerCacheType
+          - EnforcerCacheStorageKey
+      - Label:
+          default: Basic Configuration - Firewall
+        Parameters:
+          - FirewallVersion
+          - EnforcerServiceRoles
+          - EnforcerAutoscaling
+          - SmartLicenseToken
+          - MaxLicenseCount
+      - Label:
+          default: Advanced Configuration - Data Plane
+        Parameters:
+          - EnforcerConfigurationTier
+          - EnforcerCacheNodeType
+          - EnforcerCacheTransitEncryption
+          - EnforcerCacheAuthToken
+      - Label:
+          default: (Read-only, do not change) AWS Quick Start configuration
+        Parameters:
+          - QSS3BucketName
+          - QSS3KeyPrefix
+          - QSS3BucketRegion
+    ParameterLabels:
+      ClusterID:
+        default: EKS cluster ID
+      FirewallVersion:
+        default: Product version
+      DataplaneNamespace:
+        default: Namespace
+      SmartLicenseToken:
+        default: Smart License token
+      MaxLicenseCount:
+        default: Maximum licenses count
+      StorageType:
+        default: Storage type
+      EnforcerConfigurationTier:
+        default: Enforcer instance tier
+      EnforcerServiceRoles:
+        default: Enforcer service roles
+      EnforcerCacheAuthToken:
+        default: Redis authentication token
+      EnforcerCacheStorageKey:
+        default: CNFW key to encrypt sensitive data
+      EnforcerCacheType:
+        default: Cache type
+      EnforcerCacheNodeType:
+        default: Cache node type
+      EnforcerCacheTransitEncryption:
+        default: In-Transit encryption
+      EnforcerAutoscaling:
+        default: Enforcer autoscaling
+      QSS3BucketName:
+        default: Quick Start S3 Bucket Name
+      QSS3KeyPrefix:
+        default: Quick Start S3 Key Prefix
+      QSS3BucketRegion:
+        default: Quick Start S3 bucket Region
+
+
+Parameters:
+  QSS3BucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: aws-quickstart
+    Description: S3 bucket name for the Quick Start assets. This string can include
+      numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start
+      or end with a hyphen (-).
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: ^[0-9a-zA-Z-/.]*$
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), periods (.) and forward slashes (/).
+    Default: quickstart-cisco-secure-firewall-cloud-native/
+    Description: The S3 key prefix for the Quick Start assets. Quick Start key prefix
+      can include numbers, lowercase letters, uppercase letters, hyphens (-), periods (.) and
+      forward slashes (/).
+    Type: String
+  QSS3BucketRegion:
+    Default: 'us-east-1'
+    Description: AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. If you use your own bucket, you must specify this value.
+    Type: String
+
+  ClusterID:
+    AllowedPattern: ".+"
+    Type: String
+    Description: EKS cluster name (a root stack name) with SFCN product deployed.
+
+  FirewallVersion:
+    Type: String
+    Default: ""
+    Description: |
+      (Optional) Helm chart version of the product. If not provided – a version of a root stack is used automatically.
+      A version different from a root stack can be provided during an upgrade to another release.
+
+  DataplaneNamespace:
+    Type: String
+    AllowedPattern: ".+"
+    Description: A Kubernetes namespace name for a tenant. Must be unique across tenants.
+
+  SmartLicenseToken:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: A token from Smart Account that has Secure Firewall (SFW) licenses.
+
+  MaxLicenseCount:
+    Type: Number
+    Default: 4
+    MinValue: 1
+    Description: A maximum number of licenses allowed to be used by the default Enforcer when it is scaled up.
+
+  StorageType:
+    Type: String
+    AllowedValues: [ local, efs ]
+    Default: local
+    Description: The type of a storage used to keep logs and deployments files. EFS can be used only if a parent stack has EFS option selected.
+
+  EnforcerConfigurationTier:
+    Description: Instance tier to be used by enforcer workers.
+    Default: "vCPU4-c5.2xlarge"
+    Type: String
+    AllowedValues: [ "vCPU4-m5.xlarge", "vCPU4-c5.2xlarge" ]
+    ConstraintDescription: must specify vCPU4-m5.xlarge or vCPU4-c5.2xlarge
+
+
+  EnforcerServiceRoles:
+    Type: String
+    Default: default
+    AllowedPattern: "[a-zA-Z0-9-]{3,15}(,[a-zA-Z0-9-]{3,15})*"
+    AllowedValues: [ "default", "default,vpnredirector" ]
+    ConstraintDescription: |
+      Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
+      and upto 15 characters long.
+    Description: |
+      The service role of the data plane node. Leave the setting as "default" if you deployed the SFCN with the default setting of 1 data plane node. Each additional service role requires a corresponding data plane node.
+
+  EnforcerCacheAuthToken:
+    Type: String
+    NoEcho: true
+    MaxLength: 128
+    AllowedPattern: "([a-zA-Z0-9!&#$^><-]{16,128})?"
+    Default: ""
+    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters.
+    Description: |
+      Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
+      Takes effect only when in-transit encryption is enabled.
+
+  EnforcerCacheStorageKey:
+    Type: String
+    NoEcho: true
+    MaxLength: 64
+    Default: ""
+    AllowedPattern: "^([A-F0-9]{64})?$"
+    ConstraintDescription: Must be a string of length 64 consisting of uppercase hexadecimal characters (A-F,0-9).
+    Description: |
+      User-provided AES-256 key that is 64 hexadecimal characters (A-F,0-9) used to encrypt sensitive cache data before it leaves CNFW.
+      This can be generated with the command "openssl enc -aes-256-cbc -k password -P -md sha256" or any other AES key generation methods.
+      Required when 'elasticache' cache type is specified.
+
+  EnforcerCacheType:
+    Type: String
+    Default: "none"
+    AllowedValues:
+      - none
+      - elasticache
+    Description: Type of External Cache to use for CNFW.
+
+  EnforcerCacheNodeType:
+    Type: String
+    Default: "cache.m5.large"
+    AllowedValues: [ cache.m5.xlarge, cache.m5.large ]
+    Description: EC2 instance type to use as Cache node, check region availability before selection.
+
+  EnforcerCacheTransitEncryption:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: Cannot be changed after creation, update requires replacement.
+
+  EnforcerAutoscaling:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Disabled
+    Description: Enable the default Enforcer autoscaling.
+
+Rules:
+  EnforcerElasticacheRule:
+    RuleCondition: !Equals [ !Ref EnforcerCacheType, elasticache ]
+    Assertions:
+      - Assert: !Not [ !Equals [ !Ref EnforcerCacheStorageKey, "" ] ]
+        AssertDescription: Cache storage key must not be empty when cache type is set to "elasticache".
+
+Conditions:
+  UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
+  EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
+  FirewallVersionProvided: !Not [ !Equals [ !Ref FirewallVersion, '' ] ]
+
+Resources:
+  EnforcerElasticache:
+    Type: AWS::CloudFormation::Stack
+    Condition: EnforcerCacheTypeIsElastiCache
+    Properties:
+      TemplateURL:
+        !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/sfcn-elasticache.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+      Parameters:
+        Name: !Ref AWS::StackName
+        VPCID: { Fn::ImportValue: !Sub "${ClusterID}-VPCID" }
+        PublicSubnet1ID: { Fn::ImportValue: !Sub "${ClusterID}-PublicSubnet1ID" }
+        PublicSubnet2ID: { Fn::ImportValue: !Sub "${ClusterID}-PublicSubnet2ID" }
+        WorkersSecurityGroup0ID: { Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup0ID" }
+        WorkersSecurityGroup1ID: { Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup1ID" }
+        WorkersSecurityGroup2ID: { Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup2ID" }
+        WorkersSecurityGroup3ID: { Fn::ImportValue: !Sub "${ClusterID}-WorkersSecurityGroup3ID" }
+        EnforcerCacheNodeType: !Ref EnforcerCacheNodeType
+        EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
+        EnforcerCacheTransitEncryption: !Ref EnforcerCacheTransitEncryption
+
+  SecureFirewall:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/sfcn-helm.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+      Parameters:
+        ClusterID: !Ref ClusterID
+        Version: !If [ FirewallVersionProvided, !Ref FirewallVersion, { Fn::ImportValue: !Sub '${ClusterID}-FirewallVersion' } ]
+        Controlplane: Disabled
+        Name: !Sub "sfcn-${DataplaneNamespace}"
+        SystemNamespace: { Fn::ImportValue: !Sub '${ClusterID}-SystemNamespace' }
+        DataplaneNamespace: !Ref DataplaneNamespace
+        SmartLicenseToken: !Ref SmartLicenseToken
+        MaxLicenseCount: !Ref MaxLicenseCount
+        StorageType: !Ref StorageType
+        EnforcerServiceRoles: !Ref EnforcerServiceRoles
+        EnforcerCacheHost: !If [ EnforcerCacheTypeIsElastiCache, !GetAtt EnforcerElasticache.Outputs.PrimaryEndpoint, "" ]
+        EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
+        EnforcerCacheStorageKey: !Ref EnforcerCacheStorageKey
+        EnforcerAutoscaling: !Ref EnforcerAutoscaling
+        EnforcerConfigurationTier: !Ref EnforcerConfigurationTier

@@ -1,0 +1,581 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Deploys Cisco Secure Firewall Cloud Native into a new EKS cluster of an existing VPC (qs-1s3afab4m).
+
+Metadata:
+  QuickStartDocumentation:
+    EntrypointName: "Install in an existing VPC"
+    Order: 2
+  cfn-lint:
+    config:
+      ignore_checks: [ W9006 ]
+      ignore_reasons:
+        W9006: "Suppressed 'false-alarm' spelling errors for technical terms."
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Required Configuration
+        Parameters:
+          - KeyPairName
+      - Label:
+          default: Required Configuration - Network
+        Parameters:
+          - VPCID
+          - PublicSubnet1ID
+          - PrivateSubnet1ID
+          - PublicSubnet2ID
+          - PrivateSubnet2ID
+          - PublicSubnetRouteTableID
+          - CNFWOutsideSubnet1CIDR
+          - CNFWInsideSubnet1CIDR
+          - CNFWOutsideSubnet2CIDR
+          - CNFWInsideSubnet2CIDR
+      - Label:
+          default: Basic Configuration - Global
+        Parameters:
+          - StorageType
+          - LoadBalancerController
+      - Label:
+          default: Basic Configuration - Control Plane
+        Parameters:
+          - ControlNodeGroupDesiredSize
+          - ControlNodeGroupMaxSize
+      - Label:
+          default: Basic Configuration - Data Plane
+        Parameters:
+          - EnforcerNodeGroupDesiredSize
+          - EnforcerNodeGroupMaxSize
+          - EIPAttachmentMode
+          - EnforcerCacheType
+          - EnforcerCacheStorageKey
+      - Label:
+          default: Basic Configuration - Firewall
+        Parameters:
+          - SecureFirewallDataplane
+          - EnforcerServiceRoles
+          - EnforcerAutoscaling
+          - SmartLicenseToken
+          - MaxLicenseCount
+      - Label:
+          default: Advanced Configuration - Cluster
+        Parameters:
+          - KubernetesVersion
+          - AdditionalEKSAdminUserArn
+          - AdditionalEKSAdminRoleArn
+          - EKSClusterLoggingTypes
+      - Label:
+          default: Advanced Configuration - Control Plane
+        Parameters:
+          - ControllerConfigurationTier
+      - Label:
+          default: Advanced Configuration - Data Plane
+        Parameters:
+          - EnforcerConfigurationTier
+          - EnforcerCacheNodeType
+          - EnforcerCacheAuthToken
+          - EnforcerCacheTransitEncryption
+      - Label:
+          default: Advanced Configuration - Firewall
+        Parameters:
+          - FirewallVersion
+          - SystemNamespace
+      - Label:
+          default: (Read-only, do not change) AWS Quick Start configuration
+        Parameters:
+          - QSS3BucketName
+          - QSS3KeyPrefix
+          - QSS3BucketRegion
+          - PerAccountSharedResources
+          - PerRegionSharedResources
+    ParameterLabels:
+      KubernetesVersion:
+        default: Kubernetes version
+      KeyPairName:
+        default: SSH key name
+      AdditionalEKSAdminUserArn:
+        default: Additional EKS admin ARN (IAM user)
+      AdditionalEKSAdminRoleArn:
+        default: Additional EKS admin ARN (IAM role)
+      EKSClusterLoggingTypes:
+        default: Cluster logging types
+      ControllerConfigurationTier:
+        default: Controller instance tier
+      ControlNodeGroupDesiredSize:
+        default: Desired nodes
+      ControlNodeGroupMaxSize:
+        default: Maximum nodes
+      StorageType:
+        default: Storage type
+      LoadBalancerController:
+          default: Load Balancer Controller toggle
+      EnforcerConfigurationTier:
+        default: Enforcer instance tier
+      EnforcerNodeGroupDesiredSize:
+        default: Desired nodes
+      EnforcerNodeGroupMaxSize:
+        default: Maximum nodes
+      EIPAttachmentMode:
+        default: Elastic IP attachment mode
+      VPCID:
+        default: VPC ID
+      PublicSubnet1ID:
+        default: Public subnet 1 ID
+      PublicSubnet2ID:
+        default: Public subnet 2 ID
+      PrivateSubnet1ID:
+        default: Private subnet 1 ID
+      PrivateSubnet2ID:
+        default: Private subnet 2 ID
+      PublicSubnetRouteTableID:
+        default: Public subnets route table ID
+      CNFWOutsideSubnet1CIDR:
+        default: CNFW outside subnet 1 CIDR
+      CNFWInsideSubnet1CIDR:
+        default: CNFW inside subnet 1 CIDR
+      CNFWOutsideSubnet2CIDR:
+        default: CNFW outside subnet 2 CIDR
+      CNFWInsideSubnet2CIDR:
+        default: CNFW inside subnet 2 CIDR
+      EnforcerCacheType:
+        default: Cache type
+      EnforcerCacheNodeType:
+        default: Cache node type
+      EnforcerCacheAuthToken:
+        default: Redis authentication token
+      EnforcerCacheStorageKey:
+        default: CNFW key to encrypt sensitive data
+      EnforcerCacheTransitEncryption:
+        default: In-Transit encryption
+      QSS3BucketRegion:
+        default: Quick Start S3 bucket Region
+      QSS3BucketName:
+        default: Quick Start S3 bucket name
+      QSS3KeyPrefix:
+        default: Quick Start S3 key prefix
+      SmartLicenseToken:
+        default: Smart License token
+      MaxLicenseCount:
+        default: Maximum licenses count
+      SecureFirewallDataplane:
+        default: Enforcer installation
+      FirewallVersion:
+        default: Product version
+      SystemNamespace:
+        default: System namespace
+      EnforcerServiceRoles:
+        default: Enforcer service roles
+      EnforcerAutoscaling:
+        default: Enforcer autoscaling
+      PerAccountSharedResources:
+        default: Per-account shared resources
+      PerRegionSharedResources:
+        default: Per-Region shared resources
+
+Parameters:
+  QSS3BucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: aws-quickstart
+    Description: S3 bucket name for the Quick Start assets. This string can include
+      numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start
+      or end with a hyphen (-).
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: ^[0-9a-zA-Z-/.]*$
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), periods (.) and forward slashes (/).
+    Default: quickstart-cisco-secure-firewall-cloud-native/
+    Description: The S3 key prefix for the Quick Start assets. Quick Start key prefix
+      can include numbers, lowercase letters, uppercase letters, hyphens (-), periods (.) and
+      forward slashes (/).
+    Type: String
+  QSS3BucketRegion:
+    Default: 'us-east-1'
+    Description: AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. If you use your own bucket, you must specify this value.
+    Type: String
+
+  VPCID:
+    Type: "AWS::EC2::VPC::Id"
+    Description: ID of your existing VPC (e.g., vpc-0343606e).
+  PublicSubnet1ID:
+    Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the public DMZ subnet 1 (CNFW default 1), located in Availability Zone 1.
+  PrivateSubnet1ID:
+    Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the private subnet 1, located in Availability Zone 1. Must have "kubernetes.io/role/internal-elb" tag attached.
+  PublicSubnet2ID:
+    Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the public DMZ subnet 2 (CNFW default 2), located in Availability Zone 2.
+  PrivateSubnet2ID:
+    Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the private subnet 2, located in Availability Zone 2. Must have "kubernetes.io/role/internal-elb" tag attached.
+  PublicSubnetRouteTableID:
+    Description: ID of VPC public subnet route table (e.g., rtb-0b9ce78da592f11e0).
+    Type: String
+  CNFWOutsideSubnet1CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    Description: CIDR block for the CNFW outside subnet 1, located in Availability Zone 1.
+    Type: String
+  CNFWInsideSubnet1CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    Description: CIDR block for the CNFW inside subnet 1, located in Availability Zone 1.
+    Type: String
+  CNFWOutsideSubnet2CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    Description: CIDR block for the CNFW outside subnet 2, located in Availability Zone 2.
+    Type: String
+  CNFWInsideSubnet2CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16–28
+    Description: CIDR block for the CNFW inside subnet 2, located in Availability Zone 2.
+    Type: String
+
+  KubernetesVersion:
+    Type: String
+    Default: 1.18
+    AllowedValues:
+      - 1.18
+    Description: The desired Kubernetes version for your cluster.
+
+  KeyPairName:
+    Description: Name of an existing key pair, which allows you to securely connect to your instance after it launches.
+    Type: AWS::EC2::KeyPair::KeyName
+
+  AdditionalEKSAdminUserArn:
+    Type: String
+    Default: ""
+    Description: "(Optional) IAM user Amazon Resource Name (ARN) to be granted administrative access to the EKS cluster."
+
+  AdditionalEKSAdminRoleArn:
+    Type: String
+    Default: ""
+    Description: "(Optional) IAM role Amazon Resource Name (ARN) to be granted administrative access to the EKS cluster."
+
+  EKSClusterLoggingTypes:
+    Type: String
+    Default: ""
+    AllowedPattern: ^$|^\s*(api|audit|authenticator|controllerManager|scheduler)\s*(,\s*(api|audit|authenticator|controllerManager|scheduler)\s*)*$
+    ConstraintDescription: Comma separated list of allowed values - api, audit, authenticator, controllerManager and scheduler
+    Description: |
+      Cluster control plane logging options (api, audit, authenticator, controllerManager and scheduler); comma separated.
+
+  ControllerConfigurationTier:
+    Description: Instance tier to be used by controller workers.
+    Default: "vCPU4-c5.2xlarge"
+    Type: String
+    AllowedValues: [ "vCPU4-m5.xlarge", "vCPU4-c5.2xlarge" ]
+    ConstraintDescription: must specify vCPU4-m5.xlarge or vCPU4-c5.2xlarge
+
+  EnforcerConfigurationTier:
+    Description: Instance tier to be used by enforcer workers.
+    Default: "vCPU4-c5.2xlarge"
+    Type: String
+    AllowedValues: [ "vCPU4-m5.xlarge", "vCPU4-c5.2xlarge" ]
+    ConstraintDescription: must specify vCPU4-m5.xlarge or vCPU4-c5.2xlarge
+
+  ControlNodeGroupMaxSize:
+    Type: Number
+    Default: 2
+    Description: The maximum number of control plane worker nodes.
+
+  ControlNodeGroupDesiredSize:
+    Type: Number
+    Default: 1
+    Description: The desired number of control plane worker nodes.
+
+  StorageType:
+    Type: String
+    AllowedValues: [ local, efs ]
+    Default: local
+    Description: The type of a storage used to keep logs and deployments files.
+
+  LoadBalancerController:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: Enable or Disable load balancer controller.
+
+  EnforcerNodeGroupMaxSize:
+    Type: Number
+    Default: 5
+    Description: The maximum number of data plane worker nodes.
+
+  EnforcerNodeGroupDesiredSize:
+    Type: Number
+    Default: 1
+    Description: The desired number of data plane worker nodes.
+
+  EIPAttachmentMode:
+    Type: String
+    Default: "outside"
+    AllowedValues:
+      - none
+      - outside
+      - inside
+      - both
+    Description: CNFW interfaces to attach Elastic IPs.
+
+  EnforcerCacheType:
+    Type: String
+    Default: "none"
+    AllowedValues:
+      - none
+      - elasticache
+    Description: Type of External Cache to use for CNFW.
+
+  EnforcerCacheNodeType:
+    Type: String
+    Default: "cache.m5.large"
+    AllowedValues: [ cache.m5.xlarge, cache.m5.large ]
+    Description: EC2 instance type to use as Cache node, check region availaibility before selection.
+
+  EnforcerCacheAuthToken:
+    Type: String
+    NoEcho: true
+    MaxLength: 128
+    Default: ""
+    AllowedPattern: "([a-zA-Z0-9!&#$^><-]{16,128})?"
+    ConstraintDescription: Must be blank or contain at least 16 and up to 128 alphanumeric or allowed special characters.
+    Description: |
+      Blank or 16-128 alphanumeric characters. Only permitted special characters are !, &, #, $, ^, <, >, and -.
+      Takes effect only when in-transit encryption is enabled.
+
+  EnforcerCacheStorageKey:
+    Type: String
+    NoEcho: true
+    MaxLength: 64
+    Default: ""
+    AllowedPattern: "^([A-F0-9]{64})?$"
+    ConstraintDescription: Must be a string of length 64 consisting of uppercase hexadecimal characters (A-F,0-9).
+    Description: |
+      User-provided AES-256 key that is 64 hexadecimal characters (A-F,0-9) used to encrypt sensitive cache data before it leaves CNFW.
+      This can be generated with the command "openssl enc -aes-256-cbc -k password -P -md sha256" or any other AES key generation methods.
+      Required when 'elasticache' cache type is specified.
+
+  EnforcerCacheTransitEncryption:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: Cannot be changed after creation, update requires replacement.
+
+  SmartLicenseToken:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: A token from Smart Account that has Secure Firewall (SFW) licenses.
+
+  MaxLicenseCount:
+    Type: Number
+    Default: 4
+    MinValue: 1
+    Description: A maximum number of licenses allowed to be used by the default Enforcer when it is scaled up.
+
+  SecureFirewallDataplane:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Enabled
+    Description: This is enabled by default for a full deployment with control plane and data plane components. To deploy control plane components only (for multi-tenancy), disable this setting.
+
+  FirewallVersion:
+    Type: String
+    Default: v1.1.0
+    AllowedPattern: ".+"
+    Description: Helm chart version of the product.
+
+  SystemNamespace:
+    Type: String
+    Default: sfcn-system
+    AllowedPattern: ".+"
+    Description: The namespace where product components are installed.
+
+  EnforcerServiceRoles:
+    Type: String
+    Default: default
+    AllowedPattern: "[a-zA-Z0-9-]{3,15}(,[a-zA-Z0-9-]{3,15})*"
+    AllowedValues: [ "default", "default,vpnredirector" ]
+    ConstraintDescription: |
+      Role should be alphanumeric and can contain the special character, hyphen (-). Role must be at least 3 characters
+      and upto 15 characters long.
+    Description: |
+      The service role of the data plane node. Leave the setting as "default" if you selected 1 data plane node. Each additional service role requires a corresponding data plane node.
+
+  EnforcerAutoscaling:
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+    Default: Disabled
+    Description: Enable the default Enforcer autoscaling.
+
+  PerAccountSharedResources:
+    Type: String
+    AllowedValues: ['AutoDetect', 'Yes', 'No']
+    Default: 'AutoDetect'
+    Description: Choose "No" if you already deployed another EKS Quick Start stack in your AWS account.
+
+  PerRegionSharedResources:
+    Type: String
+    AllowedValues: ['AutoDetect', 'Yes', 'No']
+    Default: 'AutoDetect'
+    Description: Choose "No" if you already deployed another EKS Quick Start stack in your Region.
+
+Rules:
+  EnforcerElasticacheRule:
+    RuleCondition: !Equals [ !Ref EnforcerCacheType, elasticache ]
+    Assertions:
+      - Assert: !Equals [ !Ref SecureFirewallDataplane, Enabled ]
+        AssertDescription: Cache type can be set to "elasticache" only if firewall data plane is "Enabled"
+      - Assert: !Not [ !Equals [ !Ref EnforcerCacheStorageKey, "" ] ]
+        AssertDescription: Cache storage key must not be empty when cache type is set to "elasticache".
+
+Conditions:
+  UsingDefaultBucket: !Equals [ !Ref QSS3BucketName, 'aws-quickstart' ]
+  EnforcerCacheTypeIsElastiCache: !Equals [ !Ref EnforcerCacheType, elasticache ]
+  DetectSharedStacks: !And
+  - !Equals [!Ref PerAccountSharedResources, 'AutoDetect']
+  - !Equals [!Ref PerRegionSharedResources, 'AutoDetect']
+  CreatePerAccountSharedResources: !Equals [!Ref PerAccountSharedResources, 'Yes']
+  CreatePerRegionSharedResources: !Equals [!Ref PerRegionSharedResources, 'Yes']
+
+Resources:
+  SFCNStack:
+    Type: AWS::CloudFormation::Stack
+    Metadata:
+      DependsOn: 
+      - !If [ CreatePerAccountSharedResources, !Ref AccountSharedResources, !Ref 'AWS::NoValue']
+      - !If [ CreatePerRegionSharedResources, !Ref RegionalSharedResources, !Ref 'AWS::NoValue']
+      - !If [ DetectSharedStacks, !Ref AutoDetectSharedResources, !Ref 'AWS::NoValue' ]
+    Properties:
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/sfcn.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+      Parameters:
+        # Network configuration
+        VPCID: !Ref VPCID
+        PublicSubnet1ID: !Ref PublicSubnet1ID
+        PrivateSubnet1ID: !Ref PrivateSubnet1ID
+        PublicSubnet2ID: !Ref PublicSubnet2ID
+        PrivateSubnet2ID: !Ref PrivateSubnet2ID
+        CNFWOutsideSubnet1CIDR: !Ref CNFWOutsideSubnet1CIDR
+        CNFWInsideSubnet1CIDR: !Ref CNFWInsideSubnet1CIDR
+        CNFWOutsideSubnet2CIDR: !Ref CNFWOutsideSubnet2CIDR
+        CNFWInsideSubnet2CIDR: !Ref CNFWInsideSubnet2CIDR
+        PublicSubnetRouteTableID: !Ref PublicSubnetRouteTableID
+        # Cluster configuration
+        EKSClusterName: !Ref AWS::StackName
+        KubernetesVersion: !Ref KubernetesVersion
+        KeyPairName: !Ref KeyPairName
+        AdditionalEKSAdminUserArn: !Ref AdditionalEKSAdminUserArn
+        AdditionalEKSAdminRoleArn: !Ref AdditionalEKSAdminRoleArn
+        EKSClusterLoggingTypes: !Ref EKSClusterLoggingTypes
+        StorageType: !Ref StorageType
+        LoadBalancerController: !Ref LoadBalancerController
+        # Licensing
+        SmartLicenseToken: !Ref SmartLicenseToken
+        MaxLicenseCount: !Ref MaxLicenseCount
+        # Control Plane configuration
+        ControllerConfigurationTier: !Ref ControllerConfigurationTier
+        ControlNodeGroupDesiredSize: !Ref ControlNodeGroupDesiredSize
+        ControlNodeGroupMaxSize: !Ref ControlNodeGroupMaxSize
+        # Data Plane configuration
+        EnforcerConfigurationTier: !Ref EnforcerConfigurationTier
+        EnforcerNodeGroupDesiredSize: !Ref EnforcerNodeGroupDesiredSize
+        EnforcerNodeGroupMaxSize: !Ref EnforcerNodeGroupMaxSize
+        EIPAttachmentMode: !Ref EIPAttachmentMode
+        # External Cache configuration
+        EnforcerCacheType: !Ref EnforcerCacheType
+        EnforcerCacheNodeType: !Ref EnforcerCacheNodeType
+        EnforcerCacheAuthToken: !Ref EnforcerCacheAuthToken
+        EnforcerCacheStorageKey: !Ref EnforcerCacheStorageKey
+        EnforcerCacheTransitEncryption: !Ref EnforcerCacheTransitEncryption
+        # Quick Start configuration
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3KeyPrefix: !Ref QSS3KeyPrefix
+        QSS3BucketRegion: !Ref QSS3BucketRegion
+        # Firewall configuration
+        SecureFirewallDataplane: !Ref SecureFirewallDataplane
+        FirewallVersion: !Ref FirewallVersion
+        SystemNamespace: !Ref SystemNamespace
+        EnforcerServiceRoles: !Ref EnforcerServiceRoles
+        EnforcerAutoscaling: !Ref EnforcerAutoscaling
+
+  AutoDetectSharedResources:
+    Type: AWS::CloudFormation::Stack
+    Condition: DetectSharedStacks
+    Properties:
+      TemplateURL: !Sub 
+      - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-prerequisites.template.yaml'
+      - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+        S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+      Parameters:
+        Version: "1.0.0"
+        AccountTemplateUri: !Sub 
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-per-account-resources.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+        RegionalTemplateUri: !Sub 
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-per-region-resources.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+
+  AccountSharedResources:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreatePerAccountSharedResources
+    DeletionPolicy: Retain
+    Metadata: { cfn-lint: { config: { ignore_checks: [W3011] } } }
+    Properties:
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-per-account-resources.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+
+  RegionalSharedResources:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreatePerRegionSharedResources
+    DeletionPolicy: Retain
+    Metadata:
+      cfn-lint: { config: { ignore_checks: [W3011, W9901] } }
+      DependsOn: !If [ CreatePerAccountSharedResources, !Ref AccountSharedResources, !Ref 'AWS::NoValue' ]
+    Properties:
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks/templates/amazon-eks-per-region-resources.template.yaml'
+        - S3Region: !If [ UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion ]
+          S3Bucket: !If [ UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName ]
+
+Outputs:
+  CAData:
+    Value: !GetAtt SFCNStack.Outputs.CAData
+  ClusterEndpoint:
+    Value: !GetAtt SFCNStack.Outputs.ClusterEndpoint
+  ClusterName:
+    Value: !GetAtt SFCNStack.Outputs.ClusterName
+  CDOToken:
+    Value: !GetAtt SFCNStack.Outputs.CDOToken
+    Description: Base-64 decoded token for the CDO service account.
+  FirewallVersion:
+    Value: !GetAtt SFCNStack.Outputs.FirewallVersion
+  SystemNamespace:
+    Value: !GetAtt SFCNStack.Outputs.SystemNamespace
+  VPCID:
+    Value: !Ref VPCID
+    Export: { Name: !Sub '${AWS::StackName}-VPCID' }
+  PublicSubnetRouteTable:
+    Value: !Ref PublicSubnetRouteTableID
+  InsideSubnetsRouteTable:
+    Value: !GetAtt SFCNStack.Outputs.InsideSubnetsRouteTableID
+  ElasticachePrimaryEndpoint:
+    Condition: EnforcerCacheTypeIsElastiCache
+    Value: !GetAtt SFCNStack.Outputs.ElasticachePrimaryEndpoint
+  ElasticachePrimaryEndpointPort:
+    Condition: EnforcerCacheTypeIsElastiCache
+    Value: !GetAtt SFCNStack.Outputs.ElasticachePrimaryEndpointPort
+  ElasticacheReaderEndpoint:
+    Condition: EnforcerCacheTypeIsElastiCache
+    Value: !GetAtt SFCNStack.Outputs.ElasticacheReaderEndpoint
+  ElasticacheReaderEndpointPort:
+    Condition: EnforcerCacheTypeIsElastiCache
+    Value: !GetAtt SFCNStack.Outputs.ElasticacheReaderEndpointPort
