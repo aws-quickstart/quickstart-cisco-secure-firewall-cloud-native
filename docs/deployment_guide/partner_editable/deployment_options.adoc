@@ -1,6 +1,4 @@
-// Edit this placeholder text to accurately describe your architecture.
-
-== Deployment options
+// Edit this placeholder text as necessary to describe the deployment options.
 
 This Quick Start provides three deployment options:
 
@@ -19,6 +17,3 @@ Once Cisco Secure Fireweall Cloud is build using this quickstart, SFCN can be us
 * https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-advanced.html#Cisco_Concept.dita_c425d95d-3609-45c5-9f43-1cddc1c32db9[Enable Multi-tenancy^]
 * https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-l2l.html[Backhaul Design for Site-to-Site VPN^]
 * https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-inside-vpc.html[Backhaul Design for Inside VPC^]
-
-
-		
