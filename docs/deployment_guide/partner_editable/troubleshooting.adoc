@@ -1,5 +1,17 @@
 // Add any tips or answers to anticipated questions.
 
+For troubleshooting common Quick Start issues, refer to the http://general-content-file[AWS Quick Start General Content Guide^].
+
+Refer to the following resources for help with these subjects:
+
+* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-troubleshoot.html#Cisco_Reference.dita_de4e419b-af3b-41f7-8ec4-4e4bf05a17d1[Attach a Console Session^]
+
+* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-troubleshoot.html#Cisco_Reference.dita_2f6e3885-fcc9-4aed-adbf-bd4ce13fcfde[Connect to Amazon EKS nodes with SSH (Secure Shell)^]
+
+* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-troubleshoot.html#Cisco_Reference.dita_fe07dbae-29e6-4579-b3a1-140392efa213[View Container Logs^]
+
+After you successfully deploy a Quick Start, confirm that your resources and services are updated and configured — including any required patches — to meet your security and other needs. For more information, see the https://aws.amazon.com/compliance/shared-responsibility-model/[Shared Responsibility Model^].
+
 == FAQ
 
 *Q.* I encountered a *CREATE_FAILED* error when I launched the Quick Start.
@@ -14,22 +26,4 @@ For more information, see https://docs.aws.amazon.com/AWSCloudFormation/latest/U
 *Q.* I encountered a size-limitation error when I deployed the AWS CloudFormation templates.
 
 *A.* Launch the Quick Start templates from the links in this guide or from another S3 bucket. If you deploy the templates from a local copy on your computer or from a location other than an S3 bucket, you might encounter template-size limitations. For more information, see http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html[AWS CloudFormation quotas^].
-
-== Troubleshooting
-
-For troubleshooting common Quick Start issues, refer to the http://general-content-file[AWS Quick Start General Content Guide^].
-
-Refer to the following resources for help with these subjects:
-
-* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-troubleshoot.html#Cisco_Reference.dita_de4e419b-af3b-41f7-8ec4-4e4bf05a17d1[Attach a Console Session^]
-
-* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-troubleshoot.html#Cisco_Reference.dita_2f6e3885-fcc9-4aed-adbf-bd4ce13fcfde[Connect to Amazon EKS nodes with SSH (Secure Shell)^]
-
-* https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-troubleshoot.html#Cisco_Reference.dita_fe07dbae-29e6-4579-b3a1-140392efa213[View Container Logs^]
-
-After you successfully deploy a Quick Start, confirm that your resources and services are updated and configured — including any required patches — to meet your security and other needs. For more information, see the https://aws.amazon.com/compliance/shared-responsibility-model/[Shared Responsibility Model^].
-
-== Resources
-
-For {partner-product-name} best practices, configuration options, and use cases, refer to the https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-intro.html[Cisco Secure Firewall Cloud Native Getting Started Guide^].
 
