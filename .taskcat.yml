@@ -4,7 +4,12 @@ project:
     - us-east-1
     - us-east-2
   s3_regional_buckets: true
+  s3_object_acl: public-read
   shorten_stack_name: true
+  package_lambda: true
+  lambda_source_path: functions/source
+  lambda_zip_path: functions/packages
+  # s3_bucket: tcat-0a820f79e7cf5251aa73ff7df7f4c4a0
   parameters:
 
     # To override parameters, create ./.taskcat_overrides.yml file and place your values there. Example:
@@ -17,6 +22,8 @@ project:
 tests:
   sfcnbase:
     template: templates/entrypoint-new-vpc.template.yaml
+    regions:
+      - us-east-1
     parameters:
       LoadBalancerController: Enabled
       EnforcerCacheType: elasticache
