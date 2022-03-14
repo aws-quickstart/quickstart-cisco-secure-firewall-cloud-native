@@ -22,10 +22,10 @@ As shown in <<architecture1>>, the Quick Start sets up the following:
 ** Secure Firewall Cloud Native Redirector for load balancing of remote access virtual private network (VPN) traffic.
 ** Managed network address translation (NAT) gateways to allow outbound internet access for resources in the private subnets.*
 ** Secure Firewall Cloud Native Control Point in an Auto Scaling group for configuration validation, licensing, and route management.
-** Secure Firewall Cloud Native Enforcement Point in an Auto Scaling group for termination of VPN sessions and forwarding of traffic.
-** Cloud Native Firewall (CNFW) Elastic Network Interfaces (ENI).
+** Secure Firewall Cloud Native Enforcement Point for termination of VPN sessions and forwarding of traffic.
+** Cloud Native Firewall (CNFW) Elastic Network Interfaces (ENI) in an Auto Scaling group.
 * In the public subnets:
-** Cloud Native Firewall (CNFW) Elastic Network Interfaces (ENI).
+** Cloud Native Firewall (CNFW) Elastic Network Interfaces (ENI) in an Auto Scaling group.
 
 // Add bullet points for any additional components that are included in the deployment. Make sure that the additional components are also represented in the architecture diagram. End each bullet with a period.
 // * <describe any additional components>.
