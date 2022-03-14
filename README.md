@@ -1,4 +1,4 @@
-# Cisco Secure Firewall Cloud Native—Quick Start
+# Cisco Secure Firewall Cloud Native — Quick Start
 
 For architectural details, step-by-step instructions, and customization options, see the [deployment guide](https://fwd.aws/Xv96Y?).
 
