@@ -5,9 +5,9 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.17">
-<meta name="description" content="Cisco Secure Firewall Cloud Native Deployment Guide on AWS">
+<meta name="description" content="Cisco Secure Firewall Cloud Native Operational Guide on AWS">
 <meta name="keywords" content="Quick Start, AWS, Cisco Secure Firewall Cloud Native">
-<title>Cisco Secure Firewall Cloud Native on the AWS Cloud</title>
+<title>Cisco Secure Firewall Cloud Native on the AWS Cloud—Operational Guide</title>
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
 /* Uncomment @import statement to use as custom stylesheet */
@@ -835,23 +835,24 @@ p.footer-text a{color:#d7d8d8}
 <div id="toctitle"></div>
 <ul class="sectlevel1">
 <li><a href="#_overview">Overview</a></li>
-<li><a href="#_costs_and_licenses">Costs and licenses</a></li>
-<li><a href="#_architecture">Architecture</a></li>
-<li><a href="#_deployment_options">Deployment options</a></li>
-<li><a href="#_predeployment_steps">Predeployment steps</a>
+<li><a href="#_test_the_deployment">Test the deployment</a></li>
+<li><a href="#_post_deployment_steps">Post-deployment steps</a></li>
+<li><a href="#_best_practices_for_using_sfcn_on_aws">Best practices for using SFCN on AWS</a>
 <ul class="sectlevel2">
-<li><a href="#_prepare_your_aws_account">Prepare your AWS account</a></li>
-<li><a href="#_prepare_your_cisco_systems_inc_account">Prepare your Cisco Systems Inc. account</a></li>
-<li><a href="#_prepare_for_the_deployment">Prepare for the deployment</a></li>
+<li><a href="#_deployment_guidelines">Deployment Guidelines</a></li>
+<li><a href="#_service_roles">Service Roles</a></li>
+<li><a href="#_full_and_delta_deployments">Full and Delta Deployments</a></li>
+<li><a href="#_scaling">Scaling</a></li>
+<li><a href="#_explore_other_configuration_options">Explore Other Configuration Options</a></li>
+<li><a href="#_use_case_examples_and_scenarios">Use Case Examples and Scenarios</a></li>
 </ul>
 </li>
-<li><a href="#_deployment_steps">Deployment steps</a></li>
-<li><a href="#_postdeployment_steps">Postdeployment steps</a></li>
-<li><a href="#_test_the_deployment">Test the deployment</a></li>
-<li><a href="#_configure_cnfw_firewalls">Configure CNFW firewalls</a></li>
-<li><a href="#_best_practices_for_using_sfcn_on_aws">Best practices for using SFCN on AWS</a></li>
-<li><a href="#_troubleshooting">Troubleshooting</a></li>
-<li><a href="#_faq">FAQ</a></li>
+<li><a href="#_other_useful_information">Other useful information</a>
+<ul class="sectlevel2">
+<li><a href="#_cisco_cli_usage_guidelines">Cisco CLI Usage Guidelines</a></li>
+<li><a href="#_custom_iam_policy_for_cloudformation_users">Custom IAM Policy for CloudFormation Users</a></li>
+</ul>
+</li>
 <li><a href="#_feedback">Feedback</a></li>
 <li><a href="#_notices">Notices</a></li>
 </ul>
@@ -861,21 +862,19 @@ p.footer-text a{color:#d7d8d8}
 <div id="preamble">
 <div class="sectionbody">
 <h2 id="_cisco_secure_firewall_cloud_native_on_the_aws_cloud" class="discrete text-center">Cisco Secure Firewall Cloud Native on the AWS Cloud</h2>
-<h2 id="_quick_start_deployment_guide" class="discrete text-left text-center">Quick Start deployment guide</h2>
+<h2 id="_quick_start_operational_guide" class="discrete text-left text-center">Quick Start Operational Guide</h2>
 <div class="imageblock text-center">
 <div class="content">
-<img src="https://aws-quickstart.s3.amazonaws.com/docs/deployment-guide/aws-quickstart-deployment-graphic.png" alt="QS" width="80" height="80">
+<img src="https://aws-quickstart.s3.amazonaws.com/docs/operational-guide/aws-quickstart-operational-graphic.png" alt="QS" width="80" height="80">
 </div>
 </div>
 <div class="imageblock image-container">
 <div class="content">
-<img src="https://aws-quickstart.s3.amazonaws.com/quickstart-documentation-base/docs/boilerplate/.images/aws-quickstart-graphic.png" alt="">
+<img src="https://aws-quickstart.s3.amazonaws.com/quickstart-cisco-secure-firewall-cloud-native/docs/boilerplate/.images/aws-quickstart-operational-graphic.png" alt="">
 </div>
 </div>
 <div class="paragraph text-center">
-<p><strong>March 2022</strong><br>
-<em>Anubhav Swami, David Sounthiraraj, and Ray Gordon Cisco Systems Inc.</em><br>
-<em>Muffadal Quettawala and Shivansh Singh</em><br></p>
+<p><strong>March 2022</strong><br></p>
 </div>
 <div class="admonitionblock tip text-left">
 <table>
@@ -884,7 +883,7 @@ p.footer-text a{color:#d7d8d8}
 <i class="fa icon-tip" title="Tip"></i>
 </td>
 <td class="content">
-See the <a href="https://github.com/{quickstart-github-org}/quickstart-documentation-base" target="_blank" rel="noopener">GitHub repository</a> to view source files, report bugs, submit feature ideas, and post feedback about this Quick Start. To comment on the documentation, refer to <a href="#_feedback">Feedback</a>.
+Visit our <a href="https://github.com/aws-quickstart/quickstart-cisco-secure-firewall-cloud-native" target="_blank" rel="noopener">GitHub repository</a> to view source files, report bugs, submit feature ideas, and post feedback about this Quick Start. To comment on the documentation, refer to <a href="#_feedback">Feedback</a>.
 </td>
 </tr>
 </table>
@@ -898,227 +897,11 @@ See the <a href="https://github.com/{quickstart-github-org}/quickstart-documenta
 <h2 id="_overview">Overview</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This Quick Start deploys Cisco Secure Firewall Cloud Native (SFCN) on the AWS Cloud.</p>
+<p>This Quick Start deploys Cisco Secure Firewall Cloud Native on the AWS Cloud.</p>
 </div>
 <div class="paragraph">
 <p>If you are unfamiliar with AWS Quick Starts we recommend that you read the <a href="http://general-content-file" target="_blank" rel="noopener">AWS Quick Start General Content Guide</a>.</p>
 </div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_costs_and_licenses">Costs and licenses</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>There are no additional licenses required to use this Quick Start.</p>
-</div>
-<div class="paragraph">
-<p>There is no cost to use this Quick Start, however you will be billed for the resources deployed. For more information see the <a href="http://general-content-file" target="_blank" rel="noopener">AWS Quick Start General Content Guide</a>.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_architecture">Architecture</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Deploying this Quick Start for a new virtual private cloud (VPC) with
-default parameters builds the following SFCN environment in the
-AWS Cloud.</p>
-</div>
-<div id="architecture1" class="imageblock">
-<div class="content">
-<img src="docs/deployment_guide/images/architecture-diagram.png" alt="Architecture">
-</div>
-<div class="title">Figure 1. Quick Start architecture for SFCN on AWS</div>
-</div>
-<div class="paragraph">
-<p>As shown in <a href="#architecture1">Figure 1</a>, the Quick Start sets up the following:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>A highly available architecture that spans two Availability Zones.*</p>
-</li>
-<li>
-<p>A virtual private cloud (VPC) configured with public and private subnets, according to AWS best practices, to provide you with your own virtual network on AWS.*</p>
-</li>
-<li>
-<p>Amazon Route 53 for VPN load balancing and Cloud Native Firewall (CNFW) health monitoring.</p>
-</li>
-<li>
-<p>Amazon Elastic Kubernetes Service (Amazon EKS) for Kubernetes orchestration of the Cisco Secure Firewall cluster, including the Redirector, Control Point, and Enforcement Point.</p>
-</li>
-<li>
-<p>Amazon Elastic File Service (Amazon EFS) for elastic file systems for the Control Point and Enforcement Point.</p>
-</li>
-<li>
-<p>Amazon ElastiCache for Redis to store information on VPN sessions. The Redirector pod uses this information for smart load balancing and recovery.</p>
-</li>
-<li>
-<p>In the public subnets:</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Secure Firewall Cloud Native Redirector for load balancing of remote access virtual private network (VPN) traffic.</p>
-</li>
-<li>
-<p>Managed network address translation (NAT) gateways to allow outbound internet access for resources in the private subnets.*</p>
-</li>
-<li>
-<p>Secure Firewall Cloud Native Control Point in an Auto Scaling group for configuration validation, licensing, and route management.</p>
-</li>
-<li>
-<p>Secure Firewall Cloud Native Enforcement Point for termination of VPN sessions and forwarding of traffic.</p>
-</li>
-<li>
-<p>Cloud Native Firewall (CNFW) Elastic Network Interfaces (ENI) in an Auto Scaling group.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>In the public subnets:</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Cloud Native Firewall (CNFW) Elastic Network Interfaces (ENI) in an Auto Scaling group.</p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_deployment_options">Deployment options</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>This Quick Start provides two deployment options:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>Deploy SFCN into a new VPC</strong>. This option builds a new AWS environment consisting of the VPC, eks cluster, subnets, NAT gateways, security groups, autoscale group, route53, Redis database (optional), and other infrastructure components. It then deploys SFCN into this new VPC.</p>
-</li>
-<li>
-<p><strong>Deploy SFCN into an existing VPC</strong>. This option provisions SFCN in your existing AWS infrastructure.</p>
-</li>
-<li>
-<p><strong>Deploy a new tenant into an existing SFCN cluster</strong>. This option adds a new tenant in the SFCN cluster in your existing AWS infrastructure.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>The Quick Start provides separate templates for these options. It also lets you configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and SFCN settings.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_predeployment_steps">Predeployment steps</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_prepare_your_aws_account">Prepare your AWS account</h3>
-<div class="paragraph">
-<p>To use a custom IAM policy to deploy the CloudFormation stack instead of the <code>AdminstratorAccess</code> managed policy, refer to <a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-aws.html#Cisco_Concept.dita_df4f9142-f50e-4858-9224-d6e5c0c70163" target="_blank" rel="noopener">AWS Identity and Access Management (IAM)</a>.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_prepare_your_cisco_systems_inc_account">Prepare your Cisco Systems Inc. account</h3>
-<div class="paragraph">
-<p>Obtain a Cisco Secure Firewall Cloud Native license from your Cisco accounts team and add it to your <a href="https://www.cisco.com/c/en/us/buy/licensing.html" target="_blank" rel="noopener">Cisco smart account</a>. You can deploy this Quick Start without a Cisco Secure Firewall Cloud Native license with a single enforcement point at 100 Kbps throughput. For more information, refer to <a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-licensing.html" target="_blank" rel="noopener">Licensing</a>.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_prepare_for_the_deployment">Prepare for the deployment</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>Create At least one Amazon EC2 key pair: Ensure that at least one Amazon EC2 key pair exists in your AWS account in the Region where you plan to deploy the Secure Firewall Cloud Native RA-VPN solution. Make note of the key pair name. You need it to create a secret to allow the cluster to pull down files from your Amazon Simple Storage Service (Amazon S3) bucket. For more information, refer to <a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-aws.html#Cisco_Task.dita_7f6b3cc2-4435-493c-8100-c5f31923612f" target="_blank" rel="noopener">Create a Key Pair</a>.</p>
-</li>
-<li>
-<p>Download AnyConnect Secure Mobility Client v4.x for your operating system from the <a href="https://software.cisco.com/download/home/286281283/type/282364313/release/" target="_blank" rel="noopener">Cisco Software Download portal</a>. Version 4.8 or higher is recommended.</p>
-<div class="ulist">
-<ul>
-<li>
-<p><code>anyconnect-linux64-4.10.04071-webdeploy-k9.pkg</code></p>
-</li>
-<li>
-<p><code>anyconnect-win-4.10.04071-webdeploy-k9.pkg</code></p>
-</li>
-<li>
-<p><code>anyconnect-macos-4.10.04071-webdeploy-k9.pkg</code></p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Create one or more AnyConnect client profiles.</p>
-</li>
-<li>
-<p>Create a S3 bucket and upload your Cisco AnyConnect images and AnyConnect profiles to it. Ensure that the files are available for uploading to the cluster. This can be done by serving them over HTTP/HTTPS or syncing them to an S3 bucket. The following example shows the S3 bucket used to provision the cluster.</p>
-<div class="literalblock">
-<div class="content">
-<pre>aws s3 cp . s3://$BUCKET --recursive --exclude "*" --include "anyconnect-*"</pre>
-</div>
-</div>
-</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_deployment_steps">Deployment steps</h2>
-<div class="sectionbody">
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Sign in to your AWS account, and launch this Quick Start, as described under <a href="#_deployment_options">Deployment options</a>. The AWS CloudFormation console opens with a prepopulated template. Deployment takes about 50 minutes to complete.</p>
-</li>
-<li>
-<p>Ensure that you set the correct AWS Region, and choose <strong>Next</strong>.</p>
-</li>
-<li>
-<p>On the <strong>Create stack</strong> page, keep the default setting for the template URL, and then choose <strong>Next</strong>.</p>
-</li>
-<li>
-<p>On the <strong>Specify stack details</strong> page, change the stack name if needed. Review the parameters for the template. Provide values for the parameters that require input. For all other parameters, review the default settings and customize them as necessary. When you finish reviewing and customizing the parameters, choose <strong>Next</strong>.</p>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Unless you are customizing the Quick Start templates for your own projects, don&#8217;t change the default settings for the following Amazon Simple Storage Service (Amazon S3) parameters: <strong>Quick Start S3 bucket name</strong>, <strong>Quick Start S3 bucket Region</strong>, and <strong>Quick Start S3 key prefix</strong>. Changing these settings automatically updates code references to point to a new Quick Start location. For more information, refer to the <a href="https://aws-quickstart.github.io/option1.html" target="_blank" rel="noopener">AWS Quick Start Contributor’s Guide</a>.
-</td>
-</tr>
-</table>
-</div>
-</li>
-<li>
-<p>On the <strong>Configure stack options</strong> page, you can <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html" target="_blank" rel="noopener">specify tags</a> (key-value pairs) for resources in your stack and <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html" target="_blank" rel="noopener">set advanced options</a>. When you finish, choose <strong>Next</strong>.</p>
-</li>
-<li>
-<p>On the <strong>Review</strong> page, review and confirm the template settings. Under <strong>Capabilities</strong>, select the two check boxes to acknowledge that the template creates IAM resources that might require the ability to automatically expand macros.</p>
-</li>
-<li>
-<p>Choose <strong>Create stack</strong> to deploy the stack.</p>
-</li>
-<li>
-<p>Monitor the stack&#8217;s status, and when the status is <strong>CREATE_COMPLETE</strong>, the Cisco Secure Firewall Cloud Native deployment is ready.</p>
-</li>
-<li>
-<p>To view the created resources, choose the <strong>Outputs</strong> tab.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_postdeployment_steps">Postdeployment steps</h2>
-<div class="sectionbody">
-
 </div>
 </div>
 <div class="sect1">
@@ -1127,90 +910,70 @@ Unless you are customizing the Quick Start templates for your own projects, don&
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>After the Quick Start is deployed, run the following commands to check the SFCN cluster.</p>
+<p>Once Cisco Secure Firewall Cloud Native stack is deployed, run the following commands to check the SFCN cluster:</p>
 <div class="literalblock">
 <div class="content">
 <pre>export NS=&lt;namespace&gt;
 aws eks --region &lt;region&gt; update-kubeconfig --name &lt;sfcn-cluster-name&gt;</pre>
 </div>
 </div>
-<div class="paragraph">
-<p>For example:</p>
-</div>
 <div class="literalblock">
 <div class="content">
-<pre>export NS=sfcn-system
-aws eks --region us-east-1 update-kubeconfig --name answami-sfcn</pre>
+<pre>Example:
+  export NS=sfcn-system
+  aws eks --region us-east-1 update-kubeconfig --name answami-sfcn</pre>
 </div>
 </div>
 </li>
 <li>
-<p>Check pods.</p>
-<div class="literalblock">
-<div class="content">
-<pre>kubectl get pods -n $NS</pre>
-</div>
-</div>
+<p>Check pods using <code>kubectl get pods -n $NS</code></p>
 </li>
 <li>
-<p>Check nodes.</p>
-<div class="literalblock">
-<div class="content">
-<pre>kubectl get nodes -n $NS</pre>
-</div>
-</div>
+<p>Check nodes using <code>kubectl get nodes -n $NS</code></p>
 </li>
 <li>
-<p>Check CNFW configuration.</p>
-<div class="literalblock">
-<div class="content">
-<pre>kubectl get asacommand -A --field-selector spec.command="show run"</pre>
-</div>
-</div>
+<p>Check CNFW configuration using <code>kubectl get asacommand -A --field-selector spec.command="show run"</code></p>
 </li>
 <li>
-<p>You can capture different metrics for the SFCN based on service roles. For more information, refer to <a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-metrics.html" target="_blank" rel="noopener">Metrics Configuration</a>.</p>
+<p>You can capture different metrics for the SFCN based on service roles. See <a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-metrics.html" target="_blank" rel="noopener">Metrics Configuration</a> in the Cisco Secure Firewall Cloud Native Getting Started Guide for more information.</p>
 </li>
 </ol>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_configure_cnfw_firewalls">Configure CNFW firewalls</h2>
+<h2 id="_post_deployment_steps">Post-deployment steps</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Once the SFCN cluster, nodes, and pods are running, configure CNFW firewalls.</p>
+<p>Once the Cisco Secure Firewall Cloud Native cluster is up i.e., nodes and pods are up, access the GitHub samples to configure CNFW firewalls:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Clone the <a href="https://github.com/CiscoDevNet/sfcn.git" target="_blank" rel="noopener">Cisco Secure Firewall Github Repository</a></p>
+<p>Navigate to the Cisco Secure Firewall Github Repository: <a href="https://github.com/CiscoDevNet/sfcn" class="bare">https://github.com/CiscoDevNet/sfcn</a></p>
 </li>
 <li>
-<p>Modify the YAML files in the <code>sfcn/samples/</code> repository folder to suit your configuration.</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><code>sfcn/samples/basic</code> contains sample interface, network, access-list, and routes files.</p>
+<p>Clone this <a href="https://github.com/CiscoDevNet/sfcn.git" class="bare">https://github.com/CiscoDevNet/sfcn.git</a></p>
 </li>
 <li>
-<p><code>sfcn/samples/ra-vpn/redirector-lb/</code> contains sample RA-VPN files.</p>
+<p>Go to sfcn/samples/</p>
 </li>
 <li>
-<p><code>sfcn/samples/ra-vpn/s2s-backhaul/</code> contains sample DC backhaul files.</p>
+<p>Check the basic folder for interface, network, access-list, and routes sample YAML files</p>
+</li>
+<li>
+<p>Go to sfcn/samples/ra-vpn/redirector-lb/ for RAVPN sample YAML files</p>
+</li>
+<li>
+<p>Go to sfcn/samples/ra-vpn/s2s-backhaul/ for DC backhaul sample YAML files</p>
+</li>
+<li>
+<p>Modify YAML files to suit your configuration and apply using kubectl apply -f &lt;filename&gt;.yaml</p>
 </li>
 </ol>
 </div>
-</li>
-<li>
-<p>For each YAML file modified, apply your modifications with the following command.</p>
-<div class="literalblock">
-<div class="content">
-<pre>kubectl apply -f &lt;filename&gt;.yaml</pre>
-</div>
-</div>
-</li>
-</ol>
+<div class="paragraph">
+<p>Vist <a href="https://www.cisco.com/c/en/us/products/security/secure-firewall-cloud-native/index.html" target="_blank" rel="noopener">Cisco Secure Firewall Cloud Native</a> for the most current information and resources about the product.</p>
 </div>
 </div>
 </div>
@@ -1218,69 +981,384 @@ aws eks --region us-east-1 update-kubeconfig --name answami-sfcn</pre>
 <h2 id="_best_practices_for_using_sfcn_on_aws">Best practices for using SFCN on AWS</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Refer to the <a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-intro.html" target="_blank" rel="noopener">Cisco Secure Firewall Cloud Native Getting Started Guide</a>.</p>
+<p>See the following guidelines and best practices for the Secure Firewall Cloud Native.</p>
+</div>
+<div class="sect2">
+<h3 id="_deployment_guidelines">Deployment Guidelines</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Deploy Cisco Secure Firewall Cloud Native with a minimum of two enforcement points.</p>
+</li>
+<li>
+<p>For resiliency, Cisco recommends using RAVPN with SFCN redirector and elasticache for Redis.</p>
+</li>
+<li>
+<p>Cisco recommends using EFS storage.</p>
+</li>
+</ul>
 </div>
 </div>
-</div>
-<div class="sect1">
-<h2 id="_troubleshooting">Troubleshooting</h2>
-<div class="sectionbody">
+<div class="sect2">
+<h3 id="_service_roles">Service Roles</h3>
 <div class="paragraph">
-<p>For troubleshooting common Quick Start issues, refer to the <a href="http://general-content-file" target="_blank" rel="noopener">AWS Quick Start General Content Guide</a>.</p>
+<p>Service Roles are used to define and separate duties between enforcement points in the cluster. The mandatory "sfcn.cisco.com/service-role" label is used to match and apply configurations to their respective pods. When you have two service roles deployed, "default" and "vpnredirector" for example, then configuration(s) will only be applied to the enforcer pods with the same label.</p>
 </div>
 <div class="paragraph">
-<p>Refer to the following resources for help with these subjects:</p>
+<p>This allows you to apply elements such as ACLs, routes, etc. to your default enforcer while limiting the vpnredirector configuration to only to what is needed for its role in the cluster. The use of service roles in segmenting workloads in the Secure Firewall Cloud Native is further explained in the <a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg.html" target="_blank" rel="noopener">Secure Firewall Getting Started Guide</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_full_and_delta_deployments">Full and Delta Deployments</h3>
+<div class="paragraph">
+<p>When modifying ASAConfigurations, the control plane will make a best-effort attempt to conduct a delta deployment. This means that only the CLI lines that were modified within the spec are operated upon in order to minimize disruption.</p>
+</div>
+<div class="paragraph">
+<p>If a delta deployment fails, by default a full deployment will be attempted afterward. This involves the full desired set of ASAConfigurations being reapplied onto the enforcement points.</p>
+</div>
+<div class="paragraph">
+<p><strong>Note</strong>: Full deployments may lead to traffic disruption and/or VPN sessions getting dropped. When testing or experimenting with configuration changes, we recommend that you apply them outside of peak traffic hours.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_scaling">Scaling</h3>
+<div class="paragraph">
+<p>Secure Firewall Cloud Native utilizes the <a href="https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/" target="_blank" rel="noopener">Horizontal Pod Autoscaler (HPA)</a> and <a href="https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler" target="_blank" rel="noopener">Cluster Autoscaler</a> in concert to bring CNFW instances up and down based on the needs of your network. After you deploy the SFCN cluster, use the steps mentioned here to modify/configure <a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-advanced.html#Cisco_Concept.dita_ebd1a5e4-186c-43ec-a71e-7570f7579235" target="_blank" rel="noopener">Horizontal Pod Scaling</a></p>
+</div>
+<div class="paragraph">
+<p>The Quick Start provides separate fields for these options. It also lets you configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and SFCN settings, as discussed later in this guide.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_explore_other_configuration_options">Explore Other Configuration Options</h3>
+<div class="paragraph">
+<p>In addition to scaling, you can find information about these other configuration options:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-troubleshoot.html#Cisco_Reference.dita_de4e419b-af3b-41f7-8ec4-4e4bf05a17d1" target="_blank" rel="noopener">Attach a Console Session</a></p>
+<p><a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-basic.html" target="_blank" rel="noopener">Basic Configuration</a> includes information about namespace, service roles, networking, and access lists.</p>
 </li>
 <li>
-<p><a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-troubleshoot.html#Cisco_Reference.dita_2f6e3885-fcc9-4aed-adbf-bd4ce13fcfde" target="_blank" rel="noopener">Connect to Amazon EKS nodes with SSH (Secure Shell)</a></p>
+<p><a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-advanced.html" target="_blank" rel="noopener">Advanced Configuration</a> includes information about multiple tenants.</p>
 </li>
 <li>
-<p><a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-troubleshoot.html#Cisco_Reference.dita_fe07dbae-29e6-4579-b3a1-140392efa213" target="_blank" rel="noopener">View Container Logs</a></p>
+<p><a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-licensing.html" target="_blank" rel="noopener">Licensing</a> provides guidelines about how to license the Secure Firewall Cloud Native.</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>After you successfully deploy a Quick Start, confirm that your resources and services are updated and configured — including any required patches — to meet your security and other needs. For more information, see the <a href="https://aws.amazon.com/compliance/shared-responsibility-model/" target="_blank" rel="noopener">Shared Responsibility Model</a>.</p>
+<p>The Secure Firewall Cloud Native Getting Started Guide is updated often with expanded configuration topics, including SAML and Redis datastore.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_use_case_examples_and_scenarios">Use Case Examples and Scenarios</h3>
+<div class="paragraph">
+<p>Once the Cisco Secure Fireweall Cloud Native is built using this quickstart, SFCN can be used for the following use cases:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-route53.html" target="_blank" rel="noopener">Scalable Remote Access VPN with Route53 Integration</a></p>
+</li>
+<li>
+<p><a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/m_ra-vpn-with-session-reconnect.html" target="_blank" rel="noopener">Scalable Remote Access VPN with Session Reconnect</a></p>
+</li>
+<li>
+<p><a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-advanced.html#Cisco_Concept.dita_c425d95d-3609-45c5-9f43-1cddc1c32db9" target="_blank" rel="noopener">Enable Multi-tenancy</a></p>
+</li>
+<li>
+<p><a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-l2l.html" target="_blank" rel="noopener">Backhaul Design for Site-to-Site VPN</a></p>
+</li>
+<li>
+<p><a href="https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-vpn-inside-vpc.html" target="_blank" rel="noopener">Backhaul Design for Inside VPC</a></p>
+</li>
+</ul>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_faq">FAQ</h2>
+<h2 id="_other_useful_information">Other useful information</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_cisco_cli_usage_guidelines">Cisco CLI Usage Guidelines</h3>
 <div class="paragraph">
-<p><strong>Q.</strong> I encountered a <strong>CREATE_FAILED</strong> error when I launched the Quick Start.</p>
+<p>Cisco CNGW (containerized firewall) uses Cisco ASA configuration. You can use ASA CLI in the YAML file.</p>
 </div>
 <div class="paragraph">
-<p><strong>A.</strong> If AWS CloudFormation fails to create the stack, relaunch the template with <strong>Rollback on failure</strong> set to <strong>Disabled</strong>. This setting is under <strong>Advanced</strong> in the AWS CloudFormation console on the <strong>Configure stack options</strong> page. With this setting, the stack’s state is retained, and the instance keeps running so that you can troubleshoot the issue. (For Windows, look at the log files in <code>%ProgramFiles%\Amazon\EC2ConfigService</code> and <code>C:\cfn\log</code>.)</p>
-</div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-warning" title="Warning"></i>
-</td>
-<td class="content">
-When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, you continue to incur AWS charges for this stack. Delete the stack when you finish troubleshooting.
-</td>
-</tr>
-</table>
+<p><strong>Note</strong>: The use of shorthand ASA CLI syntax is not supported in this release. In other words, using int instead of interface or net instead of network will cause delta deployments to fail. We recommend you use full syntax when working on production clusters.</p>
 </div>
 <div class="paragraph">
-<p>For more information, see <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/troubleshooting.html" target="_blank" rel="noopener">Troubleshooting AWS CloudFormation</a>.</p>
+<p><strong>Example:</strong></p>
 </div>
 <div class="paragraph">
-<p><strong>Q.</strong> I encountered a size-limitation error when I deployed the AWS CloudFormation templates.</p>
+<p>apiVersion: cnfw.cisco.com/v1
+kind: ASAConfiguration
+metadata:
+  name: interface-example
+  labels:
+    sfcn.cisco.com/service-role: default
+spec:
+  order: 1
+  description: "DHCP interfaces taking the AWS-assigned IPs"
+  cliLines: |</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>interface Management0/0
+nameif management
+ip address dhcp
+no shutdown</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>interface TenGigabitEthernet0/0
+nameif outside
+ip address dhcp
+security-level 100
+no shutdown</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>interface TenGigabitEthernet0/1
+nameif inside
+ip address dhcp
+no shutdown</pre>
+</div>
 </div>
 <div class="paragraph">
-<p><strong>A.</strong> Launch the Quick Start templates from the links in this guide or from another S3 bucket. If you deploy the templates from a local copy on your computer or from a location other than an S3 bucket, you might encounter template-size limitations. For more information, see <a href="http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html" target="_blank" rel="noopener">AWS CloudFormation quotas</a>.</p>
+<p><code>kubectl apply -f interfaces.yaml -n $NS</code></p>
 </div>
 <div class="paragraph">
-<p>After you successfully deploy a Quick Start, confirm that your resources and services are updated and configured—including any required patches—to meet your security and other needs. For more information, refer to the <a href="https://aws.amazon.com/compliance/shared-responsibility-model/" target="_blank" rel="noopener">Shared Responsibility Model</a>.</p>
+<p>Before you implement a Kubernetes deployment strategy, you’ll need to understand the pieces of a Kubernetes deployment and how they all function together.
+You can review samples and example scripts available at the <a href="https://github.com/CiscoDevNet/sfcn" target="_blank" rel="noopener">Cisco Secure Firewall Cloud Native GitHub repository</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_custom_iam_policy_for_cloudformation_users">Custom IAM Policy for CloudFormation Users</h3>
+<div class="paragraph">
+<p>Perform steps 1 -3 if you prefer to use a custom IAM policy to deploy the CloudFormation stack instead of the <code>AdminstratorAccess</code> managed policy.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Step 1 - Create IAM user</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Create the user in the AWS Management Console, the AWS CLI, Tools for Windows PowerShell, or by using an AWS API operation. If you create the user in the AWS Management Console, then most of the steps are handled automatically via a wizard, based on your choices. If you create the users programmatically, then you must perform each of those steps individually.</p>
+</li>
+<li>
+<p>Create credentials for the user, depending on the type of access the user requires:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Programmatic access</strong>: The IAM user might need to make API calls, use the AWS CLI, or use the Tools for Windows PowerShell. In that case, create an access key (access key ID and a secret access key) for that user.</p>
+</li>
+<li>
+<p><strong>AWS Management Console access</strong>: If the user needs to access the AWS Management Console, create a password for the user. Disabling console access for a user prevents them from signing in the to the AWS Management Console using their user name and password. It does not change their permissions or prevent them from accessing the console using an assumed role.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Step 2 - Create IAM Access Policy</strong> Users who require programmatic access enabled to perform all the deployment activities must create and use the IAM policy (SFCNFullAccess) to deploy Cisco Secure Firewall Cloud Native.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Sign in to the AWS Management Console and open the IAM console.</p>
+</li>
+<li>
+<p>In the navigation pane on the left, choose Policies.</p>
+</li>
+<li>
+<p>Choose Create Policy.</p>
+</li>
+<li>
+<p>Choose the JSON tab.</p>
+</li>
+<li>
+<p>Type or paste the following JSON policy document.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-SFCNFullAccess IAM Policy" data-lang="SFCNFullAccess IAM Policy">SFCNFullAccess IAM Policy
+  {
+      "Version": "2012-10-17",
+      "Statement": [
+          {
+              "Action": [
+                  "ec2:*",
+                  "elasticfilesystem:*",
+                  "elasticache:*",
+                  "kms:DescribeKey",
+                  "kms:ListAliases",
+                  "s3:*",
+                  "iam:*",
+                  "elasticloadbalancing:*",
+                  "cloudwatch:*",
+                  "autoscaling:*",
+                  "eks:*",
+                  "ec2-instance-connect:SendSSHPublicKey",
+                  "lambda:*",
+                  "states:DescribeStateMachine",
+                  "states:ListStateMachines",
+                  "tag:GetResources",
+                  "xray:GetTraceSummaries",
+                  "xray:BatchGetTraces",
+                  "ds:CreateComputer",
+                  "ds:DescribeDirectories",
+                  "logs:*",
+                  "ssm:*",
+                  "ec2messages:*",
+                  "cloudformation:*",
+                  "ssmmessages:CreateControlChannel",
+                  "ssmmessages:CreateDataChannel",
+                  "ssmmessages:OpenControlChannel",
+                  "ssmmessages:OpenDataChannel"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+          },
+          {
+              "Action": "iam:CreateServiceLinkedRole",
+              "Effect": "Allow",
+              "Resource": "*",
+              "Condition": {
+                  "StringLike": {
+                      "iam:AWSServiceName": [
+                          "elasticfilesystem.amazonaws.com"
+                      ]
+                  }
+              }
+          },
+          {
+              "Action": "iam:CreateServiceLinkedRole",
+              "Effect": "Allow",
+              "Resource": "arn:aws:iam::*:role/aws-service-role/elasticache.amazonaws.com/AWSServiceRoleForElastiCache",
+              "Condition": {
+                  "StringLike": {
+                      "iam:AWSServiceName": "elasticache.amazonaws.com"
+                  }
+              }
+          },
+          {
+              "Effect": "Allow",
+              "Action": "iam:CreateServiceLinkedRole",
+              "Resource": "*",
+              "Condition": {
+                  "StringEquals": {
+                      "iam:AWSServiceName": [
+                          "autoscaling.amazonaws.com",
+                          "ec2scheduled.amazonaws.com",
+                          "elasticloadbalancing.amazonaws.com",
+                          "spot.amazonaws.com",
+                          "spotfleet.amazonaws.com",
+                          "transitgateway.amazonaws.com"
+                      ]
+                  }
+              }
+          },
+          {
+              "Effect": "Allow",
+              "Action": "iam:PassRole",
+              "Resource": "*",
+              "Condition": {
+                  "StringEquals": {
+                      "iam:PassedToService": "lambda.amazonaws.com"
+                  }
+              }
+          },
+          {
+              "Effect": "Allow",
+              "Action": "iam:CreateServiceLinkedRole",
+              "Resource": "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*",
+              "Condition": {
+                  "StringLike": {
+                      "iam:AWSServiceName": "ssm.amazonaws.com"
+                  }
+              }
+          },
+          {
+              "Effect": "Allow",
+              "Action": [
+                  "iam:DeleteServiceLinkedRole",
+                  "iam:GetServiceLinkedRoleDeletionStatus"
+              ], +
+              "Resource": "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*"
+          }
+      ]
+  }</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Resolve any security warnings, errors, or general warnings generated during policy validation, and then choose Review policy.</p>
+</li>
+<li>
+<p>When you are finished, choose Next: Tags.</p>
+</li>
+<li>
+<p>On the Review policy page:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Name ― Type the name for this policy: SFCNFullAccess.</p>
+</li>
+<li>
+<p>Description ― Optionally, enter a description for the policy that you are creating.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Review the policy Summary to see the permissions that are granted by your policy. Then choose Create policy to save your work.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Step 3 - Attach IAM access policy to the IAM user</strong> IAM users must explicitly be given permissions to administer credentials or IAM resources.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Sign in to the AWS Management Console and open the IAM console.</p>
+</li>
+<li>
+<p>Choose Users in the navigation pane, choose the name of the user whose permissions you want to modify, and then choose the Permissions tab.</p>
+</li>
+<li>
+<p>Choose Add permissions, and then choose Attach existing policies directly to user.</p>
+</li>
+<li>
+<p>Select the SFCNFullAccess managed policy that you created for the SFCN administrator user:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Use the Search feature to filter the policies by name.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>You can also create a new managed policy by choosing Create policy. If you do, return to this browser tab or window when the new policy is done. Choose Refresh; and then select the check box for the new policy to attach it to your user. For more information, see Creating IAM policies.</p>
+</li>
+<li>
+<p>Choose Next: Review to see the list of policies that are to be attached to the user. Then choose Add.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Step 4 - Create Cisco Secure Firewall Cluster Stack</strong>; refer to <a href="#_deployment_options">Deployment options</a> for a description of the options available and <a href="#_launch_the_quick_start">Launch the Quick Start</a> for deployment steps.</p>
+</li>
+</ul>
+</div>
 </div>
 </div>
 </div>
@@ -1293,16 +1371,16 @@ When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, 
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/{quickstart-github-org}/quickstart-documentation-base/issues/new?labels=documentation,grammar+or+spelling&amp;title=Deployment+guide+feedback&amp;body=Section+heading:%0ADocumentation+issue+description:%0A" target="_blank" rel="noopener">Grammar or spelling</a></p>
+<p><a href="https://github.com/aws-quickstart/quickstart-cisco-secure-firewall-cloud-native/issues/new?labels=documentation,grammar+or+spelling&amp;title=Deployment+guide+feedback&amp;body=Section+heading:%0ADocumentation+issue+description:%0A" target="_blank" rel="noopener">Grammar or spelling</a></p>
 </li>
 <li>
-<p><a href="https://github.com/{quickstart-github-org}/quickstart-documentation-base/issues/new?labels=documentation,broken+link&amp;title=Deployment+guide+feedback&amp;body=Section+heading:%0ADocumentation+issue+description:%0A" target="_blank" rel="noopener">Broken link</a></p>
+<p><a href="https://github.com/aws-quickstart/quickstart-cisco-secure-firewall-cloud-native/issues/new?labels=documentation,broken+link&amp;title=Deployment+guide+feedback&amp;body=Section+heading:%0ADocumentation+issue+description:%0A" target="_blank" rel="noopener">Broken link</a></p>
 </li>
 <li>
-<p><a href="https://github.com/{quickstart-github-org}/quickstart-documentation-base/issues/new?labels=documentation,inaccurate+content&amp;title=Deployment+guide+feedback&amp;body=Section+heading:%0ADocumentation+issue+description:%0A" target="_blank" rel="noopener">Inaccurate content</a></p>
+<p><a href="https://github.com/aws-quickstart/quickstart-cisco-secure-firewall-cloud-native/issues/new?labels=documentation,inaccurate+content&amp;title=Deployment+guide+feedback&amp;body=Section+heading:%0ADocumentation+issue+description:%0A" target="_blank" rel="noopener">Inaccurate content</a></p>
 </li>
 <li>
-<p><a href="https://github.com/{quickstart-github-org}/quickstart-documentation-base/issues/new?labels=documentation,display+and+design&amp;title=Deployment+guide+feedback&amp;body=Section+heading:%0ADocumentation+issue+description:%0A" target="_blank" rel="noopener">Display or design</a></p>
+<p><a href="https://github.com/aws-quickstart/quickstart-cisco-secure-firewall-cloud-native/issues/new?labels=documentation,display+and+design&amp;title=Deployment+guide+feedback&amp;body=Section+heading:%0ADocumentation+issue+description:%0A" target="_blank" rel="noopener">Display or design</a></p>
 </li>
 </ul>
 </div>
