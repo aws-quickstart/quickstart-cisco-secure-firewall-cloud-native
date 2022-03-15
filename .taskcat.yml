@@ -29,4 +29,4 @@ tests:
       EnforcerCacheType: elasticache
       SecureFirewallDataplane: Enabled
       StorageType: efs
-      EnforcerCacheStorageKey: 7372F6AB905D5792756F1A57425ACC2B19696C9075FDAC4098BF6F1AE19638C2
+      EnforcerCacheStorageKey: override
