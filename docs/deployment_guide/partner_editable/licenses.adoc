@@ -1,14 +1,5 @@
 // Include details about any licenses and how to sign up. Provide links as appropriate.
 
-The Secure Firewall Cloud Native uses https://software.cisco.com/#module/SmartLicensing[Cisco Smart Software Licensing^], which lets you purchase and manage a pool of licenses centrally. When you register the deployment, the License Authority issues an ID certificate for communication between the cluster and the License Authority. It also assigns the cluster to the appropriate virtual account.
+There are no additional licenses required to use this Quick Start.
 
-* *Option1* - No licenses are required to deploy this Quick Start. All AWS service resources consumed during the launch of the Quick Start incur AWS service usage costs. With this model, you can deploy one CNFW enforcement point, and the enforcement point's throughput will be rate-limited to 100 Kbps. 
-
-* *Option2* - To use the Quick Start in your production environment, you are responsible for obtaining a license directly from https://software.cisco.com/#module/SmartLicensing[Cisco Smart Software Licensing^]. If you do not yet have an account, https://software.cisco.com/software/csws/smartaccount/accountCreation/createSmartAccount[Cisco Smart Account link^] to set up a new account. The Smart Software Manager lets you create a master account for your organization. If you don’t have a license, you can contact your Cisco accounts team to get a trial license. The trial license gives you free usage in a non-production environment for a limited time. After this trial period ends, you can upgrade to a production license by purchasing a license directly from Cisco.
-
-For more details, go to the https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-licensing.html[Enable license for Cisco Secure Firewall Cluster^] page.
-
-// Or, if the deployment uses an AMI, update this paragraph. If it doesn’t, remove the paragraph.
-The Quick Start also requires a subscription to the containers for {partner-product-short-name}, which is available from https://aws.amazon.com/marketplace/pp/prodview-mpk3c2gkda3w4. Additional pricing, terms, and conditions may apply. 
-
-There is no cost to use this Quick Start, but you will be billed for any AWS services or resources that this Quick Start deploys. For more information, refer to the https://fwd.aws/rA69w?[AWS Quick Start General Information Guide^].
+There is no cost to use this Quick Start, however you will be billed for the resources deployed. For more information see the http://general-content-file[AWS Quick Start General Content Guide^].

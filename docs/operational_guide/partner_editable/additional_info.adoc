@@ -1,3 +1,42 @@
+// Add steps as necessary for accessing the software, post-configuration, and testing. Don’t include full usage instructions for your software, but add links to your product documentation for that information.
+//Should any sections not be applicable, remove them
+
+== Test the deployment
+// If steps are required to test the deployment, add them here. If not, remove the heading
+
+. Once Cisco Secure Firewall Cloud Native stack is deployed, run the following commands to check the SFCN cluster:
+
+    export NS=<namespace>
+    aws eks --region <region> update-kubeconfig --name <sfcn-cluster-name>
+
+  Example:
+    export NS=sfcn-system
+    aws eks --region us-east-1 update-kubeconfig --name answami-sfcn
+
+. Check pods using `kubectl get pods -n $NS`
+
+. Check nodes using `kubectl get nodes -n $NS`
+
+. Check CNFW configuration using `kubectl get asacommand -A --field-selector spec.command="show run"`
+
+. You can capture different metrics for the SFCN based on service roles. See https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-metrics.html[Metrics Configuration^] in the Cisco Secure Firewall Cloud Native Getting Started Guide for more information.
+
+== Post-deployment steps
+// If post-deployment steps are required, add them here. If not, remove the heading
+
+Once the Cisco Secure Firewall Cloud Native cluster is up i.e., nodes and pods are up, access the GitHub samples to configure CNFW firewalls:
+ 
+. Navigate to the Cisco Secure Firewall Github Repository: https://github.com/CiscoDevNet/sfcn
+. Clone this https://github.com/CiscoDevNet/sfcn.git
+. Go to sfcn/samples/
+. Check the basic folder for interface, network, access-list, and routes sample YAML files 
+. Go to sfcn/samples/ra-vpn/redirector-lb/ for RAVPN sample YAML files 
+. Go to sfcn/samples/ra-vpn/s2s-backhaul/ for DC backhaul sample YAML files 
+. Modify YAML files to suit your configuration and apply using kubectl apply -f <filename>.yaml
+
+Vist https://www.cisco.com/c/en/us/products/security/secure-firewall-cloud-native/index.html[Cisco Secure Firewall Cloud Native^] for the most current information and resources about the product.
+
+
 == Best practices for using {partner-product-short-name} on AWS
 // Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating data, backups, ensuring high performance, high availability, etc. Link to software documentation for detailed information.
 
@@ -94,7 +133,7 @@ You can review samples and example scripts available at the https://github.com/C
 
 === Custom IAM Policy for CloudFormation Users
 
-Perform steps 1 -3 if you prefer to use a custom IAM policy to deploy the CloudFormation stack instead of the AdminstratorAccess managed policy mentioned in the link:#_iam_permissions[IAM Permissions] section of this guide.
+Perform steps 1 -3 if you prefer to use a custom IAM policy to deploy the CloudFormation stack instead of the `AdminstratorAccess` managed policy.
 
 ** *Step 1 - Create IAM user*
 * Create the user in the AWS Management Console, the AWS CLI, Tools for Windows PowerShell, or by using an AWS API operation. If you create the user in the AWS Management Console, then most of the steps are handled automatically via a wizard, based on your choices. If you create the users programmatically, then you must perform each of those steps individually.
@@ -233,96 +272,4 @@ SFCNFullAccess IAM Policy
 * You can also create a new managed policy by choosing Create policy. If you do, return to this browser tab or window when the new policy is done. Choose Refresh; and then select the check box for the new policy to attach it to your user. For more information, see Creating IAM policies.
 * Choose Next: Review to see the list of policies that are to be attached to the user. Then choose Add.
 
-** *Step 4 - Create Cisco Secure Firewall Cluster Stack*; refer to link:#_deployment_options[Deployment options] for a desciption of the options available and link:#_launch_the_quick_start[Launch the Quick Start] for deployment steps.
-
-== Troubleshooting
-
-*Q.* I want to attach a console session.
-
-*A.* Use kubectl to attach a particular CNFW's console session. From there you can run any command that would not result in a change in the running configuration of CNFW. For example: capture, packet-tracer, show run, etc.
-
-`kubectl attach -it <sfcn-enforcer-pod-name> -n $NS -c cnfw`
-
-Where `$NS` represents the namespace of the pod.
-
-You might be required to run the enable command before being able to execute any of the show commands. The enable command would require you to enter a password when run for the first time. This password is not persistent and would be reset once the sfcn-enforcer pod restarts or unscheduled.
-
-*Q.* I want to SSH to EKS nodes.
-
-*A.* Install ec2instanceconnect (pip install ec2instanceconnectcli), and add the following to your shell profile:
-
-`[source,*EKS mssh*,options="nowrap"]`
-
-EKS mssh
-```
-
-function sshn() {
-  PS3="Select a node to ssh: "
-  select node in $(kubectl get nodes | grep -v NAME | awk '{print $1}')
-  do
-    echo "Selected:  $node"
-    INSTANCE_ID=$(kubectl describe node $node | awk -F'/' '/ProviderID/{print $5}')
-    REGION=$(kubectl describe nodes $node | awk -F'=' '/topology.kubernetes.io\/region/{print $2}')
-    mssh --region $REGION ubuntu@$INSTANCE_ID
-    break
-    done
-    return $?
-}
-```
-Execute `sshn`, and select the node you wish to SSH to when prompted.
-
-*Q.* I want to check the deployment status.
-
-*A.* After creating an ASAConfiguration object, you can track the status of its deployment using the status field. See the ASAConfiguration CRD for detailed information on the status field.
-
-The ASAConfiguration status field currently has 2 status conditions:
-
-*Valid:* This condition provides information if the CLI lines present in the ASAConfiguration object are valid or not. There are certain CLI commands that are blocked from using to maintain system integrity. If ASAConfiguration contains any of those commands, the Valid condition would be false. Valid condition's message field would provide detailed information on which command is blocked.
-
-*Deployed:* This condition provides information if the CLI lines have been deployed to all applicable nodes in the cluster. This condition becomes true only when the CLI lines are deployed successfully across all applicable nodes. This status condition shows a summary on how many nodes to which the cluster has been deployed.
-
-In the event the deployed status shows the configuration has been deployed to only x nodes of y nodes, check the NodeConfiguration's status field of the nodes present in the cluster.
-
-`kubectl describe nodeconfiguration <node_name> -n $NS`
-
-*Q.* I want to view container logs.
-
-*A.* By default, the system forwards the combined logs for all SFCN-related containers running in the cluster to a central logging service. Use the following kubectl command to view the logs:
-
-```
-[source,$ POD=$(grep -m 1 logging-server,options="nowrap"]
-POD=$(grep -m 1 logging-server <<< "`kubectl get pods -n $NS --no-headers=true -o custom-columns=':metadata.name'`")
-kubectl logs -n $NS pod/$POD -c logging-server
-```
-Optionally, the parameter `-f` can be added to continuously tail the log. Note that $NS represents the namespace of the pod.
-
-Alternatively, it is possible to login to the logging server:
-
-`kubectl exec -n $NS -it $POD -c logging-server -- /bin/sh`
-
-[source,$ cd /var/log/logs,options="nowrap"]
-$ cd /var/log/logs
-$ ls
-  messages-kv.log  messages.log
-$ grep asac messages-kv.log
-  Mar 30 21:30:27 ip-192-168-118-112 [2021/03/30 21:30:27] [ info] inotify_fs_add(): inode=1536390 watch_fd=62 name=/var/log/containers/sfcn-cli-validation-<truncated>.log
-  Mar 30 21:33:10 ip-192-168-118-112 [2021/03/30 21:33:10] [ info] inotify_fs_add(): inode=1536539 watch_fd=64 name=/var/log/containers/sfcn-cli-validation-<truncated>.log
-  
-
-Logs stored on the logging server are routinely rotated and cleaned up. If you need to preserve logs, save the files before the house-cleaning jobs run.
-
-Unified container logs are formatted as follows:
-```
-<year-month-day> <time> <node name> <pod namespace> <pod name> <container name> -- <log message> -- <extra JSON-formatted log metadata>
-
-For example, an entry from a configuration pod may look like this:
-[source,2021-03-18 21:28:00 ,options="nowrap"]
-2021-03-18 21:28:00 ip-1-1-1-1.ec2.internal sfcn-system sfcn-configurer-1111111111-22222 manager --
-2021-03-18T21:28:00.806Z INFO controllers.SNMPExporter Reconciliation started {"namespace": "sfcn-system"} -- {"_SDATA":{"k8s":{
-```
-
-The unified logs are also stored and periodically rotated on the node where the logging-server is running at /home/ubuntu/var-log/.
-
-Standard output and standard error logs for individual containers can also be viewed using the kubectl log command:
-
-`kubectl logs pod/<pod_name> -c <container_name>`
+** *Step 4 - Create Cisco Secure Firewall Cluster Stack*; refer to link:#_deployment_options[Deployment options] for a description of the options available and link:#_launch_the_quick_start[Launch the Quick Start] for deployment steps.

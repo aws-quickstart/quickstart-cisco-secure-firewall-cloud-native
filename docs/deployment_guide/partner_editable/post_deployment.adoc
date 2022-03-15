@@ -1,41 +1,54 @@
-// Include any postdeployment steps here, such as steps necessary to test that the deployment was successful. If there are no postdeployment steps, leave this file empty.
+//Include any postdeployment steps here, such as steps necessary to test that the deployment was successful. If there are no postdeployment steps leave this file empty.
 
 == Postdeployment steps
 
-=== Test the deployment
+// Add steps as necessary for accessing the software, post-configuration, and testing. Don’t include full usage instructions for your software, but add links to your product documentation for that information.
+//Should any sections not be applicable, remove them
+
+== Test the deployment
 // If steps are required to test the deployment, add them here. If not, remove the heading
 
-. Once Cisco Secure Firewall Cloud Native stack is deployed, run the following commands to check the SFCN cluster:
+. After the Quick Start is deployed, run the following commands to check the {partner-product-short-name} cluster.
 
     export NS=<namespace>
     aws eks --region <region> update-kubeconfig --name <sfcn-cluster-name>
++
+For example:
 
-  Example:
     export NS=sfcn-system
     aws eks --region us-east-1 update-kubeconfig --name answami-sfcn
 
-. Check pods using `kubectl get pods -n $NS`
+. Check pods. 
 
-. Check nodes using `kubectl get nodes -n $NS`
+    kubectl get pods -n $NS
 
-. Check CNFW configuration using `kubectl get asacommand -A --field-selector spec.command="show run"`
+. Check nodes.
 
-. You can capture different metrics for the SFCN based on service roles. See https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-metrics.html[Metrics Configuration^] in the Cisco Secure Firewall Cloud Native Getting Started Guide for more information.
+    kubectl get nodes -n $NS
 
-=== Configure CFNW firewalls
+. Check CNFW configuration.
 
-Once the Cisco Secure Firewall Cloud Native cluster is up i.e., nodes and pods are up, access the GitHub samples to configure CNFW firewalls:
+    kubectl get asacommand -A --field-selector spec.command="show run"
+
+. You can capture different metrics for the SFCN based on service roles. For more information, refer to https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-metrics.html[Metrics Configuration^].
+
+== Configure CNFW firewalls
+// If post-deployment steps are required, add them here. If not, remove the heading
+
+Once the {partner-product-short-name} cluster, nodes, and pods are running, configure CNFW firewalls.
  
-. Navigate to the Cisco Secure Firewall Github Repository: https://github.com/CiscoDevNet/sfcn
-. Clone this https://github.com/CiscoDevNet/sfcn.git
-. Go to sfcn/samples/
-. Check the basic folder for interface, network, access-list, and routes sample YAML files 
-. Go to sfcn/samples/ra-vpn/redirector-lb/ for RAVPN sample YAML files 
-. Go to sfcn/samples/ra-vpn/s2s-backhaul/ for DC backhaul sample YAML files 
-. Modify YAML files to suit your configuration and apply using kubectl apply -f <filename>.yaml
+. Clone the https://github.com/CiscoDevNet/sfcn.git[Cisco Secure Firewall Github Repository^]
+. Modify the YAML files in the `sfcn/samples/` repository folder to suit your configuration. 
+.. `sfcn/samples/basic` contains sample interface, network, access-list, and routes files.
+.. `sfcn/samples/ra-vpn/redirector-lb/` contains sample RA-VPN files.
+.. `sfcn/samples/ra-vpn/s2s-backhaul/` contains sample DC backhaul files.
 
-Vist https://www.cisco.com/c/en/us/products/security/secure-firewall-cloud-native/index.html[Cisco Secure Firewall Cloud Native^] for the most current information and resources about the product.
+. For each YAML file modified, apply your modifications with the following command.
+    
+    kubectl apply -f <filename>.yaml
 
-== Additional info
+== Best practices for using {partner-product-short-name} on AWS
+// Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating data, backups, ensuring high performance, high availability, etc. Link to software documentation for detailed information.
+Refer to the https://www.cisco.com/c/en/us/td/docs/security/secure-firewall/cloud-native/getting-started/secure-firewall-cloud-native-gsg/sfcn-intro.html[Cisco Secure Firewall Cloud Native Getting Started Guide^].
 
-For additional operational guidance, see the https://aws-quickstart.github.io/quickstart-cisco-secure-firewall-cloud-native/operational/index.html[Operational Guide].
+
