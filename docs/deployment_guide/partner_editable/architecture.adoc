@@ -14,7 +14,7 @@ As shown in <<architecture1>>, the Quick Start sets up the following:
 
 * A highly available architecture that spans two Availability Zones.*
 * A virtual private cloud (VPC) configured with public and private subnets, according to AWS best practices, to provide you with your own virtual network on AWS.*
-* Amazon Route 53 for VPN load balancing and CNFW health monitoring.
+* Amazon Route 53 for VPN load balancing and Cloud Native Firewall (CNFW) health monitoring.
 * Amazon Elastic Kubernetes Service (Amazon EKS) for Kubernetes orchestration of the Cisco Secure Firewall cluster, including the Redirector, Control Point, and Enforcement Point.
 * Amazon Elastic File Service (Amazon EFS) for elastic file systems for the Control Point and Enforcement Point.
 * Amazon ElastiCache for Redis to store information on VPN sessions. The Redirector pod uses this information for smart load balancing and recovery.
