@@ -397,7 +397,7 @@ Parameters:
 
   FirewallVersion:
     Type: String
-    Default: v1.1.0
+    Default: v1.1.1
     AllowedPattern: ".+"
     Description: Helm chart version of the product.
 
