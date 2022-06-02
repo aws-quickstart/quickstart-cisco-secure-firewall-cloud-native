@@ -237,9 +237,10 @@ Parameters:
 
   KubernetesVersion:
     Type: String
-    Default: 1.18
+    Default: 1.19
     AllowedValues:
       - 1.18
+      - 1.19
     Description: The desired Kubernetes version for your cluster.
 
   KeyPairName:
