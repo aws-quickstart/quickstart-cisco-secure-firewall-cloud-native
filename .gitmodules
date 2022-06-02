@@ -5,7 +5,7 @@
 [submodule "submodules/quickstart-amazon-eks"]
 	path = submodules/quickstart-amazon-eks
 	url = git@github.com:aws-quickstart/quickstart-amazon-eks.git
-	branch = main
+	branch = 20220601_quickstart-cisco-secure-firewall-cloud-native
 [submodule "submodules/quickstart-amazon-eks-nodegroup"]
 	path = submodules/quickstart-amazon-eks-nodegroup
 	url = git@github.com:aws-quickstart/quickstart-amazon-eks-nodegroup.git
